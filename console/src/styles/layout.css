@@ -15,10 +15,20 @@ body {
   min-height: 100vh;
   max-height: 100vh;
   overflow: hidden;
+  background: #f0f5ff !important;
 }
 
 .ant-layout-content {
   overflow: hidden;
+  background: #f0f5ff !important;
+}
+
+.copaw-layout {
+  background: #f0f5ff !important;
+}
+
+.copaw-layout-content {
+  background: #f0f5ff !important;
 }
 
 .page-container {

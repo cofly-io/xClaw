@@ -57,6 +57,7 @@ export default function Header({ selectedKey }: HeaderProps) {
           <Button
             icon={<FileTextOutlined />}
             type="text"
+            style={{ fontSize: '12px', fontWeight: '400' }}
             onClick={() => handleNavClick(NAV_URLS.changelog)}
           >
             {t("header.changelog")}
@@ -66,6 +67,7 @@ export default function Header({ selectedKey }: HeaderProps) {
           <Button
             icon={<BookOutlined />}
             type="text"
+            style={{ fontSize: '12px', fontWeight: '400' }}
             onClick={() => handleNavClick(NAV_URLS.docs)}
           >
             {t("header.docs")}
@@ -75,6 +77,7 @@ export default function Header({ selectedKey }: HeaderProps) {
           <Button
             icon={<QuestionCircleOutlined />}
             type="text"
+            style={{ fontSize: '12px', fontWeight: '400' }}
             onClick={() => handleNavClick(NAV_URLS.faq)}
           >
             {t("header.faq")}
@@ -85,6 +88,7 @@ export default function Header({ selectedKey }: HeaderProps) {
             icon={<GithubOutlined />}
             type="text"
             onClick={() => handleNavClick(NAV_URLS.github)}
+            style={{ fontSize: '12px', fontWeight: '400' }}
           >
             {t("header.github")}
           </Button>

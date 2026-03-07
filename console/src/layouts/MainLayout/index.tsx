@@ -47,9 +47,9 @@ export default function MainLayout() {
   }, [currentPath, navigate]);
 
   return (
-    <Layout className={styles.mainLayout}>
+    <Layout className={styles.mainLayout} style={{ background: '#f0f5ff' }}>
       <Sidebar selectedKey={selectedKey} />
-      <Layout>
+      <Layout style={{ background: '#f0f5ff' }}>
         <Header selectedKey={selectedKey} />
         <Content className="page-container">
           <ConsoleCronBubble />
