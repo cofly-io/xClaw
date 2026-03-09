@@ -1,3 +1,6 @@
+/**************
+主要样式
+**************/
 html,
 body {
   height: 100%;
@@ -45,7 +48,7 @@ body {
 .page-content {
   flex: 1 1 auto;
   overflow: auto;
-  padding: 0 24px 24px 24px;
+  /*padding: 0 24px 24px 24px;*/
 }
 
 .table-container {
@@ -67,6 +70,23 @@ body {
   padding: 0;
 }
 
+.xClaw-chat-anywhere-input-wrapper {
+  max-width: 80% !important;
+}
+.xClaw-conversations-label{
+ font-size: 13px;
+}
+.xClaw-chat-anywhere-sessions-adder button{
+  border-radius:20px;
+}
+.xClaw-chat-anywhere-sessions-adder button span {
+  color: #f8f8f8 !important;
+}
+
+.xClaw-bubble-list {
+  max-width: 80% !important;
+}
+
 /* Welcome avatar: full tall SVG. Class is CoPaw-avatar (no "ant"). */
 [class*="chat-anywhere-welcome-default"] [class*="-avatar"],
 [class*="message-list-welcome"] [class*="welcome-default"] [class*="-avatar"] {
@@ -76,8 +96,9 @@ body {
   min-height: 48px !important;
   overflow: visible !important;
 }
-[class*="chat-anywhere-welcome-default"] [class*="-avatar"] > img,
-[class*="message-list-welcome"] [class*="-avatar"] > img {
+
+[class*="chat-anywhere-welcome-default"] [class*="-avatar"]>img,
+[class*="message-list-welcome"] [class*="-avatar"]>img {
   object-fit: contain !important;
   object-position: center;
 }

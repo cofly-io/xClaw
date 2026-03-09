@@ -1,7 +1,7 @@
 /**
  * CoPaw mascot (same as logo symbol). Used in Hero and Nav.
  */
-import { CatPawIcon } from "./CatPawIcon";
+import { CatPawIcon } from "./CatPawIcon.tsx";
 
 interface CopawMascotProps {
   size?: number;

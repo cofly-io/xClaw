@@ -380,16 +380,16 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         items={menuItems}
       />
 
-      {/* Dot grip to toggle sidebar */}
+      {/* Dot grip to toggle sidebar: 2 columns × 6 rows */}
       <div
-        className={styles.dotGrip}
+        className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ''}`}
         onClick={() => setCollapsed(!collapsed)}
         title={collapsed ? "Expand" : "Collapse"}
       >
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div className={styles.dotRow}>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <span key={`r1-${i}`} className={styles.dot} />
+        {Array.from({ length: 6 }).map((_, row) => (
+          <div key={`row-${row}`} className={styles.dotRow}>
+            {Array.from({ length: 2 }).map((_, col) => (
+              <span key={`dot-${row}-${col}`} className={styles.dot} />
             ))}
           </div>
         ))}

@@ -22,11 +22,13 @@
   :global {
     .copaw-btn {
       color: #888888 !important;
+
       &:hover {
         color: #1864ff !important;
         background: #f0f5ff !important;
       }
     }
+
     .anticon {
       color: #4a6fa5;
     }
@@ -44,41 +46,58 @@
 .sider {
   background: #ffffff !important;
   border-right: 1px solid #e6eeff;
-  overflow: auto;
+  overflow: hidden !important;
   height: 100vh;
   box-shadow: 2px 0 8px rgba(24, 100, 255, 0.04);
 
   :global {
+    .copaw-layout-sider-children {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
     .copaw-menu {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
       border-inline-end: 0 !important;
       background: transparent !important;
 
+      /*第一层*/
       .copaw-menu-submenu-title {
-        color: #8fa3c8 !important;
+        color: #9fb2d4 !important;
         font-size: 13px;
-        font-weight: 400;
+        font-weight: 600;
         letter-spacing: 0.08em;
         text-transform: uppercase;
+
         &:hover {
           background: #f0f5ff !important;
           color: #4a6fa5 !important;
         }
+
         .copaw-menu-submenu-arrow {
           color: #b8cce8 !important;
         }
       }
 
+      /*第二层*/
       .copaw-menu-item {
-        color: #3d5a8a !important;
+        color: #5b6e8b !important;
         border-radius: 6px !important;
-        font-size: 12px !important;  
+        font-size: 12px !important;
         margin: 1px 8px !important;
         width: calc(100% - 16px) !important;
+
         &:hover {
           background: #f0f5ff !important;
           color: #1864ff !important;
         }
-        .anticon, svg {
+
+        .anticon,
+        svg {
           color: #7a9cc8;
         }
       }
@@ -88,9 +107,12 @@
         color: #1864ff !important;
         border-left: 3px solid #1864ff !important;
         padding-left: calc(var(--ant-menu-item-padding-inline, 16px) - 3px) !important;
-        .anticon, svg {
+
+        .anticon,
+        svg {
           color: #1864ff !important;
         }
+
         &:hover {
           background: #e0ecff !important;
         }
@@ -130,6 +152,7 @@
 
 .versionBadgeClickable {
   cursor: pointer;
+
   &:hover {
     color: #1864ff;
   }
@@ -142,6 +165,7 @@
 .collapseBtn {
   margin: auto;
   color: #7a9cc8 !important;
+
   &:hover {
     color: #1864ff !important;
     background: #f0f5ff !important;
@@ -214,8 +238,8 @@
 
 // ─── Dot Grip (sidebar toggle) ────────────────────────────────────────────────
 .dotGrip {
-  position: absolute;
-  right: -14px;
+  position: fixed;
+  left: 266px;
   top: 45%;
   transform: translateY(-50%);
   display: flex;
@@ -223,16 +247,21 @@
   gap: 4px;
   padding: 8px 4px;
   cursor: pointer;
-  z-index: 10;
+  z-index: 200;
   border-radius: 4px;
-  transition: background 0.2s;
+  transition: background 0.2s, left 0.2s;
 
   &:hover {
     background: rgba(24, 100, 255, 0.08);
+
     .dot {
       background: #1864ff;
     }
   }
+}
+
+.dotGripCollapsed {
+  left: 72px;
 }
 
 .dotRow {

@@ -1,8 +1,8 @@
 const defaultConfig = {
   theme: {
-    colorPrimary: "#615CED",
+    colorPrimary: "#1864ff",
     darkMode: false,
-    prefix: "copaw",
+    prefix: "xClaw",
     leftHeader: {
       logo: "",
       title: "xClaw Togerther",
