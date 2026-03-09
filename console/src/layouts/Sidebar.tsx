@@ -1,3 +1,6 @@
+/**********
+updated by Gangan
+***********/
 import {
   Layout,
   Menu,
@@ -29,8 +32,6 @@ import {
   Globe,
   Settings,
   Plug,
-  PanelLeftClose,
-  PanelLeftOpen,
   Copy,
   Check,
 } from "lucide-react";
@@ -175,9 +176,8 @@ function CopyButton({ text }: { text: string }) {
         size="small"
         icon={copied ? <Check size={13} /> : <Copy size={13} />}
         onClick={handleCopy}
-        className={`${styles.copyBtn} ${
-          copied ? styles.copyBtnCopied : styles.copyBtnDefault
-        }`}
+        className={`${styles.copyBtn} ${copied ? styles.copyBtnCopied : styles.copyBtnDefault
+          }`}
       />
     </Tooltip>
   );
@@ -204,7 +204,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     api
       .getVersion()
       .then((res) => setVersion(res?.version ?? ""))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -234,7 +234,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         setAllVersions(versions);
         setLatestVersion(latest);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const hasUpdate =
@@ -243,32 +243,32 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     allVersions.includes(version) &&
     version !== latestVersion;
 
-  const handleOpenUpdateModal = () => {
-    setUpdateMarkdown("");
-    setUpdateModalOpen(true);
-    const lang = i18n.language?.startsWith("zh")
-      ? "zh"
-      : i18n.language?.startsWith("ru")
-      ? "ru"
-      : "en";
-    const faqLang = lang === "zh" ? "zh" : "en";
-    const url = `https://copaw.agentscope.io/docs/faq.${faqLang}.md`;
-    fetch(url, { cache: "no-cache" })
-      .then((res) => (res.ok ? res.text() : Promise.reject()))
-      .then((text) => {
-        const zhPattern = /###\s*CoPaw如何更新[\s\S]*?(?=\n###|$)/;
-        const enPattern = /###\s*How to update CoPaw[\s\S]*?(?=\n###|$)/;
-        const match = text.match(faqLang === "zh" ? zhPattern : enPattern);
-        setUpdateMarkdown(
-          match && lang !== "ru"
-            ? match[0].trim()
-            : UPDATE_MD[lang] ?? UPDATE_MD.en,
-        );
-      })
-      .catch(() => {
-        setUpdateMarkdown(UPDATE_MD[lang] ?? UPDATE_MD.en);
-      });
-  };
+  // const handleOpenUpdateModal = () => {
+  //   setUpdateMarkdown("");
+  //   setUpdateModalOpen(true);
+  //   const lang = i18n.language?.startsWith("zh")
+  //     ? "zh"
+  //     : i18n.language?.startsWith("ru")
+  //     ? "ru"
+  //     : "en";
+  //   const faqLang = lang === "zh" ? "zh" : "en";
+  //   const url = `https://copaw.agentscope.io/docs/faq.${faqLang}.md`;
+  //   fetch(url, { cache: "no-cache" })
+  //     .then((res) => (res.ok ? res.text() : Promise.reject()))
+  //     .then((text) => {
+  //       const zhPattern = /###\s*CoPaw如何更新[\s\S]*?(?=\n###|$)/;
+  //       const enPattern = /###\s*How to update CoPaw[\s\S]*?(?=\n###|$)/;
+  //       const match = text.match(faqLang === "zh" ? zhPattern : enPattern);
+  //       setUpdateMarkdown(
+  //         match && lang !== "ru"
+  //           ? match[0].trim()
+  //           : UPDATE_MD[lang] ?? UPDATE_MD.en,
+  //       );
+  //     })
+  //     .catch(() => {
+  //       setUpdateMarkdown(UPDATE_MD[lang] ?? UPDATE_MD.en);
+  //     });
+  // };
 
   const menuItems: MenuProps["items"] = [
     {
@@ -354,12 +354,10 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
             {version && (
               <Badge dot={!!hasUpdate} color="red" offset={[4, 18]}>
                 <span
-                  className={`${styles.versionBadge} ${
-                    hasUpdate
+                  className={`${styles.versionBadge} ${hasUpdate
                       ? styles.versionBadgeClickable
                       : styles.versionBadgeDefault
-                  }`}
-                  onClick={() => hasUpdate && handleOpenUpdateModal()}
+                    }`}
                 >
                   v{version}
                 </span>
@@ -367,18 +365,6 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
             )}
           </div>
         )}
-        <Button
-          type="text"
-          icon={
-            collapsed ? (
-              <PanelLeftOpen size={20} />
-            ) : (
-              <PanelLeftClose size={20} />
-            )
-          }
-          onClick={() => setCollapsed(!collapsed)}
-          className={styles.collapseBtn}
-        />
       </div>
 
       <Menu
@@ -393,6 +379,21 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         }}
         items={menuItems}
       />
+
+      {/* Dot grip to toggle sidebar */}
+      <div
+        className={styles.dotGrip}
+        onClick={() => setCollapsed(!collapsed)}
+        title={collapsed ? "Expand" : "Collapse"}
+      >
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div className={styles.dotRow}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <span key={`r1-${i}`} className={styles.dot} />
+            ))}
+          </div>
+        ))}
+      </div>
 
       <Modal
         open={updateModalOpen}
