@@ -386,7 +386,8 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         selectedKeys={[selectedKey]}
         openKeys={openKeys}
         onOpenChange={(keys) => setOpenKeys(keys as string[])}
-        onClick={({ key }) => {
+        onClick={({ key, domEvent }) => {
+          domEvent.preventDefault();
           const path = KEY_TO_PATH[String(key)];
           if (path) navigate(path);
         }}

@@ -38,7 +38,7 @@ export function ChannelCard({
   return (
     <Card
       hoverable
-      onClick={onClick}
+      onClick={(e) => { e.preventDefault(); onClick(); }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={getCardClassNames()}

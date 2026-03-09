@@ -87,7 +87,7 @@ export const createColumns = (
           <Button
             type="link"
             size="small"
-            onClick={() => handlers.onEdit(record)}
+            onClick={(e) => { e.preventDefault(); handlers.onEdit(record); }}
           >
             {t("common.edit")}
           </Button>
@@ -95,7 +95,7 @@ export const createColumns = (
             type="link"
             size="small"
             danger
-            onClick={() => handlers.onDelete(record.id)}
+            onClick={(e) => { e.preventDefault(); handlers.onDelete(record.id); }}
           >
             {t("common.delete")}
           </Button>

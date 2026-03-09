@@ -149,7 +149,7 @@ export function SkillCard({
         <Button
           type="link"
           size="small"
-          onClick={onToggleEnabled}
+          onClick={(e) => { e.preventDefault(); onToggleEnabled(e); }}
           className={styles.actionButton}
         >
           {skill.enabled ? t("common.disable") : t("common.enable")}
