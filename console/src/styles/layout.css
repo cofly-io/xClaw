@@ -87,6 +87,10 @@ body {
   max-width: 80% !important;
 }
 
+.xClaw-chat-anywhere-chat{
+  background: #f0f0f0 !important;
+}
+
 /* Welcome avatar: full tall SVG. Class is CoPaw-avatar (no "ant"). */
 [class*="chat-anywhere-welcome-default"] [class*="-avatar"],
 [class*="message-list-welcome"] [class*="welcome-default"] [class*="-avatar"] {

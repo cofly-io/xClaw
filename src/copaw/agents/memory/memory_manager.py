@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import reme, log warning if it fails
 try:
-    from reme.reme_light import ReMeLight
+    from reme import ReMe
 
     _REME_AVAILABLE = True
 
@@ -33,11 +33,11 @@ except ImportError as e:
     _REME_AVAILABLE = False
     logger.warning(f"reme package not installed. {e}")
 
-    class ReMeLight:  # type: ignore
+    class ReMe:  # type: ignore
         """Placeholder when reme is not available."""
 
 
-class MemoryManager(ReMeLight):
+class MemoryManager(ReMe):
     """Memory manager that extends ReMeLight for CoPaw agents.
 
     This class provides memory management capabilities including:
@@ -281,10 +281,9 @@ class MemoryManager(ReMeLight):
     def get_in_memory_memory(self, **_kwargs):
         """Retrieve in-memory memory content.
 
-        Args:
-            **kwargs: Additional keyword arguments (passed to parent)
-
         Returns:
-            The in-memory memory content with token counting support
+            The in-memory memory content, or empty list if reme not available
         """
+        if not _REME_AVAILABLE:
+            return []
         return super().get_in_memory_memory(token_counter=self.token_counter)

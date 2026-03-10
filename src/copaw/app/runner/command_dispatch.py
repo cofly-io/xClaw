@@ -9,7 +9,7 @@ import logging
 from typing import AsyncIterator
 
 from agentscope.message import Msg, TextBlock
-from reme.memory.file_based.reme_in_memory_memory import ReMeInMemoryMemory
+from reme.memory.vector_based import BaseMemoryAgent
 
 from .daemon_commands import (
     DaemonContext,
@@ -61,7 +61,7 @@ def _is_command(query: str | None) -> bool:
 class _LightweightSessionAgent:
     """Minimal agent-like object for session load/save (memory only)."""
 
-    def __init__(self, memory: ReMeInMemoryMemory) -> None:
+    def __init__(self, memory: BaseMemoryAgent) -> None:
         self.memory = memory
 
     def state_dict(self) -> dict:
@@ -131,7 +131,7 @@ async def run_command_path(
         return
 
     # Conversation path: lightweight memory + CommandHandler
-    memory = ReMeInMemoryMemory(token_counter=_get_token_counter())
+    memory = BaseMemoryAgent(token_counter=_get_token_counter())
     light = _LightweightSessionAgent(memory=memory)
     if session_id and user_id:
         try:

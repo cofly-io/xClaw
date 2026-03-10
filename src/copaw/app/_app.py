@@ -31,6 +31,7 @@ from .crons.manager import CronManager
 from .runner.manager import ChatManager
 from .routers import router as api_router
 from .routers.voice import voice_router
+from .routers.supos_auth import router as supos_auth_router
 from ..envs import load_envs_into_environ
 
 # Apply log level on load so reload child process gets same level as CLI.
@@ -499,6 +500,8 @@ def get_version():
 
 app.include_router(api_router, prefix="/api")
 
+app.include_router(supos_auth_router, prefix="/api")
+
 app.include_router(
     agent_app.router,
     prefix="/api/agent",
@@ -519,7 +522,6 @@ if os.path.isdir(_CONSOLE_STATIC_DIR):
         f = _console_path / "logo.png"
         if f.is_file():
             return FileResponse(f, media_type="image/png")
-
         raise HTTPException(status_code=404, detail="Not Found")
 
     @app.get("/x-symbol.svg")
@@ -527,7 +529,20 @@ if os.path.isdir(_CONSOLE_STATIC_DIR):
         f = _console_path / "x-symbol.svg"
         if f.is_file():
             return FileResponse(f, media_type="image/svg+xml")
+        raise HTTPException(status_code=404, detail="Not Found")
 
+    @app.get("/default_login_logo.png")
+    def _console_login_logo():
+        f = _console_path / "default_login_logo.png"
+        if f.is_file():
+            return FileResponse(f, media_type="image/png")
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    @app.get("/dolphin.png")
+    def _console_dolphin():
+        f = _console_path / "dolphin.png"
+        if f.is_file():
+            return FileResponse(f, media_type="image/png")
         raise HTTPException(status_code=404, detail="Not Found")
 
     _assets_dir = _console_path / "assets"

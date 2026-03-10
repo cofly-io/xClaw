@@ -243,32 +243,32 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     allVersions.includes(version) &&
     version !== latestVersion;
 
-  // const handleOpenUpdateModal = () => {
-  //   setUpdateMarkdown("");
-  //   setUpdateModalOpen(true);
-  //   const lang = i18n.language?.startsWith("zh")
-  //     ? "zh"
-  //     : i18n.language?.startsWith("ru")
-  //     ? "ru"
-  //     : "en";
-  //   const faqLang = lang === "zh" ? "zh" : "en";
-  //   const url = `https://copaw.agentscope.io/docs/faq.${faqLang}.md`;
-  //   fetch(url, { cache: "no-cache" })
-  //     .then((res) => (res.ok ? res.text() : Promise.reject()))
-  //     .then((text) => {
-  //       const zhPattern = /###\s*CoPaw如何更新[\s\S]*?(?=\n###|$)/;
-  //       const enPattern = /###\s*How to update CoPaw[\s\S]*?(?=\n###|$)/;
-  //       const match = text.match(faqLang === "zh" ? zhPattern : enPattern);
-  //       setUpdateMarkdown(
-  //         match && lang !== "ru"
-  //           ? match[0].trim()
-  //           : UPDATE_MD[lang] ?? UPDATE_MD.en,
-  //       );
-  //     })
-  //     .catch(() => {
-  //       setUpdateMarkdown(UPDATE_MD[lang] ?? UPDATE_MD.en);
-  //     });
-  // };
+  const handleOpenUpdateModal = () => {
+    setUpdateMarkdown("");
+    setUpdateModalOpen(true);
+    const lang = i18n.language?.startsWith("zh")
+      ? "zh"
+      : i18n.language?.startsWith("ru")
+      ? "ru"
+      : "en";
+    const faqLang = lang === "zh" ? "zh" : "en";
+    const url = `https://copaw.agentscope.io/docs/faq.${faqLang}.md`;
+    fetch(url, { cache: "no-cache" })
+      .then((res) => (res.ok ? res.text() : Promise.reject()))
+      .then((text) => {
+        const zhPattern = /###\s*CoPaw如何更新[\s\S]*?(?=\n###|$)/;
+        const enPattern = /###\s*How to update CoPaw[\s\S]*?(?=\n###|$)/;
+        const match = text.match(faqLang === "zh" ? zhPattern : enPattern);
+        setUpdateMarkdown(
+          match && lang !== "ru"
+            ? match[0].trim()
+            : UPDATE_MD[lang] ?? UPDATE_MD.en,
+        );
+      })
+      .catch(() => {
+        setUpdateMarkdown(UPDATE_MD[lang] ?? UPDATE_MD.en);
+      });
+  };
 
   const menuItems: MenuProps["items"] = [
     {
@@ -358,6 +358,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
                       ? styles.versionBadgeClickable
                       : styles.versionBadgeDefault
                     }`}
+                  onClick={() => hasUpdate && handleOpenUpdateModal()}
                 >
                   v{version}
                 </span>
