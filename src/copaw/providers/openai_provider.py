@@ -49,15 +49,46 @@ class OpenAIProvider(Provider):
         return deduped
 
     async def check_connection(self, timeout: float = 5) -> tuple[bool, str]:
-        """Check if OpenAI provider is reachable with current configuration."""
+        """Check if OpenAI provider is reachable with current configuration.
+
+        First tries GET /models (standard OpenAI). If that returns an APIError
+        (some providers like MiniMax don't support it), falls back to sending a
+        minimal chat completion to verify the key and endpoint are valid.
+        """
         if self.base_url == CODING_DASHSCOPE_BASE_URL:
             return True, ""
-        client = self._client()
+        client = self._client(timeout=timeout)
         try:
             await client.models.list(timeout=timeout)
             return True, ""
         except APIError:
-            return False, f"API error when connecting to `{self.base_url}`"
+            # Fallback: some providers don't expose GET /models but do support
+            # chat completions — try a minimal request to confirm connectivity.
+            # Use the first configured model id, or a placeholder.
+            all_models = list(getattr(self, "models", [])) + list(
+                getattr(self, "extra_models", [])
+            )
+            model_id = all_models[0].id if all_models else "__test__"
+            try:
+                stream = await client.chat.completions.create(
+                    model=model_id,
+                    messages=[{"role": "user", "content": "hi"}],
+                    max_tokens=1,
+                    stream=True,
+                    timeout=timeout,
+                )
+                async for _ in stream:
+                    break
+                return True, ""
+            except APIError as e:
+                # 401/403 = bad key — real auth errors
+                # 404/400 = model not found / bad request but endpoint reachable
+                status = getattr(e, "status_code", None)
+                if status in (401, 403):
+                    return False, f"API error when connecting to `{self.base_url}`"
+                return True, ""
+            except Exception:
+                return False, f"API error when connecting to `{self.base_url}`"
         except Exception:
             return (
                 False,

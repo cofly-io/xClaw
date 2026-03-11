@@ -213,6 +213,8 @@ async def test_provider(
             tmp_provider.api_key = body.api_key
         if body and body.base_url:
             tmp_provider.base_url = body.base_url
+        if body and body.chat_model:
+            tmp_provider.chat_model = body.chat_model
         ok, msg = await tmp_provider.check_connection()
         return TestConnectionResponse(
             success=ok,

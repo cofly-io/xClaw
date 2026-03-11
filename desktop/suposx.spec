@@ -5,15 +5,23 @@
   python -m PyInstaller desktop/suposx.spec --clean --noconfirm
 """
 import os
+import subprocess
+import sys
 
 block_cipher = None
 ROOT = os.path.dirname(os.path.abspath(SPECPATH))
 
-import copaw
-copaw_pkg = os.path.dirname(copaw.__file__)
+# 用 subprocess 获取包路径，避免 import 触发副作用（pygame/litellm 等）
+def _get_pkg_dir(pkg_name):
+    result = subprocess.run(
+        [sys.executable, "-c",
+         f"import {pkg_name}, os; print(os.path.dirname({pkg_name}.__file__))"],
+        capture_output=True, text=True
+    )
+    return result.stdout.strip()
 
-import reme
-reme_pkg = os.path.dirname(reme.__file__)
+copaw_pkg = _get_pkg_dir("copaw")
+reme_pkg = _get_pkg_dir("reme")
 
 # ─── 收集数据文件 ───
 datas = []
@@ -36,17 +44,29 @@ if os.path.isdir(reme_config_dir):
 
 # 包 metadata（fastmcp 等需要 importlib.metadata 查版本）
 from PyInstaller.utils.hooks import copy_metadata
-for pkg_name in ["fastmcp", "agentscope", "agentscope_runtime", "reme-ai", "copaw"]:
+for pkg_name in ["fastmcp", "agentscope", "agentscope_runtime", "copaw"]:
     try:
         datas += copy_metadata(pkg_name)
     except Exception:
         pass
 
+# ─── Python 运行时 DLL（放到 EXE 同级目录，避免找不到模块）───
+import sys as _sys
+_py_dir = os.path.dirname(_sys.executable)
+_binaries = []
+for _dll in [
+    f"python{_sys.version_info.major}{_sys.version_info.minor}.dll",
+    f"python{_sys.version_info.major}.dll",
+]:
+    _dll_path = os.path.join(_py_dir, _dll)
+    if os.path.exists(_dll_path):
+        _binaries.append((_dll_path, "."))  # 放到 EXE 同级，不是 _internal
+
 # ─── Analysis ───
 a = Analysis(
     [os.path.join(ROOT, "desktop", "main.py")],
     pathex=[],
-    binaries=[],
+    binaries=_binaries,
     datas=datas,
     hiddenimports=[
         # uvicorn
@@ -99,3 +119,17 @@ coll = COLLECT(
     strip=False, upx=True, upx_exclude=[],
     name="supOS X",
 )
+
+# ─── Post-build：把 Python DLL 复制到 EXE 同级 ───────────────────────────────
+import shutil as _shutil
+_dist_dir = os.path.join(ROOT, "dist", "supOS X")
+_internal_dir = os.path.join(_dist_dir, "_internal")
+for _dll in [
+    f"python{_sys.version_info.major}{_sys.version_info.minor}.dll",
+    f"python{_sys.version_info.major}.dll",
+]:
+    _src = os.path.join(_internal_dir, _dll)
+    _dst = os.path.join(_dist_dir, _dll)
+    if os.path.exists(_src) and not os.path.exists(_dst):
+        _shutil.copy2(_src, _dst)
+        print(f"[post-build] Copied {_dll} to EXE directory")

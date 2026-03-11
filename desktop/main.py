@@ -14,95 +14,115 @@ import time
 # PyInstaller 兼容：确保打包后能找到资源
 # ---------------------------------------------------------------------------
 if getattr(sys, "frozen", False):
-    # 打包后的路径
     BASE_DIR = sys._MEIPASS
     os.environ.setdefault("COPAW_STATIC_DIR", os.path.join(BASE_DIR, "copaw", "console"))
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# ---------------------------------------------------------------------------
+# 加载页 HTML — 后端就绪前显示，避免黑屏
+# ---------------------------------------------------------------------------
+LOADING_HTML = """<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0d1117;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    color: #c9d1d9;
+  }
+  .logo { font-size: 32px; font-weight: 700; color: #1864ff; letter-spacing: 2px; margin-bottom: 8px; }
+  .sub  { font-size: 13px; color: #8b949e; margin-bottom: 40px; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #21262d;
+    border-top-color: #1864ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .tip { margin-top: 20px; font-size: 12px; color: #484f58; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="logo">supOS X</div>
+  <div class="sub">个人助手</div>
+  <div class="spinner"></div>
+  <div class="tip">正在启动服务，请稍候…</div>
+</body>
+</html>"""
+
 
 def find_free_port() -> int:
-    """找一个可用端口"""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
 
 
 def wait_for_backend(port: int, timeout: int = 60) -> bool:
-    """等待后端启动就绪"""
     start = time.time()
     while time.time() - start < timeout:
         try:
             with socket.create_connection(("127.0.0.1", port), timeout=1):
                 return True
         except OSError:
-            time.sleep(0.5)
+            time.sleep(0.1)  # 缩短轮询间隔，后端一好立刻跳转
     return False
 
 
 def start_backend(port: int) -> None:
-    """在子线程中启动 CoPaw FastAPI 后端"""
     import uvicorn
-    from copaw.app._app import app  # noqa: E402
+    from copaw.app._app import app
 
     uvicorn.run(
         app,
         host="127.0.0.1",
         port=port,
-        log_level="info",
-        # 关闭 uvicorn 的信号处理，由主线程管理
+        log_level="warning",   # 减少日志输出，略微提速
         timeout_keep_alive=30,
     )
 
 
 def main() -> None:
-    """主入口"""
-    import webview
-
     port = find_free_port()
 
-    # 后台线程启动后端
-    backend_thread = threading.Thread(
-        target=start_backend,
-        args=(port,),
-        daemon=True,
-    )
+    # ── 1. 后端线程尽早启动，与 webview 初始化并行 ──
+    backend_thread = threading.Thread(target=start_backend, args=(port,), daemon=True)
     backend_thread.start()
 
-    # 创建加载窗口
+    # ── 2. 导入 webview（耗时，与后端并行）──
+    import webview
+
+    # ── 3. 立即显示加载页，用户不会看到黑屏 ──
     window = webview.create_window(
         title="supOS X 个人助手",
-        url=f"http://127.0.0.1:{port}",
+        html=LOADING_HTML,          # 先显示本地加载页
         width=1280,
         height=800,
         min_size=(900, 600),
         text_select=True,
     )
 
-    def on_loaded():
-        """窗口加载完成后的回调"""
-        pass
+    def on_backend_ready():
+        """后端就绪后在后台线程跳转到真实 URL"""
+        if wait_for_backend(port, timeout=60):
+            window.load_url(f"http://127.0.0.1:{port}")
+        else:
+            window.load_html(
+                "<h2 style='text-align:center;margin-top:40vh;font-family:sans-serif;color:#c00'>"
+                "后端启动失败，请检查日志</h2>"
+            )
 
-    def on_closing():
-        """窗口关闭时清理"""
-        return True
+    # ── 4. 用独立线程等待后端，不阻塞 GUI ──
+    threading.Thread(target=on_backend_ready, daemon=True).start()
 
-    window.events.loaded += on_loaded
-    window.events.closing += on_closing
-
-    # 等待后端就绪
-    if not wait_for_backend(port, timeout=60):
-        webview.create_window(
-            title="启动失败",
-            html="<h2 style='text-align:center;margin-top:40vh;font-family:sans-serif;'>"
-                 "后端启动失败，请检查日志</h2>",
-            width=400,
-            height=300,
-        )
-        webview.start()
-        return
-
-    # 启动 GUI 事件循环
     webview.start(debug=False)
 
 

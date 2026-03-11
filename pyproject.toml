@@ -51,6 +51,7 @@ build-backend = "setuptools.build_meta"
 
 [project.scripts]
 copaw = "copaw.cli.main:cli"
+xclaw = "copaw.cli.main:cli"
 
 [project.optional-dependencies]
 dev = [

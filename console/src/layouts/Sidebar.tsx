@@ -1,6 +1,3 @@
-/**********
-updated by Gangan
-***********/
 import {
   Layout,
   Menu,
@@ -33,8 +30,6 @@ import {
   Settings,
   Plug,
   Wrench,
-  PanelLeftClose,
-  PanelLeftOpen,
   Copy,
   Check,
 } from "lucide-react";
@@ -180,8 +175,9 @@ function CopyButton({ text }: { text: string }) {
         size="small"
         icon={copied ? <Check size={13} /> : <Copy size={13} />}
         onClick={handleCopy}
-        className={`${styles.copyBtn} ${copied ? styles.copyBtnCopied : styles.copyBtnDefault
-          }`}
+        className={`${styles.copyBtn} ${
+          copied ? styles.copyBtnCopied : styles.copyBtnDefault
+        }`}
       />
     </Tooltip>
   );
@@ -208,7 +204,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     api
       .getVersion()
       .then((res) => setVersion(res?.version ?? ""))
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -238,7 +234,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         setAllVersions(versions);
         setLatestVersion(latest);
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const hasUpdate =
@@ -346,6 +342,20 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   ];
 
   return (
+    <>
+      {/* Dot grip — fixed on sidebar right edge */}
+      <div
+        className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ""}`}
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        {[0, 1, 2, 3, 4, 5].map((col) => (
+          <div key={col} className={styles.dotRow}>
+            {[0, 1].map((row) => (
+              <div key={row} className={styles.dot} />
+            ))}
+          </div>
+        ))}
+      </div>
     <Sider
       collapsed={collapsed}
       onCollapse={setCollapsed}
@@ -355,14 +365,15 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       <div className={styles.siderTop}>
         {!collapsed && (
           <div className={styles.logoWrapper}>
-            <img src="/logo.png" alt="xClaw" className={styles.logoImg} />
+            <img src="/logo.png" alt="CoPaw" className={styles.logoImg} />
             {version && (
               <Badge dot={!!hasUpdate} color="red" offset={[4, 18]}>
                 <span
-                  className={`${styles.versionBadge} ${hasUpdate
+                  className={`${styles.versionBadge} ${
+                    hasUpdate
                       ? styles.versionBadgeClickable
                       : styles.versionBadgeDefault
-                    }`}
+                  }`}
                   onClick={() => hasUpdate && handleOpenUpdateModal()}
                 >
                   v{version}
@@ -371,35 +382,19 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
             )}
           </div>
         )}
-      </div>
 
+      </div>
       <Menu
         mode="inline"
         selectedKeys={[selectedKey]}
         openKeys={openKeys}
         onOpenChange={(keys) => setOpenKeys(keys as string[])}
-        onClick={({ key, domEvent }) => {
-          domEvent.preventDefault();
+        onClick={({ key }) => {
           const path = KEY_TO_PATH[String(key)];
           if (path) navigate(path);
         }}
         items={menuItems}
       />
-
-      {/* Dot grip to toggle sidebar: 2 columns × 6 rows */}
-      <div
-        className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ''}`}
-        onClick={() => setCollapsed(!collapsed)}
-        title={collapsed ? "Expand" : "Collapse"}
-      >
-        {Array.from({ length: 6 }).map((_, row) => (
-          <div key={`row-${row}`} className={styles.dotRow}>
-            {Array.from({ length: 2 }).map((_, col) => (
-              <span key={`dot-${row}-${col}`} className={styles.dot} />
-            ))}
-          </div>
-        ))}
-      </div>
 
       <Modal
         open={updateModalOpen}
@@ -466,5 +461,6 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         </div>
       </Modal>
     </Sider>
+    </>
   );
 }

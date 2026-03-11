@@ -239,8 +239,8 @@
 // ─── Dot Grip (sidebar toggle) ────────────────────────────────────────────────
 .dotGrip {
   position: fixed;
-  left: 266px;
-  top: 45%;
+  left: 0;
+  top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
@@ -248,8 +248,8 @@
   padding: 8px 4px;
   cursor: pointer;
   z-index: 200;
-  border-radius: 4px;
-  transition: background 0.2s, left 0.2s;
+  border-radius: 0 4px 4px 0;
+  transition: background 0.2s;
 
   &:hover {
     background: rgba(24, 100, 255, 0.08);
@@ -261,7 +261,7 @@
 }
 
 .dotGripCollapsed {
-  left: 72px;
+  left: 0;
 }
 
 .dotRow {
