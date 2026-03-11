@@ -9,7 +9,7 @@ import logging
 from typing import AsyncIterator
 
 from agentscope.message import Msg, TextBlock
-from reme.memory.vector_based import BaseMemoryAgent
+from reme.memory.file_based.reme_in_memory_memory import ReMeInMemoryMemory
 
 from .daemon_commands import (
     DaemonContext,
@@ -57,19 +57,6 @@ def _is_command(query: str | None) -> bool:
         return True
     return _is_conversation_command(query)
 
-
-class _LightweightSessionAgent:
-    """Minimal agent-like object for session load/save (memory only)."""
-
-    def __init__(self, memory: BaseMemoryAgent) -> None:
-        self.memory = memory
-
-    def state_dict(self) -> dict:
-        return {"memory": self.memory.state_dict()}
-
-    def load_state_dict(self, state_dict: dict, strict: bool = True) -> None:
-        mem = state_dict.get("memory", state_dict)
-        self.memory.load_state_dict(mem, strict=strict)
 
 
 async def run_command_path(
@@ -131,21 +118,17 @@ async def run_command_path(
         return
 
     # Conversation path: lightweight memory + CommandHandler
-    memory = BaseMemoryAgent(token_counter=_get_token_counter())
-    light = _LightweightSessionAgent(memory=memory)
-    if session_id and user_id:
-        try:
-            await runner.session.load_session_state(
-                session_id=session_id,
-                user_id=user_id,
-                agent=light,
-            )
-        except ValueError:
-            pass  # No session file yet
+    memory = ReMeInMemoryMemory(token_counter=_get_token_counter())
+    session_state = await runner.session.get_session_state_dict(
+        session_id=session_id,
+        user_id=user_id,
+    )
+    memory_state = session_state.get("agent", {}).get("memory")
+    memory.load_state_dict(memory_state)
 
     conv_handler = CommandHandler(
         agent_name="Friday",
-        memory=light.memory,
+        memory=memory,
         memory_manager=runner.memory_manager,
         enable_memory_manager=runner.memory_manager is not None,
     )
@@ -159,9 +142,20 @@ async def run_command_path(
         )
     yield response_msg, True
 
+    # Update memory key with session_id & user_id to session,
+    # but only if identifiers are present
     if session_id and user_id:
-        await runner.session.save_session_state(
+        await runner.session.update_session_state(
             session_id=session_id,
+            key="agent.memory",
+            value=memory.state_dict(),
             user_id=user_id,
-            agent=light,
+        )
+    else:
+        logger.warning(
+            "Skipping session_state update for conversation"
+            " memory due to missing session_id or user_id (session_id=%r, "
+            "user_id=%r)",
+            session_id,
+            user_id,
         )
