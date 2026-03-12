@@ -21,7 +21,7 @@ class OpenAIProvider(Provider):
 
     def _client(self, timeout: float = 5) -> AsyncOpenAI:
         return AsyncOpenAI(
-            base_url=self.base_url,
+            base_url=self._normalize_base_url(self.base_url),
             api_key=self.api_key,
             timeout=timeout,
         )
@@ -107,6 +107,20 @@ class OpenAIProvider(Provider):
                 f"Unknown exception when connecting to model '{model_id}'",
             )
 
+    @staticmethod
+    def _normalize_base_url(url: str) -> str:
+        """Ensure the base URL ends with /v1 as required by the OpenAI SDK.
+
+        The OpenAI SDK appends paths like /chat/completions directly to the
+        base_url, so it must already include the /v1 prefix.  If the user
+        configured a bare root URL (e.g. https://api.example.com) we add /v1
+        automatically so they don't have to remember.
+        """
+        url = url.rstrip("/")
+        if not url.endswith("/v1"):
+            url = f"{url}/v1"
+        return url
+
     def get_chat_model_instance(self, model_id: str) -> ChatModelBase:
         from .openai_chat_model_compat import OpenAIChatModelCompat
 
@@ -115,7 +129,16 @@ class OpenAIProvider(Provider):
             CODING_DASHSCOPE_BASE_URL,
         ]
 
-        client_kwargs = {"base_url": self.base_url}
+        # Normalize base_url: OpenAI SDK requires the /v1 suffix.
+        # Skip normalization for DashScope URLs which already include the
+        # full path.
+        effective_base_url = (
+            self.base_url
+            if self.base_url in dashscope_base_urls
+            else self._normalize_base_url(self.base_url)
+        )
+
+        client_kwargs = {"base_url": effective_base_url}
 
         if self.base_url in dashscope_base_urls:
             client_kwargs["default_headers"] = {

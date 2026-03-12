@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xClaw - Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f5ff; display: flex; height: 100vh; overflow: hidden; color: #1a1a2e; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px; min-width: 220px;
+    background: #fff;
+    border-right: 1px solid #e8eeff;
+    display: flex; flex-direction: column;
+    box-shadow: 2px 0 12px rgba(24,100,255,0.06);
+    z-index: 10;
+  }
+  .sidebar-logo {
+    padding: 18px 20px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid #eef2ff;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #1864ff, #4f8aff);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; font-size: 14px; letter-spacing: -1px;
+  }
+  .logo-text { font-size: 15px; font-weight: 700; color: #1864ff; letter-spacing: 0.5px; }
+  .logo-version { font-size: 10px; color: #aab4d4; margin-left: 2px; }
+
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 0; }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: #dde5ff; border-radius: 4px; }
+
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-header {
+    padding: 6px 16px 4px;
+    font-size: 10px; font-weight: 600; letter-spacing: 1px;
+    color: #aab4d4; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nav-group-header::after {
+    content: ''; flex: 1; height: 1px; background: #eef2ff;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; margin: 1px 8px;
+    border-radius: 8px; cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+  .nav-item:hover { background: #f0f5ff; }
+  .nav-item:hover .nav-tooltip { opacity: 1; pointer-events: auto; transform: translateX(0); }
+  .nav-item.active { background: linear-gradient(135deg, #1864ff15, #4f8aff10); }
+  .nav-item.active .nav-label { color: #1864ff; font-weight: 600; }
+  .nav-item.active .nav-icon { color: #1864ff; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 20px; background: #1864ff; border-radius: 0 3px 3px 0;
+  }
+
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; color: #7a8ab8; flex-shrink: 0; }
+  .nav-label { font-size: 13px; color: #3a4a7a; flex: 1; }
+  .nav-badge {
+    font-size: 10px; background: #1864ff; color: #fff;
+    padding: 1px 6px; border-radius: 10px; font-weight: 600;
+  }
+
+  /* Tooltip on hover */
+  .nav-tooltip {
+    position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%) translateX(-6px);
+    background: #1a2a5e; color: #fff; font-size: 11px;
+    padding: 6px 10px; border-radius: 6px; white-space: nowrap;
+    opacity: 0; pointer-events: none;
+    transition: all 0.2s ease; z-index: 100;
+    box-shadow: 0 4px 12px rgba(24,100,255,0.25);
+  }
+  .nav-tooltip::before {
+    content: ''; position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
+    border: 5px solid transparent; border-right-color: #1a2a5e;
+  }
+  .nav-tooltip .tip-title { font-weight: 600; margin-bottom: 2px; }
+  .nav-tooltip .tip-desc { color: #aab4d4; font-size: 10px; }
+
+  /* ── Middle Panel (Chat List) ── */
+  .chat-panel {
+    width: 240px; min-width: 240px;
+    background: #fff;
+    border-right: 1px solid #e8eeff;
+    display: flex; flex-direction: column;
+  }
+  .chat-panel-header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid #eef2ff;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .chat-panel-title { font-size: 13px; font-weight: 600; color: #3a4a7a; }
+  .icon-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    background: #f0f5ff; color: #1864ff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: background 0.15s;
+  }
+  .icon-btn:hover { background: #dde8ff; }
+
+  .new-chat-btn {
+    margin: 12px; padding: 9px 0;
+    background: linear-gradient(135deg, #1864ff, #4f8aff);
+    color: #fff; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.2s; box-shadow: 0 2px 8px rgba(24,100,255,0.3);
+  }
+  .new-chat-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(24,100,255,0.4); }
+
+  .chat-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+  .chat-list::-webkit-scrollbar { width: 4px; }
+  .chat-list::-webkit-scrollbar-thumb { background: #dde5ff; border-radius: 4px; }
+
+  .chat-item {
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    margin-bottom: 2px; transition: background 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chat-item:hover { background: #f0f5ff; }
+  .chat-item.active { background: #eef3ff; }
+  .chat-item-dot { width: 6px; height: 6px; border-radius: 50%; background: #c8d4ff; flex-shrink: 0; }
+  .chat-item.active .chat-item-dot { background: #1864ff; }
+  .chat-item-text { font-size: 12px; color: #5a6a9a; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-item.active .chat-item-text { color: #1864ff; font-weight: 500; }
+  .chat-item-more { opacity: 0; font-size: 14px; color: #aab4d4; }
+  .chat-item:hover .chat-item-more { opacity: 1; }
+
+  /* ── Main Content ── */
+  .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  /* Header */
+  .header {
+    height: 52px; background: #fff;
+    border-bottom: 1px solid #e8eeff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: 0 1px 8px rgba(24,100,255,0.05);
+  }
+  .header-title { font-size: 15px; font-weight: 600; color: #1a2a5e; }
+  .header-actions { display: flex; align-items: center; gap: 4px; }
+  .header-btn {
+    padding: 5px 10px; border: none; background: transparent;
+    color: #7a8ab8; font-size: 12px; cursor: pointer; border-radius: 6px;
+    display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .header-btn:hover { background: #f0f5ff; color: #1864ff; }
+  .header-divider { width: 1px; height: 16px; background: #e8eeff; margin: 0 4px; }
+
+  /* Chat area */
+  .chat-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+
+  .welcome-icon {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #1864ff18, #4f8aff10);
+    border-radius: 16px; border: 1px solid #dde8ff;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .welcome-icon svg { width: 36px; height: 36px; }
+  .welcome-title { font-size: 20px; font-weight: 700; color: #1a2a5e; margin-bottom: 8px; }
+  .welcome-sub { font-size: 13px; color: #8a9ac8; margin-bottom: 28px; }
+
+  .suggestion-cards { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 480px; }
+  .suggestion-card {
+    padding: 12px 16px; background: #fff;
+    border: 1px solid #e0e8ff; border-radius: 10px;
+    cursor: pointer; display: flex; align-items: center; gap: 12px;
+    transition: all 0.2s; box-shadow: 0 1px 4px rgba(24,100,255,0.06);
+  }
+  .suggestion-card:hover {
+    border-color: #1864ff; background: #f5f8ff;
+    box-shadow: 0 4px 16px rgba(24,100,255,0.12);
+    transform: translateY(-1px);
+  }
+  .suggestion-card-icon { font-size: 18px; flex-shrink: 0; }
+  .suggestion-card-text { font-size: 13px; color: #3a4a7a; flex: 1; }
+  .suggestion-card-arrow { color: #c8d4ff; font-size: 14px; transition: color 0.15s; }
+  .suggestion-card:hover .suggestion-card-arrow { color: #1864ff; }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 20px 20px;
+    background: #fff;
+    border-top: 1px solid #e8eeff;
+  }
+  .input-box {
+    background: #f5f8ff; border: 1.5px solid #dde8ff;
+    border-radius: 12px; padding: 12px 16px;
+    display: flex; align-items: flex-end; gap: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-box:focus-within {
+    border-color: #1864ff;
+    box-shadow: 0 0 0 3px rgba(24,100,255,0.08);
+    background: #fff;
+  }
+  .input-box textarea {
+    flex: 1; border: none; background: transparent; resize: none;
+    font-size: 13px; color: #1a2a5e; outline: none; min-height: 20px; max-height: 120px;
+    font-family: inherit; line-height: 1.5;
+  }
+  .input-box textarea::placeholder { color: #aab4d4; }
+  .input-actions { display: flex; align-items: center; gap: 6px; }
+  .input-tool-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    background: transparent; color: #aab4d4; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.15s;
+  }
+  .input-tool-btn:hover { background: #eef2ff; color: #1864ff; }
+  .send-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    background: linear-gradient(135deg, #1864ff, #4f8aff);
+    color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(24,100,255,0.3);
+  }
+  .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(24,100,255,0.4); }
+  .input-hint { font-size: 11px; color: #c8d4ff; text-align: center; margin-top: 8px; }
+
+  /* Model selector */
+  .model-selector {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: #f0f5ff;
+    border: 1px solid #dde8ff; border-radius: 20px;
+    font-size: 12px; color: #5a6aaa; cursor: pointer;
+    transition: all 0.15s; margin-bottom: 12px;
+  }
+  .model-selector:hover { border-color: #1864ff; color: #1864ff; background: #eef3ff; }
+  .model-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">X</div>
+    <div>
+      <div class="logo-text">xClaw</div>
+    </div>
+    <span class="logo-version">v1.0</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <!-- 导航 -->
+    <div class="nav-group">
+      <div class="nav-group-header">导航</div>
+      <div class="nav-item active">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">对话</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">对话</div>
+          <div class="tip-desc">与 AI 助手进行多轮对话</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 控制 -->
+    <div class="nav-group">
+      <div class="nav-group-header">控制</div>
+      <div class="nav-item">
+        <span class="nav-icon">📡</span>
+        <span class="nav-label">频道</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">频道</div>
+          <div class="tip-desc">管理消息频道与推送配置</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🗂️</span>
+        <span class="nav-label">会话</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">会话管理</div>
+          <div class="tip-desc">查看和管理所有历史会话</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">⏰</span>
+        <span class="nav-label">定时任务</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">定时任务</div>
+          <div class="tip-desc">配置 Cron 定时执行任务</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">💓</span>
+        <span class="nav-label">心跳</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">心跳监控</div>
+          <div class="tip-desc">监控服务连接状态与健康度</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 智能体 -->
+    <div class="nav-group">
+      <div class="nav-group-header">智能体</div>
+      <div class="nav-item">
+        <span class="nav-icon">🏗️</span>
+        <span class="nav-label">工作区</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">工作区</div>
+          <div class="tip-desc">管理智能体工作空间与文件</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-label">技能</span>
+        <span class="nav-badge">3</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">技能库</div>
+          <div class="tip-desc">为智能体添加自定义技能脚本</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🛠️</span>
+        <span class="nav-label">工具</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">工具集</div>
+          <div class="tip-desc">内置工具函数管理与配置</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🔌</span>
+        <span class="nav-label">MCP</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">MCP 协议</div>
+          <div class="tip-desc">Model Context Protocol 插件管理</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">运行配置</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">运行配置</div>
+          <div class="tip-desc">智能体运行参数与行为配置</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置 -->
+    <div class="nav-group">
+      <div class="nav-group-header">设置</div>
+      <div class="nav-item">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">模型</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">模型管理</div>
+          <div class="tip-desc">配置 LLM 模型提供商与参数</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🌿</span>
+        <span class="nav-label">环境变量</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">环境变量</div>
+          <div class="tip-desc">管理系统环境变量与密钥</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🔒</span>
+        <span class="nav-label">安全</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">安全设置</div>
+          <div class="tip-desc">访问控制、密码与权限管理</div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Token 消耗</span>
+        <div class="nav-tooltip">
+          <div class="tip-title">Token 用量</div>
+          <div class="tip-desc">查看各模型 Token 消耗统计</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<!-- Chat List Panel -->
+<div class="chat-panel">
+  <div class="chat-panel-header">
+    <span class="chat-panel-title">xClaw Together</span>
+    <button class="icon-btn" title="新建对话">✏️</button>
+  </div>
+  <button class="new-chat-btn">
+    <span>＋</span> New Chat
+  </button>
+  <div class="chat-list">
+    <div class="chat-item active">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">New Chat</span>
+      <span class="chat-item-more">···</span>
+    </div>
+    <div class="chat-item">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">查询 UNS 树结构</span>
+      <span class="chat-item-more">···</span>
+    </div>
+    <div class="chat-item">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">我想看看 uns</span>
+      <span class="chat-item-more">···</span>
+    </div>
+    <div class="chat-item">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">我想看看 uns</span>
+      <span class="chat-item-more">···</span>
+    </div>
+    <div class="chat-item">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">帮我打开我的 chro...</span>
+      <span class="chat-item-more">···</span>
+    </div>
+    <div class="chat-item">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">查看列 Token 的数据</span>
+      <span class="chat-item-more">···</span>
+    </div>
+    <div class="chat-item">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">查看 UNS 项目表</span>
+      <span class="chat-item-more">···</span>
+    </div>
+    <div class="chat-item">
+      <div class="chat-item-dot"></div>
+      <span class="chat-item-text">帮我分析传感器数据</span>
+      <span class="chat-item-more">···</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Header -->
+  <div class="header">
+    <span class="header-title">对话</span>
+    <div class="header-actions">
+      <button class="header-btn">📋 变更日志</button>
+      <div class="header-divider"></div>
+      <button class="header-btn">📖 文档</button>
+      <div class="header-divider"></div>
+      <button class="header-btn">❓ 常见问题</button>
+      <div class="header-divider"></div>
+      <button class="header-btn">⭐ GitHub</button>
+      <div class="header-divider"></div>
+      <button class="header-btn" title="锁屏">🔒</button>
+      <button class="header-btn" style="color:#ff4d4f" title="退出">⏻</button>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-area">
+    <div class="welcome-icon">
+      <svg viewBox="0 0 36 36" fill="none">
+        <path d="M6 18L18 6L30 18" stroke="#1864ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 26L18 14L30 26" stroke="#4f8aff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="welcome-title">你好，我今天能帮你做什么？</div>
+    <div class="welcome-sub">我是一个智能助手，可以帮助你解答各类问题。</div>
+
+    <div class="model-selector">
+      <div class="model-dot"></div>
+      MiniMax M2.5 ▾
+    </div>
+
+    <div class="suggestion-cards">
+      <div class="suggestion-card">
+        <span class="suggestion-card-icon">💡</span>
+        <span class="suggestion-card-text">让我们开启一段新的探索吧！</span>
+        <span class="suggestion-card-arrow">→</span>
+      </div>
+      <div class="suggestion-card">
+        <span class="suggestion-card-icon">🔧</span>
+        <span class="suggestion-card-text">告诉我你有哪些技能吗？</span>
+        <span class="suggestion-card-arrow">→</span>
+      </div>
+      <div class="suggestion-card">
+        <span class="suggestion-card-icon">🌳</span>
+        <span class="suggestion-card-text">查询 supOS UNS 节点树结构</span>
+        <span class="suggestion-card-arrow">→</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-box">
+      <textarea rows="1" placeholder="输入问题，按 Enter 发送..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <div class="input-actions">
+        <button class="input-tool-btn" title="上传文件">📎</button>
+        <button class="input-tool-btn" title="展开">⤢</button>
+        <button class="send-btn" title="发送">↑</button>
+      </div>
+    </div>
+    <div class="input-hint">按 Enter 发送，Shift+Enter 换行 &nbsp;·&nbsp; 0 / 10000</div>
+  </div>
+</div>
+
+<script>
+  // Nav item click
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+  // Chat item click
+  document.querySelectorAll('.chat-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+  // Enter to send
+  document.querySelector('textarea').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); }
+  });
+</script>
+</body>
+</html>
