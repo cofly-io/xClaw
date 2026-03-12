@@ -239,7 +239,7 @@
 // ─── Dot Grip (sidebar toggle) ────────────────────────────────────────────────
 .dotGrip {
   position: fixed;
-  left: 0;
+  left: 267px; // 侧边栏宽 275px，grip 宽约 8px，贴在右边框
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -249,7 +249,7 @@
   cursor: pointer;
   z-index: 200;
   border-radius: 0 4px 4px 0;
-  transition: background 0.2s;
+  transition: background 0.2s, left 0.2s;
 
   &:hover {
     background: rgba(24, 100, 255, 0.08);
@@ -261,7 +261,7 @@
 }
 
 .dotGripCollapsed {
-  left: 0;
+  left: 72px; // 收起时侧边栏约 80px
 }
 
 .dotRow {

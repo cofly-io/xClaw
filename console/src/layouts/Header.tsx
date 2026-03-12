@@ -1,13 +1,15 @@
 import { Layout, Space } from "antd";
-import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import {
   FileTextOutlined,
   BookOutlined,
   QuestionCircleOutlined,
   GithubOutlined,
+  LockOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import { Button, Tooltip } from "@agentscope-ai/design";
+import { useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
 
 const { Header: AntHeader } = Layout;
@@ -36,23 +38,29 @@ const keyToLabel: Record<string, string> = {
 
 interface HeaderProps {
   selectedKey: string;
+  onLock: () => void;
 }
 
-export default function Header({ selectedKey }: HeaderProps) {
+export default function Header({ selectedKey, onLock }: HeaderProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const handleNavClick = (url: string) => {
     if (url) {
-      // Check if running in pywebview environment
       const pywebview = (window as any).pywebview;
       if (pywebview && pywebview.api) {
-        // Use pywebview API to open external link in system browser
         pywebview.api.open_external_link(url);
       } else {
-        // Normal browser environment
         window.open(url, "_blank");
       }
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("supos_token");
+    localStorage.removeItem("supos_user");
+    localStorage.removeItem("supos_locked");
+    navigate("/login");
   };
 
   return (
@@ -101,7 +109,22 @@ export default function Header({ selectedKey }: HeaderProps) {
             {t("header.github")}
           </Button>
         </Tooltip>
-        <LanguageSwitcher />
+        <Tooltip title={t("header.lock", "锁屏")}>
+          <Button
+            icon={<LockOutlined />}
+            type="text"
+            onClick={onLock}
+            style={{ fontSize: '12px', fontWeight: '400' }}
+          />
+        </Tooltip>
+        <Tooltip title={t("header.logout", "退出")}>
+          <Button
+            icon={<LogoutOutlined />}
+            type="text"
+            onClick={handleLogout}
+            style={{ fontSize: '12px', fontWeight: '400', color: '#ff4d4f' }}
+          />
+        </Tooltip>
       </Space>
     </AntHeader>
   );

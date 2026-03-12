@@ -1,0 +1,77 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(8, 18, 40, 0.82);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 40px 48px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+}
+
+.icon {
+  font-size: 40px;
+  color: #7ab3ff;
+  line-height: 1;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e8f0ff;
+  letter-spacing: 0.04em;
+}
+
+.sub {
+  font-size: 12px;
+  color: #8aa8d4;
+  text-align: center;
+  margin-top: -8px;
+}
+
+.input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+
+  :global {
+    input {
+      background: transparent !important;
+      color: #fff !important;
+    }
+    .ant-input-password-icon {
+      color: #7a9cc8;
+    }
+  }
+}
+
+.unlockBtn {
+  width: 100%;
+  background: #1864ff !important;
+  border-color: #1864ff !important;
+  font-weight: 600;
+}
+
+.setPwdBtn {
+  color: #7a9cc8 !important;
+  font-size: 12px;
+  margin-top: -4px;
+
+  &:hover {
+    color: #1864ff !important;
+  }
+}

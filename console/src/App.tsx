@@ -16,7 +16,7 @@ function App() {
   return (
     <BrowserRouter>
       <GlobalStyle />
-      <ConfigProvider {...bailianTheme} prefix="copaw" prefixCls="copaw">
+      <ConfigProvider {...bailianTheme} prefix="xClaw" prefixCls="xClaw">
         <MainLayout />
       </ConfigProvider>
     </BrowserRouter>
