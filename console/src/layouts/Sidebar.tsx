@@ -341,11 +341,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
           label: t("nav.environments"),
           icon: <Globe size={16} />,
         },
-        {
-          key: "security",
-          label: t("nav.security"),
-          icon: <Shield size={16} />,
-        },
+        // { key: "security", label: t("nav.security"), icon: <Shield size={16} /> },
         {
           key: "token-usage",
           label: t("nav.tokenUsage"),
