@@ -353,7 +353,7 @@ export const createColumns = (
             <Button
               type="link"
               size="small"
-              onClick={(e) => { e.preventDefault(); handlers.onToggleEnabled(record); }}
+              onClick={() => handlers.onToggleEnabled(record)}
             >
               {record.enabled
                 ? handlers.t("cronJobs.disable")
@@ -362,7 +362,7 @@ export const createColumns = (
             <Button
               type="link"
               size="small"
-              onClick={(e) => { e.preventDefault(); handlers.onExecuteNow(record); }}
+              onClick={() => handlers.onExecuteNow(record)}
             >
               {handlers.t("cronJobs.executeNow")}
             </Button>

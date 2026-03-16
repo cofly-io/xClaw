@@ -127,7 +127,7 @@ export function MCPClientCard({
           <Button
             type="link"
             size="small"
-            onClick={(e) => { e.preventDefault(); handleToggleClick(e); }}
+            onClick={handleToggleClick}
             className={styles.actionButton}
           >
             {client.enabled ? t("common.disable") : t("common.enable")}
