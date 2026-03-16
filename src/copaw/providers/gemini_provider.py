@@ -7,17 +7,29 @@ from __future__ import annotations
 from typing import Any, List
 
 from agentscope.model import ChatModelBase
-from google import genai
-from google.genai import errors as genai_errors
-from google.genai import types as genai_types
 
 from copaw.providers.provider import ModelInfo, Provider
+
+try:
+    from google import genai
+    from google.genai import errors as genai_errors
+    from google.genai import types as genai_types
+    _GENAI_AVAILABLE = True
+except ImportError:
+    genai = None  # type: ignore
+    genai_errors = None  # type: ignore
+    genai_types = None  # type: ignore
+    _GENAI_AVAILABLE = False
 
 
 class GeminiProvider(Provider):
     """Provider implementation for Google Gemini API."""
 
     def _client(self, timeout: float = 10) -> Any:
+        if not _GENAI_AVAILABLE:
+            raise ImportError(
+                "google-genai is not installed. Run: pip install google-genai"
+            )
         return genai.Client(
             api_key=self.api_key,
             http_options=genai_types.HttpOptions(timeout=int(timeout * 1000)),
