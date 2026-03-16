@@ -68,6 +68,19 @@ function App() {
         prefix="xClaw"
         prefixCls="xClaw"
         locale={antdLocale}
+        theme={{
+          ...bailianTheme?.theme,
+          components: {
+            ...bailianTheme?.theme?.components,
+            Menu: {
+              ...bailianTheme?.theme?.components?.Menu,
+              itemHeight: 40,
+              itemPaddingInline: 16,
+              subMenuItemBg: "transparent",
+              fontSize: 13,
+            },
+          },
+        }}
       >
         <MainLayout />
       </ConfigProvider>

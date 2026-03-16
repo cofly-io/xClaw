@@ -20,7 +20,7 @@
   box-shadow: 0 1px 4px rgba(24, 100, 255, 0.06);
 
   :global {
-    .copaw-btn {
+    .xClaw-btn {
       color: #888888 !important;
 
       &:hover {
@@ -51,70 +51,87 @@
   box-shadow: 2px 0 8px rgba(24, 100, 255, 0.04);
 
   :global {
-    .copaw-layout-sider-children {
+    .xClaw-layout-sider-children {
       display: flex;
       flex-direction: column;
       height: 100%;
       overflow: hidden;
     }
 
-    .copaw-menu {
+    .xClaw-menu {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
       border-inline-end: 0 !important;
       background: transparent !important;
+      padding: 10px 0 !important;
 
-      /*第一层*/
-      .copaw-menu-submenu-title {
-        color: #9fb2d4 !important;
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
+      /*第一�?�?group header*/
+      .xClaw-menu-submenu-title {
+        color: #aab4d4 !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        letter-spacing: 1px !important;
         text-transform: uppercase;
+        height: auto !important;
+        line-height: 1.4 !important;
+        padding: 6px 16px 4px !important;
+        margin: 0 !important;
+        width: 100% !important;
 
         &:hover {
-          background: #f0f5ff !important;
-          color: #4a6fa5 !important;
+          background: transparent !important;
+          color: #7a8ab8 !important;
         }
 
-        .copaw-menu-submenu-arrow {
-          color: #b8cce8 !important;
+        .xClaw-menu-submenu-arrow {
+          display: none !important;
         }
       }
 
-      /*第二层*/
-      .copaw-menu-item {
-        color: #5b6e8b !important;
-        border-radius: 6px !important;
-        font-size: 12px !important;
-        margin: 1px 8px !important;
+      /*第二�?�?nav item*/
+      .xClaw-menu-item {
+        color: #3a4a7a !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        height: auto !important;
+        line-height: 1.5 !important;
+        padding: 10px 16px !important;
+        margin: 2px 8px !important;
         width: calc(100% - 16px) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
 
         &:hover {
           background: #f0f5ff !important;
           color: #1864ff !important;
         }
 
+        .xClaw-menu-item-icon,
         .anticon,
         svg {
-          color: #7a9cc8;
+          color: #7a8ab8;
+          font-size: 15px;
+          width: 15px;
+          height: 15px;
+          flex-shrink: 0;
+          margin-inline-end: 0 !important;
         }
       }
 
-      .copaw-menu-item-selected {
-        background: linear-gradient(90deg, #e8f0ff 0%, #f0f5ff 100%) !important;
+      .xClaw-menu-item-selected {
+        background: linear-gradient(135deg, rgba(24, 100, 255, 0.08), rgba(79, 138, 255, 0.06)) !important;
         color: #1864ff !important;
-        border-left: 3px solid #1864ff !important;
-        padding-left: calc(var(--ant-menu-item-padding-inline, 16px) - 3px) !important;
 
+        .xClaw-menu-item-icon,
         .anticon,
         svg {
           color: #1864ff !important;
         }
 
         &:hover {
-          background: #e0ecff !important;
+          background: linear-gradient(135deg, rgba(24, 100, 255, 0.12), rgba(79, 138, 255, 0.08)) !important;
         }
       }
     }
@@ -239,7 +256,7 @@
 // ─── Dot Grip (sidebar toggle) ────────────────────────────────────────────────
 .dotGrip {
   position: fixed;
-  left: 267px; // 侧边栏宽 275px，grip 宽约 8px，贴在右边框
+  left: 212px; // 侧边栏宽 220px，grip 宽约 8px，贴在右边框
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -261,7 +278,7 @@
 }
 
 .dotGripCollapsed {
-  left: 72px; // 收起时侧边栏约 80px
+  left: 72px; // 收起时侧边栏�?80px
 }
 
 .dotRow {

@@ -14,26 +14,8 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  MessageSquare,
-  Radio,
-  Zap,
-  MessageCircle,
-  Wifi,
-  UsersRound,
-  CalendarClock,
-  Activity,
-  Sparkles,
-  Briefcase,
-  Cpu,
-  Box,
-  Globe,
-  Settings,
-  Shield,
-  Plug,
-  Wrench,
   Copy,
   Check,
-  BarChart3,
 } from "lucide-react";
 import api from "../api";
 import styles from "./index.module.less";
@@ -69,9 +51,9 @@ const KEY_TO_PATH: Record<string, string> = {
 const UPDATE_MD: Record<string, string> = {
   zh: `### CoPaw如何更新
 
-要更新 CoPaw 到最新版本，可根据你的安装方式选择对应方法：
+要更�?CoPaw 到最新版本，可根据你的安装方式选择对应方法�?
 
-1. 如果你使用的是一键安装脚本，直接重新运行安装命令即可自动升级。
+1. 如果你使用的是一键安装脚本，直接重新运行安装命令即可自动升级�?
 
 2. 如果你是通过 pip 安装，在终端中执行以下命令升级：
 
@@ -79,7 +61,7 @@ const UPDATE_MD: Record<string, string> = {
 pip install --upgrade copaw
 \`\`\`
 
-3. 如果你是从源码安装，进入项目目录并拉取最新代码后重新安装：
+3. 如果你是从源码安装，进入项目目录并拉取最新代码后重新安装�?
 
 \`\`\`
 cd CoPaw
@@ -87,14 +69,14 @@ git pull origin main
 pip install -e .
 \`\`\`
 
-4. 如果你使用的是 Docker，拉取最新镜像并重启容器：
+4. 如果你使用的�?Docker，拉取最新镜像并重启容器�?
 
 \`\`\`
 docker pull agentscope/copaw:latest
 docker run -p 127.0.0.1:8088:8088 -v copaw-data:/app/working agentscope/copaw:latest
 \`\`\`
 
-升级后重启服务 copaw app。`,
+升级后重启服�?copaw app。`,
 
   ru: `### Как обновить CoPaw
 
@@ -187,6 +169,11 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+// emoji icon helper — renders emoji at consistent size
+const E = ({ e }: { e: string }) => (
+  <span style={{ fontSize: 15, lineHeight: 1, display: "inline-flex", alignItems: "center" }}>{e}</span>
+);
+
 export default function Sidebar({ selectedKey }: SidebarProps) {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -278,82 +265,54 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     {
       key: "chat-group",
       label: t("nav.chat"),
-      icon: <MessageSquare size={16} />,
+      icon: <E e="💬" />,
       children: [
         {
           key: "chat",
           label: t("nav.chat"),
-          icon: <MessageCircle size={16} />,
+          icon: <E e="💬" />,
         },
       ],
     },
     {
       key: "control-group",
       label: t("nav.control"),
-      icon: <Radio size={16} />,
+      icon: <E e="📡" />,
       children: [
-        { key: "channels", label: t("nav.channels"), icon: <Wifi size={16} /> },
-        {
-          key: "sessions",
-          label: t("nav.sessions"),
-          icon: <UsersRound size={16} />,
-        },
-        {
-          key: "cron-jobs",
-          label: t("nav.cronJobs"),
-          icon: <CalendarClock size={16} />,
-        },
-        {
-          key: "heartbeat",
-          label: t("nav.heartbeat"),
-          icon: <Activity size={16} />,
-        },
+        { key: "channels", label: t("nav.channels"), icon: <E e="📡" /> },
+        { key: "sessions", label: t("nav.sessions"), icon: <E e="🗂️" /> },
+        { key: "cron-jobs", label: t("nav.cronJobs"), icon: <E e="⏰" /> },
+        { key: "heartbeat", label: t("nav.heartbeat"), icon: <E e="💓" /> },
       ],
     },
     {
       key: "agent-group",
       label: t("nav.agent"),
-      icon: <Zap size={16} />,
+      icon: <E e="⚡" />,
       children: [
-        {
-          key: "workspace",
-          label: t("nav.workspace"),
-          icon: <Briefcase size={16} />,
-        },
-        { key: "skills", label: t("nav.skills"), icon: <Sparkles size={16} /> },
-        { key: "tools", label: t("nav.tools"), icon: <Wrench size={16} /> },
-        { key: "mcp", label: t("nav.mcp"), icon: <Plug size={16} /> },
-        {
-          key: "agent-config",
-          label: t("nav.agentConfig"),
-          icon: <Settings size={16} />,
-        },
+        { key: "workspace", label: t("nav.workspace"), icon: <E e="🏗️" /> },
+        { key: "skills", label: t("nav.skills"), icon: <E e="🔧" /> },
+        { key: "tools", label: t("nav.tools"), icon: <E e="🛠️" /> },
+        { key: "mcp", label: t("nav.mcp"), icon: <E e="🔌" /> },
+        { key: "agent-config", label: t("nav.agentConfig"), icon: <E e="⚙️" /> },
       ],
     },
     {
       key: "settings-group",
       label: t("nav.settings"),
-      icon: <Cpu size={16} />,
+      icon: <E e="🖥️" />,
       children: [
-        { key: "models", label: t("nav.models"), icon: <Box size={16} /> },
-        {
-          key: "environments",
-          label: t("nav.environments"),
-          icon: <Globe size={16} />,
-        },
-        // { key: "security", label: t("nav.security"), icon: <Shield size={16} /> },
-        {
-          key: "token-usage",
-          label: t("nav.tokenUsage"),
-          icon: <BarChart3 size={16} />,
-        },
+        { key: "models", label: t("nav.models"), icon: <E e="🤖" /> },
+        { key: "environments", label: t("nav.environments"), icon: <E e="🌿" /> },
+        // { key: "security", label: t("nav.security"), icon: <E e="🔒" /> },
+        { key: "token-usage", label: t("nav.tokenUsage"), icon: <E e="📊" /> },
       ],
     },
   ];
 
   return (
     <>
-      {/* Dot grip — fixed on sidebar right edge */}
+      {/* Dot grip �?fixed on sidebar right edge */}
       <div
         className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ""}`}
         onClick={() => setCollapsed(!collapsed)}
@@ -369,7 +328,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     <Sider
       collapsed={collapsed}
       onCollapse={setCollapsed}
-      width={275}
+      width={220}
       className={styles.sider}
     >
       <div className={styles.siderTop}>

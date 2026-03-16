@@ -17,42 +17,60 @@ def _get_token_counter():
 
     Returns:
         TokenCounterBase: The token counter instance for Qwen models.
-
-    Raises:
-        RuntimeError: If token counter initialization fails.
+        Falls back to a character-based estimator if HuggingFace/torch fails.
     """
     global _token_counter
     if _token_counter is None:
-        from agentscope.token import HuggingFaceTokenCounter
+        try:
+            from agentscope.token import HuggingFaceTokenCounter
 
-        # Use Qwen tokenizer for DashScope models
-        # Qwen3 series uses the same tokenizer as Qwen2.5
+            # Use Qwen tokenizer for DashScope models
+            # Qwen3 series uses the same tokenizer as Qwen2.5
 
-        # Try local tokenizer first, fall back to online if not found
-        local_tokenizer_path = (
-            Path(__file__).parent.parent.parent / "tokenizer"
-        )
-
-        if (
-            local_tokenizer_path.exists()
-            and (local_tokenizer_path / "tokenizer.json").exists()
-        ):
-            tokenizer_path = str(local_tokenizer_path)
-            logger.info(f"Using local Qwen tokenizer from {tokenizer_path}")
-        else:
-            tokenizer_path = "Qwen/Qwen2.5-7B-Instruct"
-            logger.info(
-                "Local tokenizer not found, downloading from HuggingFace",
+            # Try local tokenizer first, fall back to online if not found
+            local_tokenizer_path = (
+                Path(__file__).parent.parent.parent / "tokenizer"
             )
 
-        _token_counter = HuggingFaceTokenCounter(
-            pretrained_model_name_or_path=tokenizer_path,
-            use_mirror=True,  # Use HF mirror for users in China
-            use_fast=True,
-            trust_remote_code=True,
-        )
-        logger.debug("Token counter initialized with Qwen tokenizer")
+            if (
+                local_tokenizer_path.exists()
+                and (local_tokenizer_path / "tokenizer.json").exists()
+            ):
+                tokenizer_path = str(local_tokenizer_path)
+                logger.info(f"Using local Qwen tokenizer from {tokenizer_path}")
+            else:
+                tokenizer_path = "Qwen/Qwen2.5-7B-Instruct"
+                logger.info(
+                    "Local tokenizer not found, downloading from HuggingFace",
+                )
+
+            _token_counter = HuggingFaceTokenCounter(
+                pretrained_model_name_or_path=tokenizer_path,
+                use_mirror=True,  # Use HF mirror for users in China
+                use_fast=True,
+                trust_remote_code=True,
+            )
+            logger.debug("Token counter initialized with Qwen tokenizer")
+        except Exception as e:
+            logger.warning(
+                "HuggingFace token counter unavailable (%s), "
+                "using character-based estimator (len/4).",
+                e,
+            )
+            _token_counter = _CharBasedTokenCounter()
     return _token_counter
+
+
+class _CharBasedTokenCounter:
+    """Minimal token counter fallback using character-based estimation."""
+
+    class _FakeTokenizer:
+        def encode(self, text: str) -> list:
+            # ~4 chars per token is a reasonable approximation
+            return [0] * max(1, len(text.encode("utf-8")) // 4)
+
+    def __init__(self):
+        self.tokenizer = self._FakeTokenizer()
 
 
 def _extract_text_from_messages(messages: list[dict]) -> str:

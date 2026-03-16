@@ -185,6 +185,7 @@ const chatSpecToSession = (chat: ChatSpec): ExtendedSession =>
   ({
     id: chat.id,
     name: (chat as ChatSpec & { name?: string }).name || DEFAULT_SESSION_NAME,
+    updateAt: chat.updated_at ? new Date(chat.updated_at).getTime() : Date.now(),
     sessionId: chat.session_id,
     userId: chat.user_id,
     channel: chat.channel,

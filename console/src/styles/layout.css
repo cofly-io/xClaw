@@ -73,8 +73,60 @@ body {
 .xClaw-chat-anywhere-input-wrapper {
   max-width: 80% !important;
 }
-.xClaw-conversations-label{
- font-size: 13px;
+/* Remove default ul bullet points */
+.xClaw-conversations-list {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+
+.xClaw-conversations-item {
+  margin-bottom: 0 !important;
+}
+
+.xClaw-conversations-item .xClaw-conversations-content {
+  height: 30px !important;
+  padding: 0 8px 0 4px !important;
+}
+
+/* The root conversations element has gap:8px from the library, zero it out */
+.xClaw-conversations {
+  gap: 0 !important;
+}
+
+/* Session item label — match preview.html chat-item-text */
+.xClaw-conversations-label {
+  font-size: 12px !important;
+  color: #5a6a9a !important;
+}
+.xClaw-conversations-item-active .xClaw-conversations-label {
+  color: #1864ff !important;
+  font-weight: 500 !important;
+}
+.xClaw-conversations-item {
+  margin-bottom: 1px !important;
+  border-radius: 8px !important;
+}
+.xClaw-conversations-item:hover {
+  background-color: #f0f5ff !important;
+}
+.xClaw-conversations-item-active {
+  background-color: #eef3ff !important;
+}
+
+/* Group titles — smaller, lighter */
+.xClaw-conversations-group-title {
+  height: auto !important;
+  min-height: 20px !important;
+  padding: 10px 12px 3px !important;
+}
+.xClaw-conversations-group-title .ant-typography,
+.xClaw-conversations-group-title .ant-typography span,
+.xClaw-conversations-group-title span {
+  font-size: 10px !important;
+  color: #b0b8d0 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
 }
 .xClaw-chat-anywhere-sessions-adder button{
   border-radius:20px;
@@ -121,3 +173,6 @@ body {
   margin-right: auto !important;
   margin-left: 0 !important;
 }
+
+
+
