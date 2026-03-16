@@ -58,7 +58,6 @@ def _is_command(query: str | None) -> bool:
     return _is_conversation_command(query)
 
 
-
 async def run_command_path(
     request,
     msgs,
