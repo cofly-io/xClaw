@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 # pylint: disable=too-many-statements,too-many-branches
 # pylint: disable=too-many-return-statements,too-many-instance-attributes
 # pylint: disable=too-many-nested-blocks
@@ -29,6 +29,7 @@ from agentscope_runtime.engine.schemas.agent_schemas import (
 )
 from aibot import WSClient, WSClientOptions, generate_req_id
 
+from ....constant import DEFAULT_MEDIA_DIR
 from ..base import (
     BaseChannel,
     ContentType,
@@ -61,7 +62,7 @@ class WecomChannel(BaseChannel):
         bot_id: str,
         secret: str,
         bot_prefix: str = "[BOT] ",
-        media_dir: str = "~/.copaw/media",
+        media_dir: str = "",
         welcome_text: str = "",
         on_reply_sent: OnReplySent = None,
         show_tool_details: bool = True,
@@ -89,7 +90,9 @@ class WecomChannel(BaseChannel):
         self.secret = secret
         self.bot_prefix = bot_prefix
         self.welcome_text = welcome_text
-        self._media_dir = Path(media_dir).expanduser()
+        self._media_dir = (
+            Path(media_dir).expanduser() if media_dir else DEFAULT_MEDIA_DIR
+        )
         self._max_reconnect_attempts = max_reconnect_attempts
 
         self._client: Any = None
@@ -118,7 +121,7 @@ class WecomChannel(BaseChannel):
             bot_id=os.getenv("WECOM_BOT_ID", ""),
             secret=os.getenv("WECOM_SECRET", ""),
             bot_prefix=os.getenv("WECOM_BOT_PREFIX", "[BOT] "),
-            media_dir=os.getenv("WECOM_MEDIA_DIR", "~/.copaw/media"),
+            media_dir=os.getenv("WECOM_MEDIA_DIR", ""),
             on_reply_sent=on_reply_sent,
             dm_policy=os.getenv("WECOM_DM_POLICY", "open"),
             group_policy=os.getenv("WECOM_GROUP_POLICY", "open"),
@@ -145,10 +148,7 @@ class WecomChannel(BaseChannel):
             bot_id=getattr(config, "bot_id", "") or "",
             secret=getattr(config, "secret", "") or "",
             bot_prefix=getattr(config, "bot_prefix", "[BOT] ") or "[BOT] ",
-            media_dir=(
-                getattr(config, "media_dir", "~/.copaw/media")
-                or "~/.copaw/media"
-            ),
+            media_dir=getattr(config, "media_dir", None) or "",
             welcome_text=getattr(config, "welcome_text", "") or "",
             on_reply_sent=on_reply_sent,
             show_tool_details=show_tool_details,
@@ -188,8 +188,8 @@ class WecomChannel(BaseChannel):
     def _parse_chatid_from_handle(to_handle: str) -> str:
         """Extract chatid/userid from a to_handle string.
 
-        - ``wecom:group:<chatid>`` → ``<chatid>``
-        - ``wecom:<userid>``       → ``<userid>``
+        - ``wecom:group:<chatid>`` 鈫?``<chatid>``
+        - ``wecom:<userid>``       鈫?``<userid>``
         """
         h = (to_handle or "").strip()
         if h.startswith("wecom:group:"):
@@ -443,7 +443,7 @@ class WecomChannel(BaseChannel):
                     await self._client.reply_stream(
                         frame,
                         stream_id=processing_stream_id,
-                        content="🤔 思考中...",
+                        content="馃 鎬濊€冧腑...",
                         finish=False,
                     )
                 except Exception:
