@@ -25,13 +25,10 @@ class GeminiProvider(Provider):
     """Provider implementation for Google Gemini API."""
 
     def _client(self, timeout: float = 10) -> Any:
-<<<<<<< HEAD
         if not _GENAI_AVAILABLE:
             raise ImportError(
                 "google-genai is not installed. Run: pip install google-genai"
             )
-=======
->>>>>>> upstream/main
         return genai.Client(
             api_key=self.api_key,
             http_options=genai_types.HttpOptions(timeout=int(timeout * 1000)),
