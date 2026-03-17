@@ -270,7 +270,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     {
       key: "chat-group",
       label: t("nav.chat"),
-      icon: <E e="💬" />,
+      //icon: <E e="💬" />,
       children: [
         {
           key: "chat",
@@ -282,7 +282,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     {
       key: "control-group",
       label: t("nav.control"),
-      icon: <E e="📡" />,
+      //icon: <E e="📡" />,
       children: [
         { key: "channels", label: t("nav.channels"), icon: <E e="📡" /> },
         { key: "sessions", label: t("nav.sessions"), icon: <E e="🗂️" /> },
@@ -293,7 +293,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     {
       key: "agent-group",
       label: t("nav.agent"),
-      icon: <E e="⚡" />,
+      //icon: <E e="⚡" />,
       children: [
         { key: "workspace", label: t("nav.workspace"), icon: <E e="🏗️" /> },
         { key: "skills", label: t("nav.skills"), icon: <E e="🔧" /> },
@@ -305,7 +305,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     {
       key: "settings-group",
       label: t("nav.settings"),
-      icon: <E e="🖥️" />,
+      //icon: <E e="🖥️" />,
       children: [
         { key: "agents", label: t("nav.agents"), icon: <Bot size={16} /> },
         { key: "models", label: t("nav.models"), icon: <E e="🤖" /> },
