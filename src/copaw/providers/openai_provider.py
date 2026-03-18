@@ -13,6 +13,7 @@ from copaw.providers.provider import ModelInfo, Provider
 
 DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 CODING_DASHSCOPE_BASE_URL = "https://coding.dashscope.aliyuncs.com/v1"
+MINIMAX_BASE_URL = "https://api.minimaxi.com/v1"
 
 
 class OpenAIProvider(Provider):
@@ -49,7 +50,7 @@ class OpenAIProvider(Provider):
 
     async def check_connection(self, timeout: float = 5) -> tuple[bool, str]:
         """Check if OpenAI provider is reachable with current configuration."""
-        if self.base_url == CODING_DASHSCOPE_BASE_URL:
+        if self.base_url in (CODING_DASHSCOPE_BASE_URL, MINIMAX_BASE_URL):
             return True, ""
         client = self._client()
         try:
