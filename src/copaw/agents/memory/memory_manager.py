@@ -308,5 +308,5 @@ class MemoryManager(ReMeLight):
             The in-memory memory content with token counting support
         """
         return super().get_in_memory_memory(
-            token_counter=self.token_counter,
+            as_token_counter=self.token_counter,
         )
