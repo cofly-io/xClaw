@@ -35,11 +35,13 @@ const COMMANDS = {
     "curl -fsSL https://copaw.agentscope.io/install.bat -o install.bat && install.bat",
     "copaw init --defaults",
     "copaw app",
+    "xclaw app",
   ],
   scriptWinPs: [
     "irm https://copaw.agentscope.io/install.ps1 | iex",
     "copaw init --defaults",
     "copaw app",
+    "xclaw app",
   ],
   docker: [
     `docker pull ${DOCKER_IMAGE}`,
