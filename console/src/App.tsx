@@ -40,6 +40,9 @@ const GlobalStyle = createGlobalStyle`
   margin: 0;
   box-sizing: border-box;
 }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", SimSun, sans-serif;
+}
 `;
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -141,6 +144,10 @@ function AppInner() {
           algorithm: isDark
             ? antdTheme.darkAlgorithm
             : antdTheme.defaultAlgorithm,
+          token: {
+            ...(bailianTheme as any)?.theme?.token,
+            fontFamily: '"PingFang SC", "Microsoft YaHei", SimSun, sans-serif',
+          },
           components: {
             ...(bailianTheme as any)?.theme?.components,
             Menu: {

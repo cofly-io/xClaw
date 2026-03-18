@@ -786,12 +786,26 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   color: #f8f8f8 !important;
 }
 
+.xClaw-chat-anywhere-sessions {
+  background: #F8F8F8 !important;
+  border-right: 1px solid #e6eeff;
+}
+
 .xClaw-bubble-list {
   max-width: 80% !important;
 }
 
 .xClaw-chat-anywhere-chat{
-  background: #f0f0f0 !important;
+  background: #F8F8F8 !important;
+}
+
+/* Chat message content font */
+[class*="chat-anywhere"] [class*="message-content"],
+[class*="chat-anywhere"] [class*="message"] p,
+[class*="chat-anywhere"] [class*="message"] span,
+[class*="chat-anywhere"] [class*="message"] li {
+  /* font-family: "PingFang SC", "Microsoft YaHei", SimSun, sans-serif !important; */
+  font-size: 13px;
 }
 
 /* Welcome avatar: full tall SVG. Class is CoPaw-avatar (no "ant"). */

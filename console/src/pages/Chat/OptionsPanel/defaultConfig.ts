@@ -7,7 +7,7 @@ const defaultConfig = {
     prefix: "xClaw",
     leftHeader: {
       logo: "",
-      title: "......",
+      title: "",
     },
   },
   sender: {

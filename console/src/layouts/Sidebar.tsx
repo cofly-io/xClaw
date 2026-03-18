@@ -14,11 +14,24 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  Copy,
-  Check,
-  BarChart3,
-  Bot,
-} from "lucide-react";
+  CopyOutlined,
+  CheckOutlined,
+  MessageOutlined,
+  ApiOutlined,
+  HistoryOutlined,
+  ClockCircleOutlined,
+  ScheduleOutlined,
+  HeartOutlined,
+  FolderOutlined,
+  ThunderboltOutlined,
+  ToolOutlined,
+  SettingOutlined,
+  RobotOutlined,
+  ClusterOutlined,
+  ChromeOutlined,
+  EnvironmentOutlined,
+  BarChartOutlined,
+} from "@ant-design/icons";
 import api from "../api";
 import styles from "./index.module.less";
 import { useTheme } from "../contexts/ThemeContext";
@@ -163,7 +176,7 @@ function CopyButton({ text }: { text: string }) {
       <Button
         type="text"
         size="small"
-        icon={copied ? <Check size={13} /> : <Copy size={13} />}
+        icon={copied ? <CheckOutlined /> : <CopyOutlined />}
         onClick={handleCopy}
         className={`${styles.copyBtn} ${
           copied ? styles.copyBtnCopied : styles.copyBtnDefault
@@ -172,11 +185,6 @@ function CopyButton({ text }: { text: string }) {
     </Tooltip>
   );
 }
-
-// emoji icon helper — renders emoji at consistent size
-const E = ({ e }: { e: string }) => (
-  <span style={{ fontSize: 15, lineHeight: 1, display: "inline-flex", alignItems: "center" }}>{e}</span>
-);
 
 export default function Sidebar({ selectedKey }: SidebarProps) {
   const navigate = useNavigate();
@@ -270,48 +278,43 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     {
       key: "chat-group",
       label: t("nav.chat"),
-      //icon: <E e="💬" />,
       children: [
         {
           key: "chat",
           label: t("nav.chat"),
-          icon: <E e="💬" />,
+          icon: <MessageOutlined />,
         },
       ],
     },
     {
       key: "control-group",
       label: t("nav.control"),
-      //icon: <E e="📡" />,
       children: [
-        { key: "channels", label: t("nav.channels"), icon: <E e="📡" /> },
-        { key: "sessions", label: t("nav.sessions"), icon: <E e="🗂️" /> },
-        { key: "cron-jobs", label: t("nav.cronJobs"), icon: <E e="⏰" /> },
-        { key: "heartbeat", label: t("nav.heartbeat"), icon: <E e="💓" /> },
+        { key: "channels", label: t("nav.channels"), icon: <ApiOutlined /> },
+        { key: "sessions", label: t("nav.sessions"), icon: <HistoryOutlined /> },
+        { key: "cron-jobs", label: t("nav.cronJobs"), icon: <ScheduleOutlined /> },
+        { key: "heartbeat", label: t("nav.heartbeat"), icon: <HeartOutlined /> },
       ],
     },
     {
       key: "agent-group",
       label: t("nav.agent"),
-      //icon: <E e="⚡" />,
       children: [
-        { key: "workspace", label: t("nav.workspace"), icon: <E e="🏗️" /> },
-        { key: "skills", label: t("nav.skills"), icon: <E e="🔧" /> },
-        { key: "tools", label: t("nav.tools"), icon: <E e="🛠️" /> },
-        { key: "mcp", label: t("nav.mcp"), icon: <E e="🔌" /> },
-        { key: "agent-config", label: t("nav.agentConfig"), icon: <E e="⚙️" /> },
+        { key: "workspace", label: t("nav.workspace"), icon: <FolderOutlined /> },
+        { key: "skills", label: t("nav.skills"), icon: <ThunderboltOutlined /> },
+        { key: "tools", label: t("nav.tools"), icon: <ToolOutlined /> },
+        { key: "mcp", label: t("nav.mcp"), icon: <ApiOutlined /> },
+        { key: "agent-config", label: t("nav.agentConfig"), icon: <SettingOutlined /> },
       ],
     },
     {
       key: "settings-group",
       label: t("nav.settings"),
-      //icon: <E e="🖥️" />,
       children: [
-        { key: "agents", label: t("nav.agents"), icon: <Bot size={16} /> },
-        { key: "models", label: t("nav.models"), icon: <E e="🤖" /> },
-        { key: "environments", label: t("nav.environments"), icon: <E e="🌿" /> },
-        // { key: "security", label: t("nav.security"), icon: <E e="🔒" /> },
-        { key: "token-usage", label: t("nav.tokenUsage"), icon: <BarChart3 size={16} /> },
+        { key: "agents", label: t("nav.agents"), icon: <RobotOutlined /> },
+        { key: "models", label: t("nav.models"), icon: <ChromeOutlined /> },
+        { key: "environments", label: t("nav.environments"), icon: <EnvironmentOutlined /> },
+        { key: "token-usage", label: t("nav.tokenUsage"), icon: <BarChartOutlined /> },
       ],
     },
   ];
