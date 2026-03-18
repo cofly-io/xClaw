@@ -779,16 +779,55 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   font-weight: 500 !important;
   letter-spacing: 0.3px !important;
 }
-.xClaw-chat-anywhere-sessions-adder button{
-  border-radius:20px;
-}
-.xClaw-chat-anywhere-sessions-adder button span {
-  color: #f8f8f8 !important;
-}
-
+/* ── Sessions panel layout ── */
 .xClaw-chat-anywhere-sessions {
   background: #F8F8F8 !important;
   border-right: 1px solid #e6eeff;
+  position: relative !important;
+}
+
+/* Header: absolute top-right, always visible regardless of collapsed state */
+.xClaw-chat-anywhere-sessions-header {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  height: 54px !important;
+  width: auto !important;
+  padding: 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  z-index: 10 !important;
+}
+
+/* Hide logo/title text, keep only the collapse icon button */
+.xClaw-chat-anywhere-sessions-header-left {
+  display: none !important;
+}
+
+/* Replace "New Chat" with "开启新会话" */
+.xClaw-chat-anywhere-sessions-adder button > span:last-child {
+  font-size: 0 !important;
+}
+.xClaw-chat-anywhere-sessions-adder button > span:last-child::after {
+  content: "开启新会话";
+  font-size: 13px !important;
+  color: #858585;
+}
+/* do NOT set display — library sets display:none when collapsed */
+.xClaw-chat-anywhere-sessions-adder {
+  padding: 12px 52px 8px 12px !important;
+}
+
+/* Adder button: pill shape, auto width  会话按钮样式*/
+.xClaw-chat-anywhere-sessions-adder button {
+  border-radius: 0px !important;
+  width: auto !important;
+  height: 30px !important;
+  padding: 0 14px !important;
+  /* font-size: 12px !important; */
+  background: #F8F8F8;
+  box-shadow: none !important;
+  font-weight: 800 !important;
 }
 
 .xClaw-bubble-list {

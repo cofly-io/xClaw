@@ -286,7 +286,8 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   const menuItems: MenuProps["items"] = [
     {
       key: "chat-group",
-      label: t("nav.chat"),
+      label: collapsed ? null : t("nav.chat"),
+      icon: collapsed ? <MessageOutlined /> : null,
       children: [
         {
           key: "chat",
@@ -297,7 +298,8 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     },
     {
       key: "control-group",
-      label: t("nav.control"),
+      label: collapsed ? null : t("nav.control"),
+      icon: collapsed ? <ClusterOutlined /> : null,
       children: [
         { key: "channels", label: t("nav.channels"), icon: <ApiOutlined /> },
         { key: "sessions", label: t("nav.sessions"), icon: <HistoryOutlined /> },
@@ -307,7 +309,8 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     },
     {
       key: "agent-group",
-      label: t("nav.agent"),
+      label: collapsed ? null : t("nav.agent"),
+      icon: collapsed ? <RobotOutlined /> : null,
       children: [
         { key: "workspace", label: t("nav.workspace"), icon: <FolderOutlined /> },
         { key: "skills", label: t("nav.skills"), icon: <ThunderboltOutlined /> },
@@ -318,7 +321,8 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     },
     {
       key: "settings-group",
-      label: t("nav.settings"),
+      label: collapsed ? null : t("nav.settings"),
+      icon: collapsed ? <SettingOutlined /> : null,
       children: [
         { key: "agents", label: t("nav.agents"), icon: <RobotOutlined /> },
         { key: "models", label: t("nav.models"), icon: <ChromeOutlined /> },

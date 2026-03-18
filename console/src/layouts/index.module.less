@@ -89,6 +89,24 @@
         }
       }
 
+      // 折叠时 group icon 居中、间距加大
+      &.xClaw-menu-inline-collapsed {
+        .xClaw-menu-submenu-title {
+          padding: 14px 0 !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          width: 100% !important;
+
+          .anticon, svg {
+            font-size: 18px !important;
+            width: 18px !important;
+            height: 18px !important;
+            color: #7a8ab8 !important;
+          }
+        }
+      }
+
       /*第二层nav item*/
       .xClaw-menu-item {
         color: #696969 !important;
