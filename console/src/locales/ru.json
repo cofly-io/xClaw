@@ -139,7 +139,10 @@
     "stopOptimize": "Стоп",
     "optimizeSuccess": "Навык успешно оптимизирован",
     "optimizeFailed": "Не удалось оптимизировать навык",
-    "noContentToOptimize": "Нет содержимого для оптимизации"
+    "noContentToOptimize": "Нет содержимого для оптимизации",
+    "cancelImport": "Отменить импорт",
+    "importCancelled": "Импорт навыка отменён",
+    "importTimeout": "Время ожидания импорта навыка истекло. Повторите попытку или проверьте сеть."
   },
   "mcp": {
     "title": "MCP-клиенты",
@@ -302,7 +305,7 @@
     "policyOpen": "Open",
     "policyAllowlist": "Allowlist",
     "allowFrom": "Пользователи allowlist",
-    "allowFromTooltip": "Список ID пользователей, которым разрешено взаимодействовать с ботом (формат: nickname#last4, например John#1234)",
+    "allowFromTooltip": "Список ID пользователей, которым разрешено взаимодействовать с ботом. Включите белый список, затем напишите боту в ЛС — ваш ID будет в сообщении об отказе",
     "allowFromPlaceholder": "Введите ID пользователя и нажмите Enter, чтобы добавить",
     "denyMessage": "Сообщение об отказе",
     "denyMessageTooltip": "Пользовательское сообщение для пользователей, которым отказан доступ",
@@ -318,6 +321,13 @@
     "welcomeGreeting": "Приветственное сообщение",
     "voiceSetupGuide": "Создайте аккаунт Twilio, купите номер телефона и затем введите данные ниже. Account SID и Auth Token находятся на панели Twilio Console. Phone Number SID указан в разделе Phone Numbers → Active Numbers.",
     "voiceSetupLink": "Открыть Twilio Console",
+    "loginWeCom": "Авторизовать бота WeCom по QR-коду",
+    "wecomAuthHint": "Нажмите кнопку — откроется окно с QR-кодом WeCom. После сканирования Bot ID и Secret будут заполнены автоматически.",
+    "wecomAuthSuccess": "Бот WeCom успешно авторизован",
+    "wecomWindowBlocked": "Всплывающее окно заблокировано. Разрешите всплывающие окна и попробуйте снова.",
+    "wecomCancelled": "Авторизация отменена",
+    "wecomAuthFailed": "Ошибка авторизации: {{msg}}",
+    "wecomSdkLoadFailed": "Не удалось загрузить WeCom SDK",
     "filterAll": "Все",
     "builtin": "Встроенные",
     "custom": "Пользовательские"
@@ -524,6 +534,7 @@
     "testConnectionError": "Произошла ошибка при проверке подключения",
     "discoverModels": "Обнаружить модели",
     "discoverModelsFailed": "Не удалось обнаружить модели",
+    "ollamaFetchModelsFailed": "Не удалось получить список моделей Ollama. Проверьте подробности ошибки.",
     "modelTestFailed": "Проверка модели не пройдена, проверьте корректность ID модели",
     "modelTestFailedConfirm": "Тест подключения модели не пройден: {{message}}. Всё равно добавить эту модель?",
     "autoDiscoveredAndAdded": "Автоматически обнаружено {{count}} моделей и добавлено {{added}} новых",
