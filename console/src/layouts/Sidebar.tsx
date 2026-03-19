@@ -365,20 +365,6 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
               alt="CoPaw"
               className={styles.logoImg}
             />
-            {version && (
-              <Badge dot={!!hasUpdate} color="red" offset={[4, 18]}>
-                <span
-                  className={`${styles.versionBadge} ${
-                    hasUpdate
-                      ? styles.versionBadgeClickable
-                      : styles.versionBadgeDefault
-                  }`}
-                  onClick={() => hasUpdate && handleOpenUpdateModal()}
-                >
-                  v{version}
-                </span>
-              </Badge>
-            )}
           </div>
         )}
 

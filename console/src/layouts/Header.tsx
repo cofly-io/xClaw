@@ -1,7 +1,6 @@
 import { Layout, Space } from "antd";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import ThemeToggleButton from "../components/ThemeToggleButton";
-import AgentSelector from "../components/AgentSelector";
 import { useTranslation } from "react-i18next";
 import {
   FileTextOutlined,
@@ -75,12 +74,11 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
         {t(keyToLabel[selectedKey] || "nav.chat")}
       </span>
       <Space size="middle">
-        <AgentSelector />
         <Tooltip title={t("header.changelog")}>
           <Button
             icon={<FileTextOutlined />}
             type="text"
-            style={{ fontSize: '12px', fontWeight: '400' }}
+            style={{ fontSize: '14px' }}
             onClick={() => handleNavClick(NAV_URLS.changelog)}
           >
             {t("header.changelog")}
@@ -90,7 +88,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
           <Button
             icon={<BookOutlined />}
             type="text"
-            style={{ fontSize: '12px', fontWeight: '400' }}
+            style={{ fontSize: '14px' }}
             onClick={() => handleNavClick(NAV_URLS.docs)}
           >
             {t("header.docs")}
@@ -100,20 +98,10 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
           <Button
             icon={<QuestionCircleOutlined />}
             type="text"
-            style={{ fontSize: '12px', fontWeight: '400' }}
+            style={{ fontSize: '14px' }}
             onClick={() => handleNavClick(NAV_URLS.faq)}
           >
             {t("header.faq")}
-          </Button>
-        </Tooltip>
-        <Tooltip title={t("header.github")}>
-          <Button
-            icon={<GithubOutlined />}
-            type="text"
-            onClick={() => handleNavClick(NAV_URLS.github)}
-            style={{ fontSize: '12px', fontWeight: '400' }}
-          >
-            {t("header.github")}
           </Button>
         </Tooltip>
         <Tooltip title={t("header.lock", "锁屏")}>
@@ -121,7 +109,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
             icon={<LockOutlined />}
             type="text"
             onClick={onLock}
-            style={{ fontSize: '12px', fontWeight: '400' }}
+            style={{ fontSize: '14px' }}
           />
         </Tooltip>
         <Tooltip title={t("header.logout", "退出")}>
@@ -132,8 +120,6 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
             style={{ fontSize: '12px', fontWeight: '400', color: '#ff4d4f' }}
           />
         </Tooltip>
-        <LanguageSwitcher />
-        <ThemeToggleButton />
       </Space>
     </AntHeader>
   );
