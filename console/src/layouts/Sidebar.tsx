@@ -19,7 +19,6 @@ import {
   MessageOutlined,
   ApiOutlined,
   HistoryOutlined,
-  ClockCircleOutlined,
   ScheduleOutlined,
   HeartOutlined,
   FolderOutlined,
@@ -31,128 +30,26 @@ import {
   ChromeOutlined,
   EnvironmentOutlined,
   BarChartOutlined,
+  AudioOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import api from "../api";
+import { clearAuthToken } from "../api/config";
+import { authApi } from "../api/modules/auth";
 import styles from "./index.module.less";
 import { useTheme } from "../contexts/ThemeContext";
+import {
+  PYPI_URL,
+  ONE_HOUR_MS,
+  DEFAULT_OPEN_KEYS,
+  KEY_TO_PATH,
+  UPDATE_MD,
+  isStableVersion,
+  compareVersions,
+  getReleaseNotesUrl,
+} from "./constants";
 
 const { Sider } = Layout;
-
-const PYPI_URL = "https://pypi.org/pypi/copaw/json";
-
-const DEFAULT_OPEN_KEYS = [
-  "chat-group",
-  "control-group",
-  "agent-group",
-  "settings-group",
-];
-
-const KEY_TO_PATH: Record<string, string> = {
-  chat: "/chat",
-  channels: "/channels",
-  sessions: "/sessions",
-  "cron-jobs": "/cron-jobs",
-  heartbeat: "/heartbeat",
-  skills: "/skills",
-  tools: "/tools",
-  mcp: "/mcp",
-  workspace: "/workspace",
-  agents: "/agents",
-  models: "/models",
-  environments: "/environments",
-  "agent-config": "/agent-config",
-  security: "/security",
-  "token-usage": "/token-usage",
-};
-
-const UPDATE_MD: Record<string, string> = {
-  zh: `### CoPaw如何更新
-
-要更�?CoPaw 到最新版本，可根据你的安装方式选择对应方法�?
-
-1. 如果你使用的是一键安装脚本，直接重新运行安装命令即可自动升级�?
-
-2. 如果你是通过 pip 安装，在终端中执行以下命令升级：
-
-\`\`\`
-pip install --upgrade copaw
-\`\`\`
-
-3. 如果你是从源码安装，进入项目目录并拉取最新代码后重新安装�?
-
-\`\`\`
-cd CoPaw
-git pull origin main
-pip install -e .
-\`\`\`
-
-4. 如果你使用的�?Docker，拉取最新镜像并重启容器�?
-
-\`\`\`
-docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 -v copaw-data:/app/working agentscope/copaw:latest
-\`\`\`
-
-升级后重启服�?copaw app。`,
-
-  ru: `### Как обновить CoPaw
-
-Чтобы обновить CoPaw, выберите способ в зависимости от типа установки:
-
-1. Если вы устанавливали через однострочный скрипт, повторно запустите установщик для обновления.
-
-2. Если устанавливали через pip, выполните:
-
-\`\`\`
-pip install --upgrade copaw
-\`\`\`
-
-3. Если устанавливали из исходников, получите последние изменения и переустановите:
-
-\`\`\`
-cd CoPaw
-git pull origin main
-pip install -e .
-\`\`\`
-
-4. Если используете Docker, загрузите новый образ и перезапустите контейнер:
-
-\`\`\`
-docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 -v copaw-data:/app/working agentscope/copaw:latest
-\`\`\`
-
-После обновления перезапустите сервис с помощью \`copaw app\`.`,
-
-  en: `### How to update CoPaw
-
-To update CoPaw, use the method matching your installation type:
-
-1. If installed via one-line script, re-run the installer to upgrade.
-
-2. If installed via pip, run:
-
-\`\`\`
-pip install --upgrade copaw
-\`\`\`
-
-3. If installed from source, pull the latest code and reinstall:
-
-\`\`\`
-cd CoPaw
-git pull origin main
-pip install -e .
-\`\`\`
-
-4. If using Docker, pull the latest image and restart the container:
-
-\`\`\`
-docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 -v copaw-data:/app/working agentscope/copaw:latest
-\`\`\`
-
-After upgrading, restart the service with \`copaw app\`.`,
-};
 
 interface SidebarProps {
   selectedKey: string;
@@ -194,14 +91,19 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   const [openKeys, setOpenKeys] = useState<string[]>(DEFAULT_OPEN_KEYS);
   const [version, setVersion] = useState<string>("");
   const [latestVersion, setLatestVersion] = useState<string>("");
-  const [allVersions, setAllVersions] = useState<string[]>([]);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [updateMarkdown, setUpdateMarkdown] = useState<string>("");
+  const [authEnabled, setAuthEnabled] = useState(false);
 
   useEffect(() => {
-    if (!collapsed) {
-      setOpenKeys(DEFAULT_OPEN_KEYS);
-    }
+    authApi
+      .getStatus()
+      .then((res) => setAuthEnabled(res.enabled))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!collapsed) setOpenKeys(DEFAULT_OPEN_KEYS);
   }, [collapsed]);
 
   useEffect(() => {
@@ -217,44 +119,49 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       .then((data) => {
         const releases = data?.releases ?? {};
 
-        // Filter out pre-release versions (alpha, beta, rc, dev, etc.)
-        const isStableVersion = (version: string) => {
-          // Pre-release indicators: a, alpha, b, beta, rc, c, candidate, dev, post
-          const preReleasePattern = /(a|alpha|b|beta|rc|c|candidate|dev)\d*/i;
-          // Also check for prerelease field in package info
-          return !preReleasePattern.test(version);
-        };
-
-        // Sort versions by upload_time (newest first), only include stable versions
         const versionsWithTime = Object.entries(releases)
-          .filter(([version]) => isStableVersion(version))
-          .map(([version, files]) => {
+          .filter(([v]) => isStableVersion(v))
+          .map(([v, files]) => {
             const fileList = files as Array<{ upload_time_iso_8601?: string }>;
-            // Get the latest upload time among all files for this version
             const latestUpload = fileList
               .map((f) => f.upload_time_iso_8601)
               .filter(Boolean)
               .sort()
               .pop();
-            return { version, uploadTime: latestUpload || "" };
+            return { version: v, uploadTime: latestUpload || "" };
           });
-        versionsWithTime.sort(
-          (a, b) =>
-            new Date(b.uploadTime).getTime() - new Date(a.uploadTime).getTime(),
-        );
+
+        versionsWithTime.sort((a, b) => {
+          const timeDiff =
+            new Date(b.uploadTime).getTime() - new Date(a.uploadTime).getTime();
+          return timeDiff !== 0
+            ? timeDiff
+            : compareVersions(b.version, a.version);
+        });
+
         const versions = versionsWithTime.map((v) => v.version);
         const latest = versions[0] ?? data?.info?.version ?? "";
-        setAllVersions(versions);
-        setLatestVersion(latest);
+
+        // Only notify once the latest version is older than 1 hour
+        const releaseTime = versionsWithTime.find((v) => v.version === latest)
+          ?.uploadTime;
+        const isOldEnough =
+          !!releaseTime &&
+          new Date(releaseTime) <= new Date(Date.now() - ONE_HOUR_MS);
+
+        if (isOldEnough) {
+          setLatestVersion(latest);
+        } else {
+          setLatestVersion("");
+        }
       })
       .catch(() => {});
   }, []);
 
   const hasUpdate =
-    version &&
-    allVersions.length > 0 &&
-    allVersions.includes(version) &&
-    version !== latestVersion;
+    !!version &&
+    !!latestVersion &&
+    compareVersions(latestVersion, version) > 0;
 
   const handleOpenUpdateModal = () => {
     setUpdateMarkdown("");
@@ -327,14 +234,16 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         { key: "agents", label: t("nav.agents"), icon: <RobotOutlined /> },
         { key: "models", label: t("nav.models"), icon: <ChromeOutlined /> },
         { key: "environments", label: t("nav.environments"), icon: <EnvironmentOutlined /> },
+        // { key: "security", label: t("nav.security"), icon: <SafetyOutlined /> },
         { key: "token-usage", label: t("nav.tokenUsage"), icon: <BarChartOutlined /> },
+        { key: "voice-transcription", label: t("nav.voiceTranscription"), icon: <AudioOutlined /> },
       ],
     },
   ];
 
   return (
     <>
-      {/* Dot grip �?fixed on sidebar right edge */}
+      {/* Dot grip — fixed on sidebar right edge */}
       <div
         className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ""}`}
         onClick={() => setCollapsed(!collapsed)}
@@ -347,106 +256,140 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
           </div>
         ))}
       </div>
-    <Sider
-      collapsed={collapsed}
-      onCollapse={setCollapsed}
-      width={220}
-      className={`${styles.sider}${isDark ? ` ${styles.siderDark}` : ""}`}
-    >
-      <div className={styles.siderTop}>
-        {!collapsed && (
-          <div className={styles.logoWrapper}>
-            <img
-              src={
-                isDark
-                  ? `${import.meta.env.BASE_URL}dark-logo.png`
-                  : `${import.meta.env.BASE_URL}logo.png`
-              }
-              alt="CoPaw"
-              className={styles.logoImg}
-            />
+      <Sider
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        width={220}
+        className={`${styles.sider}${isDark ? ` ${styles.siderDark}` : ""}`}
+      >
+        <div className={styles.siderTop}>
+          {!collapsed && (
+            <div className={styles.logoWrapper}>
+              <img
+                src={
+                  isDark
+                    ? `${import.meta.env.BASE_URL}dark-logo.png`
+                    : `${import.meta.env.BASE_URL}logo.png`
+                }
+                alt="CoPaw"
+                className={styles.logoImg}
+              />
+              {version && (
+                <Badge dot={!!hasUpdate} color="red" offset={[4, 18]}>
+                  <span
+                    className={`${styles.versionBadge} ${
+                      hasUpdate
+                        ? styles.versionBadgeClickable
+                        : styles.versionBadgeDefault
+                    }`}
+                    onClick={() => hasUpdate && handleOpenUpdateModal()}
+                  >
+                    v{version}
+                  </span>
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          openKeys={openKeys}
+          onOpenChange={(keys) => setOpenKeys(keys as string[])}
+          onClick={({ key }) => {
+            const path = KEY_TO_PATH[String(key)];
+            if (path) navigate(path);
+          }}
+          items={menuItems}
+          theme={isDark ? "dark" : "light"}
+        />
+
+        {authEnabled && (
+          <div style={{ padding: "12px 16px", borderTop: "1px solid #e6eeff" }}>
+            <Button
+              type="text"
+              icon={<LogoutOutlined />}
+              onClick={() => {
+                clearAuthToken();
+                window.location.href = "/login";
+              }}
+              block
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                justifyContent: collapsed ? "center" : "flex-start",
+                color: "#7a8ab8",
+              }}
+            >
+              {!collapsed && t("login.logout")}
+            </Button>
           </div>
         )}
 
-      </div>
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        openKeys={openKeys}
-        onOpenChange={(keys) => setOpenKeys(keys as string[])}
-        onClick={({ key }) => {
-          const path = KEY_TO_PATH[String(key)];
-          if (path) navigate(path);
-        }}
-        items={menuItems}
-        theme={isDark ? "dark" : "light"}
-      />
-
-      <Modal
-        open={updateModalOpen}
-        onCancel={() => setUpdateModalOpen(false)}
-        title={
-          <h3 className={styles.updateModalTitle}>
-            {t("sidebar.updateModal.title", { version: latestVersion })}
-          </h3>
-        }
-        width={680}
-        footer={[
-          <Button
-            key="releases"
-            type="primary"
-            onClick={() =>
-              window.open(
-                "https://github.com/agentscope-ai/CoPaw/releases",
-                "_blank",
-              )
-            }
-            className={styles.updateModalPrimaryBtn}
-          >
-            {t("sidebar.updateModal.viewReleases")}
-          </Button>,
-          <Button key="close" onClick={() => setUpdateModalOpen(false)}>
-            {t("sidebar.updateModal.close")}
-          </Button>,
-        ]}
-      >
-        <div className={styles.updateModalBody}>
-          {!updateMarkdown ? (
-            <div className={styles.updateModalSpinWrapper}>
-              <Spin />
-            </div>
-          ) : (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                code({ className, children, ...props }) {
-                  const isBlock =
-                    className?.startsWith("language-") ||
-                    String(children).includes("\n");
-                  if (isBlock) {
-                    return (
-                      <pre className={styles.codeBlock}>
-                        <CopyButton text={String(children)} />
-                        <code className={styles.codeBlockInner} {...props}>
-                          {children}
-                        </code>
-                      </pre>
-                    );
-                  }
-                  return (
-                    <code className={styles.codeInline} {...props}>
-                      {children}
-                    </code>
-                  );
-                },
-              }}
+        <Modal
+          open={updateModalOpen}
+          onCancel={() => setUpdateModalOpen(false)}
+          title={
+            <h3 className={styles.updateModalTitle}>
+              {t("sidebar.updateModal.title", { version: latestVersion })}
+            </h3>
+          }
+          width={680}
+          footer={[
+            <Button
+              key="releases"
+              type="primary"
+              onClick={() =>
+                window.open(getReleaseNotesUrl(i18n.language), "_blank")
+              }
+              className={styles.updateModalPrimaryBtn}
             >
-              {updateMarkdown}
-            </ReactMarkdown>
-          )}
-        </div>
-      </Modal>
-    </Sider>
+              {t("sidebar.updateModal.viewReleases")}
+            </Button>,
+            <Button key="close" onClick={() => setUpdateModalOpen(false)}>
+              {t("sidebar.updateModal.close")}
+            </Button>,
+          ]}
+        >
+          <div className={styles.updateModalBody}>
+            {!updateMarkdown ? (
+              <div className={styles.updateModalSpinWrapper}>
+                <Spin />
+              </div>
+            ) : (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ className, children, ...props }) {
+                    const isBlock =
+                      className?.startsWith("language-") ||
+                      String(children).includes("\n");
+                    if (isBlock) {
+                      return (
+                        <pre className={styles.codeBlock}>
+                          <CopyButton text={String(children)} />
+                          <code className={styles.codeBlockInner} {...props}>
+                            {children}
+                          </code>
+                        </pre>
+                      );
+                    }
+                    return (
+                      <code className={styles.codeInline} {...props}>
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {updateMarkdown}
+              </ReactMarkdown>
+            )}
+          </div>
+        </Modal>
+      </Sider>
     </>
   );
 }

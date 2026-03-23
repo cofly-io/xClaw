@@ -36,34 +36,10 @@ export const KEY_TO_PATH: Record<string, string> = {
   "voice-transcription": "/voice-transcription",
 };
 
-export const KEY_TO_LABEL: Record<string, string> = {
-  chat: "nav.chat",
-  channels: "nav.channels",
-  sessions: "nav.sessions",
-  "cron-jobs": "nav.cronJobs",
-  heartbeat: "nav.heartbeat",
-  skills: "nav.skills",
-  tools: "nav.tools",
-  mcp: "nav.mcp",
-  "agent-config": "nav.agentConfig",
-  workspace: "nav.workspace",
-  models: "nav.models",
-  environments: "nav.environments",
-  security: "nav.security",
-  "token-usage": "nav.tokenUsage",
-  agents: "nav.agents",
-};
-
 // ── URL helpers ───────────────────────────────────────────────────────────
 
 export const getWebsiteLang = (lang: string): string =>
   lang.startsWith("zh") ? "zh" : "en";
-
-export const getDocsUrl = (lang: string): string =>
-  `https://copaw.agentscope.io/docs/intro?lang=${getWebsiteLang(lang)}`;
-
-export const getFaqUrl = (lang: string): string =>
-  `https://copaw.agentscope.io/docs/faq?lang=${getWebsiteLang(lang)}`;
 
 export const getReleaseNotesUrl = (lang: string): string =>
   `https://copaw.agentscope.io/release-notes?lang=${getWebsiteLang(lang)}`;
@@ -71,17 +47,15 @@ export const getReleaseNotesUrl = (lang: string): string =>
 // ── Version helpers ────────────────────────────────────────────────────────
 
 // Filter out pre-release versions; post-releases are treated as stable.
-// PEP 440 pre-release suffixes: aN / bN / rcN (or cN) / devN.
 export const isStableVersion = (v: string): boolean =>
   !/(\d)(a|alpha|b|beta|rc|c|dev)\d*/i.test(v);
 
 // Compare two PEP 440 version strings. Returns >0 if a>b, <0 if a<b, 0 if equal.
-// .postN releases sort after their base version (e.g. 1.0.0.post1 > 1.0.0).
 export const compareVersions = (a: string, b: string): number => {
   const normalise = (v: string) =>
     v
       .replace(/\.post(\d+)/i, ".$1")
-      .split(/[.\-]/)
+      .split(/[.-]/)
       .map((seg) => (isNaN(Number(seg)) ? 0 : Number(seg)));
   const aN = normalise(a);
   const bN = normalise(b);
