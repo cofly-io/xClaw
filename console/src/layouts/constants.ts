@@ -36,10 +36,34 @@ export const KEY_TO_PATH: Record<string, string> = {
   "voice-transcription": "/voice-transcription",
 };
 
+export const KEY_TO_LABEL: Record<string, string> = {
+  chat: "nav.chat",
+  channels: "nav.channels",
+  sessions: "nav.sessions",
+  "cron-jobs": "nav.cronJobs",
+  heartbeat: "nav.heartbeat",
+  skills: "nav.skills",
+  tools: "nav.tools",
+  mcp: "nav.mcp",
+  "agent-config": "nav.agentConfig",
+  workspace: "nav.workspace",
+  models: "nav.models",
+  environments: "nav.environments",
+  security: "nav.security",
+  "token-usage": "nav.tokenUsage",
+  agents: "nav.agents",
+};
+
 // ── URL helpers ───────────────────────────────────────────────────────────
 
 export const getWebsiteLang = (lang: string): string =>
   lang.startsWith("zh") ? "zh" : "en";
+
+export const getDocsUrl = (lang: string): string =>
+  `https://copaw.agentscope.io/docs/intro?lang=${getWebsiteLang(lang)}`;
+
+export const getFaqUrl = (lang: string): string =>
+  `https://copaw.agentscope.io/docs/faq?lang=${getWebsiteLang(lang)}`;
 
 export const getReleaseNotesUrl = (lang: string): string =>
   `https://copaw.agentscope.io/release-notes?lang=${getWebsiteLang(lang)}`;

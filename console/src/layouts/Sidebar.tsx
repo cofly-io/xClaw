@@ -6,6 +6,9 @@ import {
   Modal,
   Spin,
   Tooltip,
+  Input,
+  Form,
+  message,
   type MenuProps,
 } from "antd";
 import { useState, useEffect, useCallback } from "react";
@@ -14,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+<<<<<<< HEAD
   CopyOutlined,
   CheckOutlined,
   MessageOutlined,
@@ -33,6 +37,35 @@ import {
   AudioOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
+=======
+  MessageSquare,
+  Radio,
+  Zap,
+  MessageCircle,
+  Wifi,
+  UsersRound,
+  CalendarClock,
+  Activity,
+  Sparkles,
+  Briefcase,
+  Cpu,
+  Box,
+  Globe,
+  Settings,
+  Shield,
+  Plug,
+  Wrench,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Copy,
+  Check,
+  BarChart3,
+  Mic,
+  Bot,
+  LogOut,
+  UserCog,
+} from "lucide-react";
+>>>>>>> upstream/main
 import api from "../api";
 import { clearAuthToken } from "../api/config";
 import { authApi } from "../api/modules/auth";
@@ -94,6 +127,9 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [updateMarkdown, setUpdateMarkdown] = useState<string>("");
   const [authEnabled, setAuthEnabled] = useState(false);
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [accountLoading, setAccountLoading] = useState(false);
+  const [accountForm] = Form.useForm();
 
   useEffect(() => {
     authApi
@@ -190,6 +226,67 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       });
   };
 
+<<<<<<< HEAD
+=======
+  // ── Menu items ────────────────────────────────────────────────────────────
+
+  const handleUpdateProfile = async (values: {
+    currentPassword: string;
+    newUsername?: string;
+    newPassword?: string;
+  }) => {
+    const trimmedUsername = values.newUsername?.trim() || undefined;
+    const trimmedPassword = values.newPassword?.trim() || undefined;
+
+    // User typed spaces only in password field
+    if (values.newPassword && !trimmedPassword) {
+      message.error(t("account.passwordEmpty"));
+      return;
+    }
+
+    // User typed spaces only in username field
+    if (values.newUsername && !trimmedUsername) {
+      message.error(t("account.usernameEmpty"));
+      return;
+    }
+
+    if (!trimmedUsername && !trimmedPassword) {
+      message.warning(t("account.nothingToUpdate"));
+      return;
+    }
+
+    setAccountLoading(true);
+    try {
+      await authApi.updateProfile(
+        values.currentPassword,
+        trimmedUsername,
+        trimmedPassword,
+      );
+      message.success(t("account.updateSuccess"));
+      setAccountModalOpen(false);
+      accountForm.resetFields();
+      // Force re-login with new credentials
+      clearAuthToken();
+      window.location.href = "/login";
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : "";
+      let msg = t("account.updateFailed");
+      if (raw.includes("password is incorrect")) {
+        msg = t("account.wrongPassword");
+      } else if (raw.includes("Nothing to update")) {
+        msg = t("account.nothingToUpdate");
+      } else if (raw.includes("cannot be empty")) {
+        msg = t("account.nothingToUpdate");
+      } else if (raw) {
+        msg = raw;
+      }
+      message.error(msg);
+    } finally {
+      setAccountLoading(false);
+    }
+  };
+
+>>>>>>> upstream/main
   const menuItems: MenuProps["items"] = [
     {
       key: "chat-group",
@@ -242,11 +339,201 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   ];
 
   return (
+<<<<<<< HEAD
     <>
       {/* Dot grip — fixed on sidebar right edge */}
       <div
         className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ""}`}
         onClick={() => setCollapsed(!collapsed)}
+=======
+    <Sider
+      collapsed={collapsed}
+      onCollapse={setCollapsed}
+      width={275}
+      className={`${styles.sider}${isDark ? ` ${styles.siderDark}` : ""}`}
+    >
+      <div className={styles.siderTop}>
+        {!collapsed && (
+          <div className={styles.logoWrapper}>
+            <img
+              src={
+                isDark
+                  ? `${import.meta.env.BASE_URL}dark-logo.png`
+                  : `${import.meta.env.BASE_URL}logo.png`
+              }
+              alt="CoPaw"
+              className={styles.logoImg}
+            />
+            {version && (
+              <Badge dot={!!hasUpdate} color="red" offset={[4, 18]}>
+                <span
+                  className={`${styles.versionBadge} ${
+                    hasUpdate
+                      ? styles.versionBadgeClickable
+                      : styles.versionBadgeDefault
+                  }`}
+                  onClick={() => hasUpdate && handleOpenUpdateModal()}
+                >
+                  v{version}
+                </span>
+              </Badge>
+            )}
+          </div>
+        )}
+        <Button
+          type="text"
+          icon={
+            collapsed ? (
+              <PanelLeftOpen size={20} />
+            ) : (
+              <PanelLeftClose size={20} />
+            )
+          }
+          onClick={() => setCollapsed(!collapsed)}
+          className={styles.collapseBtn}
+        />
+      </div>
+
+      <Menu
+        mode="inline"
+        selectedKeys={[selectedKey]}
+        openKeys={openKeys}
+        onOpenChange={(keys) => setOpenKeys(keys as string[])}
+        onClick={({ key }) => {
+          const path = KEY_TO_PATH[String(key)];
+          if (path) navigate(path);
+        }}
+        items={menuItems}
+        theme={isDark ? "dark" : "light"}
+      />
+
+      {authEnabled && (
+        <div className={styles.authActions}>
+          <Button
+            type="text"
+            icon={<UserCog size={16} />}
+            onClick={() => {
+              accountForm.resetFields();
+              setAccountModalOpen(true);
+            }}
+            block
+            className={`${styles.authBtn} ${
+              collapsed ? styles.authBtnCollapsed : ""
+            }`}
+          >
+            {!collapsed && t("account.title")}
+          </Button>
+          <Button
+            type="text"
+            icon={<LogOut size={16} />}
+            onClick={() => {
+              clearAuthToken();
+              window.location.href = "/login";
+            }}
+            block
+            className={`${styles.authBtn} ${
+              collapsed ? styles.authBtnCollapsed : ""
+            }`}
+          >
+            {!collapsed && t("login.logout")}
+          </Button>
+        </div>
+      )}
+
+      <Modal
+        open={accountModalOpen}
+        onCancel={() => setAccountModalOpen(false)}
+        title={t("account.title")}
+        footer={null}
+        destroyOnHidden
+        centered
+      >
+        <Form
+          form={accountForm}
+          layout="vertical"
+          onFinish={handleUpdateProfile}
+        >
+          <Form.Item
+            name="currentPassword"
+            label={t("account.currentPassword")}
+            rules={[
+              { required: true, message: t("account.currentPasswordRequired") },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item name="newUsername" label={t("account.newUsername")}>
+            <Input placeholder={t("account.newUsernamePlaceholder")} />
+          </Form.Item>
+          <Form.Item name="newPassword" label={t("account.newPassword")}>
+            <Input.Password placeholder={t("account.newPasswordPlaceholder")} />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label={t("account.confirmPassword")}
+            dependencies={["newPassword"]}
+            rules={[
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value && !getFieldValue("newPassword")) {
+                    return Promise.resolve();
+                  }
+                  if (value === getFieldValue("newPassword")) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error(t("account.passwordMismatch")),
+                  );
+                },
+              }),
+            ]}
+          >
+            <Input.Password
+              placeholder={t("account.confirmPasswordPlaceholder")}
+            />
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={accountLoading}
+              block
+            >
+              {t("account.save")}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={updateModalOpen}
+        onCancel={() => setUpdateModalOpen(false)}
+        title={
+          <h3 className={styles.updateModalTitle}>
+            {t("sidebar.updateModal.title", { version: latestVersion })}
+          </h3>
+        }
+        width={680}
+        footer={[
+          <Button
+            key="releases"
+            type="primary"
+            onClick={() => {
+              const websiteLang = i18n.language?.startsWith("zh") ? "zh" : "en";
+              window.open(
+                `https://copaw.agentscope.io/release-notes?lang=${websiteLang}`,
+                "_blank",
+              );
+            }}
+            className={styles.updateModalPrimaryBtn}
+          >
+            {t("sidebar.updateModal.viewReleases")}
+          </Button>,
+          <Button key="close" onClick={() => setUpdateModalOpen(false)}>
+            {t("sidebar.updateModal.close")}
+          </Button>,
+        ]}
+>>>>>>> upstream/main
       >
         {[0, 1, 2, 3, 4, 5].map((col) => (
           <div key={col} className={styles.dotRow}>

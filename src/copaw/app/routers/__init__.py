@@ -19,7 +19,7 @@ from ..runner.api import router as runner_router
 from .console import router as console_router
 from .token_usage import router as token_usage_router
 from .auth import router as auth_router
-from .supos_auth import router as supos_auth_router
+from .messages import router as messages_router
 
 router = APIRouter()
 
@@ -30,6 +30,7 @@ router.include_router(console_router)
 router.include_router(cron_router)
 router.include_router(local_models_router)
 router.include_router(mcp_router)
+router.include_router(messages_router)
 router.include_router(ollama_models_router)
 router.include_router(providers_router)
 router.include_router(runner_router)
@@ -40,7 +41,6 @@ router.include_router(workspace_router)
 router.include_router(envs_router)
 router.include_router(token_usage_router)
 router.include_router(auth_router)
-router.include_router(supos_auth_router)
 
 
 def create_agent_scoped_router() -> APIRouter:
