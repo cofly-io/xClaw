@@ -21,6 +21,7 @@ from .token_usage import router as token_usage_router
 from .auth import router as auth_router
 from .messages import router as messages_router
 from .files import router as files_router
+from .supos_auth import router as supos_auth_router
 
 router = APIRouter()
 
@@ -43,6 +44,7 @@ router.include_router(envs_router)
 router.include_router(token_usage_router)
 router.include_router(auth_router)
 router.include_router(files_router)
+router.include_router(supos_auth_router)
 
 
 def create_agent_scoped_router() -> APIRouter:
