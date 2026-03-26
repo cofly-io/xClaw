@@ -1,15 +1,6 @@
 import { Layout, Space } from "antd";
-import LanguageSwitcher from "../components/LanguageSwitcher";
-import ThemeToggleButton from "../components/ThemeToggleButton";
 import { useTranslation } from "react-i18next";
-import {
-  FileTextOutlined,
-  BookOutlined,
-  QuestionCircleOutlined,
-  GithubOutlined,
-  LockOutlined,
-  LogoutOutlined,
-} from "@ant-design/icons";
+import { FileText, Book, HelpCircle, Lock, LogOut } from "lucide-react";
 import { Button, Tooltip } from "@agentscope-ai/design";
 import { useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
@@ -76,7 +67,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
       <Space size="middle">
         <Tooltip title={t("header.changelog")}>
           <Button
-            icon={<FileTextOutlined />}
+            icon={<FileText />}
             type="text"
             style={{ fontSize: '14px' }}
             onClick={() => handleNavClick(NAV_URLS.changelog)}
@@ -86,7 +77,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
         </Tooltip>
         <Tooltip title={t("header.docs")}>
           <Button
-            icon={<BookOutlined />}
+            icon={<Book />}
             type="text"
             style={{ fontSize: '14px' }}
             onClick={() => handleNavClick(NAV_URLS.docs)}
@@ -96,7 +87,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
         </Tooltip>
         <Tooltip title={t("header.faq")}>
           <Button
-            icon={<QuestionCircleOutlined />}
+            icon={<HelpCircle size={14} />}
             type="text"
             style={{ fontSize: '14px' }}
             onClick={() => handleNavClick(NAV_URLS.faq)}
@@ -106,7 +97,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
         </Tooltip>
         <Tooltip title={t("header.lock", "锁屏")}>
           <Button
-            icon={<LockOutlined />}
+            icon={<Lock />}
             type="text"
             onClick={onLock}
             style={{ fontSize: '14px' }}
@@ -114,7 +105,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
         </Tooltip>
         <Tooltip title={t("header.logout", "退出")}>
           <Button
-            icon={<LogoutOutlined />}
+            icon={<LogOut />}
             type="text"
             onClick={handleLogout}
             style={{ fontSize: '12px', fontWeight: '400', color: '#ff4d4f' }}

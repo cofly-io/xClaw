@@ -1,13 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Dropdown, message, Spin } from "antd";
-import {
-  DownOutlined,
-  CheckOutlined,
-  LoadingOutlined,
-  RightOutlined,
-} from "@ant-design/icons";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ChevronDown, Check, Loader2, ChevronRight } from "lucide-react";
 import { providerApi } from "../../../api/modules/provider";
 import type { ProviderInfo, ActiveModelsInfo } from "../../../api/types";
 import styles from "./index.module.less";
@@ -163,7 +158,7 @@ export default function ModelSelector() {
               ].join(" ")}
             >
               <span className={styles.providerName}>{provider.name}</span>
-              <RightOutlined className={styles.providerArrow} />
+              <ChevronRight className={styles.providerArrow} />
 
               {/* Level-2 submenu — shown on parent hover via CSS */}
               <div className={`${styles.submenu} modelSubmenu`}>
@@ -186,7 +181,7 @@ export default function ModelSelector() {
                         {model.name || model.id}
                       </span>
                       {isActive && (
-                        <CheckOutlined className={styles.checkIcon} />
+                        <Check className={styles.checkIcon} />
                       )}
                     </div>
                   );
@@ -211,10 +206,10 @@ export default function ModelSelector() {
         className={[styles.trigger, open ? styles.triggerActive : ""].join(" ")}
       >
         {saving && (
-          <LoadingOutlined style={{ fontSize: 11, color: "#615ced" }} />
+          <Loader2 style={{ fontSize: 11, color: "#615ced", animation: "spin 1s linear infinite" }} />
         )}
         <span className={styles.triggerName}>{activeModelName}</span>
-        <DownOutlined
+        <ChevronDown
           className={[
             styles.triggerArrow,
             open ? styles.triggerArrowOpen : "",
