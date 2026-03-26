@@ -65,6 +65,7 @@ class DingTalkConfig(BaseChannelConfig):
     card_template_key: str = "content"
     robot_code: str = ""
     media_dir: Optional[str] = None
+    card_auto_layout: bool = False
 
 
 class FeishuConfig(BaseChannelConfig):
@@ -261,7 +262,7 @@ class AgentsRunningConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     max_iters: int = Field(
-        default=50,
+        default=100,
         ge=1,
         description=(
             "Maximum number of reasoning-acting iterations for ReAct agent"
@@ -431,10 +432,16 @@ class AgentProfileRef(BaseModel):
     Full agent configuration is stored in workspace/agent.json.
     """
 
+    model_config = ConfigDict(extra="ignore")
+
     id: str = Field(..., description="Unique agent ID")
     workspace_dir: str = Field(
         ...,
         description="Path to agent's workspace directory",
+    )
+    enabled: bool = Field(
+        default=True,
+        description="Whether agent is enabled (controls instance loading)",
     )
 
 
@@ -771,6 +778,28 @@ class ToolsConfig(BaseModel):
             if name not in self.builtin_tools:
                 self.builtin_tools[name] = tc
         return self
+
+
+def build_qa_agent_tools_config() -> ToolsConfig:
+    """Tools preset for builtin ``default_qa_agent`` (first workspace init).
+
+    Only these are enabled: execute_shell_command, read_file, edit_file,
+    write_file, view_image. All other built-ins are disabled.
+    """
+    allow = frozenset(
+        {
+            "execute_shell_command",
+            "read_file",
+            "write_file",
+            "edit_file",
+            "view_image",
+        },
+    )
+    builtin_tools = {
+        name: tc.model_copy(update={"enabled": name in allow})
+        for name, tc in _default_builtin_tools().items()
+    }
+    return ToolsConfig(builtin_tools=builtin_tools)
 
 
 class ToolGuardRuleConfig(BaseModel):

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronDown, Check, Loader2, ChevronRight } from "lucide-react";
 import { providerApi } from "../../../api/modules/provider";
 import type { ProviderInfo, ActiveModelsInfo } from "../../../api/types";
+import { useAgentStore } from "../../../stores/agentStore";
 import styles from "./index.module.less";
 
 interface EligibleProvider {
@@ -24,13 +25,17 @@ export default function ModelSelector() {
   const [open, setOpen] = useState(false);
   const savingRef = useRef(false);
   const location = useLocation();
+  const { selectedAgent } = useAgentStore();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [provData, activeData] = await Promise.all([
         providerApi.listProviders(),
-        providerApi.getActiveModels(),
+        providerApi.getActiveModels({
+          scope: "effective",
+          agent_id: selectedAgent,
+        }),
       ]);
       if (Array.isArray(provData)) setProviders(provData);
       if (activeData) setActiveModels(activeData);
@@ -39,7 +44,7 @@ export default function ModelSelector() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedAgent]);
 
   useEffect(() => {
     fetchData();
@@ -54,13 +59,16 @@ export default function ModelSelector() {
     const comingToChat = curr.startsWith("/chat") && !prev.startsWith("/chat");
     if (comingToChat) {
       providerApi
-        .getActiveModels()
+        .getActiveModels({
+          scope: "effective",
+          agent_id: selectedAgent,
+        })
         .then((activeData) => {
           if (activeData) setActiveModels(activeData);
         })
         .catch(() => {});
     }
-  }, [location.pathname]);
+  }, [location.pathname, selectedAgent]);
 
   // Eligible providers: configured + has models
   const eligibleProviders: EligibleProvider[] = providers
@@ -96,18 +104,24 @@ export default function ModelSelector() {
     return activeModelId;
   })();
 
-  const handleOpenChange = useCallback(async (next: boolean) => {
-    setOpen(next);
-    if (next) {
-      // Re-fetch active model every time the dropdown opens
-      try {
-        const activeData = await providerApi.getActiveModels();
-        if (activeData) setActiveModels(activeData);
-      } catch {
-        // ignore
+  const handleOpenChange = useCallback(
+    async (next: boolean) => {
+      setOpen(next);
+      if (next) {
+        // Re-fetch active model every time the dropdown opens
+        try {
+          const activeData = await providerApi.getActiveModels({
+            scope: "effective",
+            agent_id: selectedAgent,
+          });
+          if (activeData) setActiveModels(activeData);
+        } catch {
+          // ignore
+        }
       }
-    }
-  }, []);
+    },
+    [selectedAgent],
+  );
 
   const handleSelect = async (providerId: string, modelId: string) => {
     if (savingRef.current) return;
@@ -122,10 +136,14 @@ export default function ModelSelector() {
       await providerApi.setActiveLlm({
         provider_id: providerId,
         model: modelId,
+        scope: "agent",
+        agent_id: selectedAgent,
       });
       setActiveModels({
         active_llm: { provider_id: providerId, model: modelId },
       });
+      // Notify ChatPage to refresh multimodal capabilities
+      window.dispatchEvent(new CustomEvent("model-switched"));
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : t("modelSelector.switchFailed");
