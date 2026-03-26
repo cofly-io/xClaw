@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "preview:prod": "vite preview --mode production",
-    "preview:test": "vite preview --mode test"
+    "preview:test": "vite preview --mode test",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@agentscope-ai/chat": "^1.1.54",
@@ -50,6 +51,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "less": "^4.5.1",
+    "patch-package": "^8.0.1",
     "prettier": "3.0.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",

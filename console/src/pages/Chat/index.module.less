@@ -28,43 +28,64 @@
   min-height: 0;
   height: 100%;
   width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
+}
 
-  /* Custom scrollbar */
-  &::-webkit-scrollbar {
-    width: 8px;
+/* Welcome greeting text */
+:global(.xClaw-welcome-prompts-greeting) {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+/* Welcome description text */
+:global(.xClaw-welcome-prompts-description) {
+  font-size: 13px !important;
+  color: #8a9ac8;
+  margin-bottom: 12px;
+}
+
+/* Welcome prompts navigation - frosted glass effect */
+:global(.xClaw-welcome-prompts-prompts) {
+  width: 500px !important;  
+  gap:12px !important;
+}
+:global(.xClaw-welcome-prompts-prompt) {
+  height: 45px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  background: linear-gradient(135deg, #60a5fa20 0%, #a78bfa20 50%, #f472b620 100%) !important;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.5s ease;
   }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  &:hover {
+    background: linear-gradient(135deg, #60a5fa50 0%, #a78bfa50 50%, #f472b650 100%) !important;
+    box-shadow: 0 0 20px rgba(167, 139, 250, 0.5), 0 0 40px rgba(96, 165, 250, 0.3);
 
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.3);
+    &::before {
+      left: 100%;
     }
-  }
-
-  /* Dark mode scrollbar */
-  :global(.dark) & {
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
-    }
-  }
-
-  /* Firefox scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-
-  :global(.dark) & {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   }
 }
+

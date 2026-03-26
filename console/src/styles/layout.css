@@ -796,8 +796,8 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
 .xClaw-conversations-group-title .ant-typography,
 .xClaw-conversations-group-title .ant-typography span,
 .xClaw-conversations-group-title span {
-  font-size: 10px !important;
-  color: #b0b8d0 !important;
+  font-size: 11px !important;
+  color: #a8adbd !important;
   font-weight: 500 !important;
   letter-spacing: 0.3px !important;
 }
@@ -902,3 +902,5 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
 
 
 
+
+/* ModelSelector — same row as speech/zoom, after zoom button */

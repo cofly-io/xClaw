@@ -17,6 +17,7 @@ import { buildAuthHeaders } from "../../api/authHeaders";
 import { providerApi } from "../../api/modules/provider";
 import type { ProviderInfo, ModelInfo } from "../../api/types";
 import ModelSelector from "./ModelSelector";
+import SessionList from "./SessionList";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAgentStore } from "../../stores/agentStore";
 import { useChatAnywhereInput } from "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Context/ChatAnywhereInputContext.js";
@@ -482,26 +483,19 @@ export default function ChatPage() {
       theme: {
         ...defaultConfig.theme,
         darkMode: isDark,
-        leftHeader: {
-          ...defaultConfig.theme.leftHeader,
-        },
-        rightHeader: (
-          <>
-            <RuntimeLoadingBridge bridgeRef={runtimeLoadingBridgeRef} />
-            <ModelSelector />
-          </>
-        ),
+        leftHeader: <SessionList />,
       },
       welcome: {
         ...i18nConfig.welcome,
         avatar: isDark
-          ? `${import.meta.env.BASE_URL}copaw-dark.png`
-          : `${import.meta.env.BASE_URL}copaw-symbol.svg`,
+          ? `${import.meta.env.BASE_URL}dark-logo.png`
+          : `${import.meta.env.BASE_URL}x-symbol.svg`,
       },
       sender: {
         ...(i18nConfig as any)?.sender,
         beforeSubmit: handleBeforeSubmit,
         allowSpeech: true,
+        prefix: <span style={{ order: 999 }}><ModelSelector /></span>,
         attachments: {
           trigger: function (props: any) {
             const tooltipKey = multimodalCaps.supportsMultimodal

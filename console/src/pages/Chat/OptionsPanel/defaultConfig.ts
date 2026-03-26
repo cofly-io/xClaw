@@ -46,7 +46,7 @@ export function getDefaultConfig(t: TFunction) {
       ...defaultConfig.welcome,
       greeting: t("chat.greeting"),
       description: t("chat.description"),
-      prompts: [{ value: t("chat.prompt1") }, { value: t("chat.prompt2") }],
+      prompts: [{ value: t("chat.prompt1") }, { value: t("chat.prompt2") }, { value: t("chat.prompt3") }],
     },
   };
 }

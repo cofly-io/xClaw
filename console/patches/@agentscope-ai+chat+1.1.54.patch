@@ -1,0 +1,37 @@
+diff --git a/node_modules/@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Sessions/index.js b/node_modules/@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Sessions/index.js
+index cf010f1..08fa8d6 100644
+--- a/node_modules/@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Sessions/index.js
++++ b/node_modules/@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Sessions/index.js
+@@ -128,9 +128,11 @@ export function InnerList(props) {
+     toggleCollapsed = _useContext4.toggleCollapsed;
+   var items = useMemo(function () {
+     return sessions.map(function (session) {
++      console.log('[xclaw-debug] session:', session.id, 'group:', session.group);
+       return {
+         key: session.id,
+-        label: session.name || 'New Chat'
++        label: session.name || 'New Chat',
++        group: session.group
+       };
+     });
+   }, [sessions]);
+@@ -138,6 +140,7 @@ export function InnerList(props) {
+     className: "".concat(prefixCls, "-list"),
+     style: props.style,
+     children: /*#__PURE__*/_jsx(HistoryPanel, {
++      groupable: true,
+       items: items,
+       menu: [{
+         key: 'delete',
+diff --git a/node_modules/@agentscope-ai/chat/lib/ChatAnywhere/SessionList/index.js b/node_modules/@agentscope-ai/chat/lib/ChatAnywhere/SessionList/index.js
+index 3f65ca9..066056c 100644
+--- a/node_modules/@agentscope-ai/chat/lib/ChatAnywhere/SessionList/index.js
++++ b/node_modules/@agentscope-ai/chat/lib/ChatAnywhere/SessionList/index.js
+@@ -53,6 +53,7 @@ export function InnerSession() {
+   return /*#__PURE__*/_jsx("div", {
+     className: "".concat(prefixCls, "-session"),
+     children: /*#__PURE__*/_jsx(Conversations, {
++      groupable: true,
+       menu: [{
+         key: 'delete',
+         icon: /*#__PURE__*/_jsx(SparkDeleteLine, {}),

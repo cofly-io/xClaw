@@ -10,6 +10,20 @@ import api, {
   type Message,
 } from "../../../api";
 import { chatApi } from "../../../api/modules/chat";
+import i18n from "../../../i18n";
+
+// ---------------------------------------------------------------------------
+// Session date grouping
+// ---------------------------------------------------------------------------
+
+function getSessionGroup(updateAt: number): string {
+  const now = Date.now();
+  const diffDays = (now - updateAt) / (1000 * 60 * 60 * 24);
+  if (diffDays < 1) return i18n.t("chat.group.today");
+  if (diffDays < 3) return i18n.t("chat.group.last3Days");
+  if (diffDays < 7) return i18n.t("chat.group.last7Days");
+  return i18n.t("chat.group.monthAgo");
+}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -243,18 +257,21 @@ const convertMessages = (
   return result;
 };
 
-const chatSpecToSession = (chat: ChatSpec): ExtendedSession =>
-  ({
+const chatSpecToSession = (chat: ChatSpec): ExtendedSession => {
+  const updateAt = chat.updated_at ? new Date(chat.updated_at).getTime() : Date.now();
+  return {
     id: chat.id,
     name: (chat as ChatSpec & { name?: string }).name || DEFAULT_SESSION_NAME,
-    updateAt: chat.updated_at ? new Date(chat.updated_at).getTime() : Date.now(),
+    updateAt,
+    group: getSessionGroup(updateAt),
     sessionId: chat.session_id,
     userId: chat.user_id,
     channel: chat.channel,
     messages: [],
     meta: chat.meta || {},
     status: chat.status ?? "idle",
-  }) as ExtendedSession;
+  } as ExtendedSession;
+};
 
 /** Returns true when id is a pure numeric local timestamp (not a backend UUID). */
 const isLocalTimestamp = (id: string): boolean => /^\d+$/.test(id);
@@ -328,7 +345,7 @@ function clearPendingUserMessage(sessionId: string): void {
 // ---------------------------------------------------------------------------
 
 class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
-  private sessionList: IAgentScopeRuntimeWebUISession[] = [];
+  sessionList: IAgentScopeRuntimeWebUISession[] = [];
 
   /**
    * Cache the latest user message for a chat so it can be patched into
@@ -488,6 +505,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
             : s;
         });
 
+        this.notifySubscribers();
         return [...this.sessionList];
       } finally {
         this.sessionListRequest = null;
@@ -652,6 +670,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
       });
     }
 
+    this.notifySubscribers();
     return [...this.sessionList];
   }
 
@@ -690,7 +709,23 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     const resolvedId = existing?.realId ?? sessionId;
     this.onSessionRemoved?.(resolvedId);
 
+    this.notifySubscribers();
     return [...this.sessionList];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Subscriber mechanism for external React components
+  // ---------------------------------------------------------------------------
+
+  private subscribers: Set<() => void> = new Set();
+
+  subscribe(fn: () => void): () => void {
+    this.subscribers.add(fn);
+    return () => this.subscribers.delete(fn);
+  }
+
+  private notifySubscribers(): void {
+    this.subscribers.forEach((fn) => fn());
   }
 }
 
