@@ -4,11 +4,11 @@
 **OpenAPI**: 3.0.0
 
 ---
-
+# basePath：/os/open-api/file-server
 
 ## 文件服务接口
 
-### GET /os/open-api/file-server/v2/groups/{groupId}/files/{fileUuid}
+### GET /v2/groups/{groupId}/files/{fileUuid}
 
 **下载文件**
 
@@ -36,7 +36,7 @@
 
 ---
 
-### DELETE /os/open-api/file-server/v2/groups/{groupId}/files/{fileUuid}
+### DELETE /v2/groups/{groupId}/files/{fileUuid}
 
 **删除文件**
 
@@ -65,7 +65,7 @@
 
 ---
 
-### POST /os/open-api/file-server/v2/groups/{groupId}/files
+### POST /v2/groups/{groupId}/files
 
 **上传文件**
 
@@ -102,7 +102,7 @@
 
 ---
 
-### GET /os/open-api/file-server/v2/groups/{groupId}/files
+### GET /v2/groups/{groupId}/files
 
 **查询分组下文件列表**
 

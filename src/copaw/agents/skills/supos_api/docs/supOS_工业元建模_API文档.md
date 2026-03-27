@@ -4,11 +4,11 @@
 **OpenAPI**: 3.0.1
 
 ---
-
+# basePath：/os/open-api/uns/
 
 ## 文件夹/文件管理
 
-### GET /os/open-api/uns/folder/schema
+### GET /folder/schema
 
 **查询文件夹schema 元数据结构**
 
@@ -23,7 +23,7 @@
 
 ---
 
-### GET /os/open-api/uns/file/schema
+### GET /file/schema
 
 **查询文件schema 元数据结构**
 
@@ -38,7 +38,7 @@
 
 ---
 
-### GET /os/open-api/uns/folder/{alias}
+### GET /folder/{alias}
 
 **别名查询文件夹详情**
 
@@ -103,7 +103,7 @@
 
 ---
 
-### GET /os/open-api/uns/file/{alias}
+### GET /file/{alias}
 
 **别名查询文件详情**
 
@@ -178,7 +178,7 @@
 
 ---
 
-### GET /os/open-api/uns/folder/byPath
+### GET /folder/byPath
 
 **路径查询文件夹详情**
 
@@ -243,7 +243,7 @@
 
 ---
 
-### GET /os/open-api/uns/file/byPath
+### GET /file/byPath
 
 **路径查询文件详情**
 
@@ -318,7 +318,7 @@
 
 ---
 
-### POST /os/open-api/uns/file
+### POST /file
 
 **创建文件**
 
@@ -385,7 +385,7 @@
 
 ---
 
-### POST /os/open-api/uns/folder
+### POST /folder
 
 **创建文件夹**
 
@@ -436,7 +436,7 @@
 
 ---
 
-### PUT /os/open-api/uns/file/detail/{alias}
+### PUT /file/detail/{alias}
 
 **修改文件**
 
@@ -500,7 +500,7 @@
 
 ---
 
-### PUT /os/open-api/uns/folder/detail/{alias}
+### PUT /folder/detail/{alias}
 
 **修改文件夹**
 
@@ -554,7 +554,7 @@
 
 ---
 
-### POST /os/open-api/uns/condition/tree
+### POST /condition/tree
 
 **分页查询树结构**
 
@@ -610,7 +610,7 @@
 
 ---
 
-### POST /os/open-api/uns/condition/pageList
+### POST /condition/pageList
 
 **分页查询文件列表**
 
@@ -668,7 +668,7 @@
 
 ---
 
-### POST /os/open-api/uns/file/definition/batch
+### POST /file/definition/batch
 
 **批量查询文件属性信息**
 
@@ -721,7 +721,7 @@
 
 ---
 
-### GET /os/open-api/uns/file/definition
+### GET /file/definition
 
 **根据关键字查询文件属性信息**
 
@@ -792,7 +792,7 @@
 
 ---
 
-### DELETE /os/open-api/uns/batch/alias
+### DELETE /batch/alias
 
 **批量删除文件夹/文件**
 
@@ -833,7 +833,7 @@
 
 ## 模板管理
 
-### GET /os/open-api/uns/template/{alias}
+### GET /template/{alias}
 
 **查询模板详情**
 
@@ -907,7 +907,7 @@
 
 ---
 
-### PUT /os/open-api/uns/template/{alias}
+### PUT /template/{alias}
 
 **修改模板**
 
@@ -957,7 +957,7 @@
 
 ---
 
-### DELETE /os/open-api/uns/template/{alias}
+### DELETE /template/{alias}
 
 **删除模板**
 
@@ -995,7 +995,7 @@
 
 ---
 
-### GET /os/open-api/uns/template/schema
+### GET /template/schema
 
 **查询模版schema 元数据结构**
 
@@ -1010,7 +1010,7 @@
 
 ---
 
-### GET /os/open-api/uns/template
+### GET /template
 
 **查询模板列表**
 
@@ -1056,7 +1056,7 @@
 
 ---
 
-### POST /os/open-api/uns/template
+### POST /template
 
 **新增模板**
 
@@ -1104,7 +1104,7 @@
 
 ## 标签管理
 
-### GET /os/open-api/uns/label/schema
+### GET /label/schema
 
 **查询标签schema 元数据结构**
 
@@ -1119,7 +1119,7 @@
 
 ---
 
-### GET /os/open-api/uns/label
+### GET /label
 
 **查询标签列表**
 
@@ -1167,7 +1167,7 @@
 
 ---
 
-### POST /os/open-api/uns/label
+### POST /label
 
 **创建标签**
 
@@ -1207,7 +1207,7 @@
 
 ---
 
-### GET /os/open-api/uns/label/{id}
+### GET /label/{id}
 
 **查询标签详情**
 
@@ -1251,7 +1251,7 @@
 
 ---
 
-### PUT /os/open-api/uns/label/{id}
+### PUT /label/{id}
 
 **修改标签**
 
@@ -1294,7 +1294,7 @@
 
 ---
 
-### DELETE /os/open-api/uns/label/{id}
+### DELETE /label/{id}
 
 **删除标签**
 
@@ -1332,7 +1332,7 @@
 
 ---
 
-### POST /os/open-api/uns/batch/makeLabel
+### POST /batch/makeLabel
 
 **批量文件打标签**
 
@@ -1368,7 +1368,7 @@
 
 ---
 
-### PUT /os/open-api/uns/cancelLabel/{alias}
+### PUT /cancelLabel/{alias}
 
 **文件取消标签**
 
@@ -1395,564 +1395,9 @@
 ---
 
 
-## Pride
-
-### GET /os/open-api/uns/pride/template/alias
-
-**根据别名查询模板详情**
-
-#### Parameters
-
-| 名称 | 位置 | 类型 | 必填 | 说明 |
-|------|------|------|------|------|
-| alias | query | string | 否 |  |
-
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码200成功  其他失败 |
-| msg | string | 提示消息 |
-| data | TemplateVo |  |
-| data.id | integer (int64) | 模板ID |
-| data.name | string | 模板名称 |
-| data.alias | string | 别名 |
-| data.definition | array<FieldDefine> | 字段定义 |
-| data.definition[].name | string | 字段名：字母开头，支持字母、数字和下划线，最长63 |
-| data.definition[].type | string | 字段类型：INTEGER, LONG, FLOAT, DOUBLE, BOOLEAN, DATETIME, STRING |
-| data.definition[].unique | boolean | 是否唯一约束，新建模板时，此参数不生效 |
-| data.definition[].index | string | 对应的协议字段key，新建模板时，此参数不生效 |
-| data.definition[].displayName | string | 显示名 |
-| data.definition[].remark | string | 备注 |
-| data.definition[].maxLen | integer (int32) | 最大长度(string字段类型生效) |
-| data.definition[].systemField | boolean | 是否系统参数，新建模板时，此参数不生效 |
-| data.definition[].unit | string | 位号单位 最长5 |
-| data.definition[].upperLimit | number | 里程上限 |
-| data.definition[].lowerLimit | number | 里程下限 |
-| data.definition[].decimal | integer | 小数精度位数 |
-| data.createTime | integer (int64) | 创建时间--单位：毫秒 |
-| data.description | string | 模型描述 |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/pride/template/pageList
-
-**查询模板列表**
-
-#### Request Body
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| pageNo | integer (int64) | 当前页数，默认为1 |
-| pageSize | integer (int64) | 每页记录数，默认为20，最大支持1000 |
-| key | string | 搜索关键字 |
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| pageNo | integer (int64) | 当前页数 |
-| pageSize | integer (int64) | 每页记录数 |
-| total | integer (int64) | 总记录数 |
-| code | integer (int64) |  |
-| data | array<object> |  |
-| data[].id | string | 模板ID |
-| data[].name | string | 模板名称 |
-| data[].description | string | 模型描述 |
-| data[].alias | string | 别名 |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/pride/task/import
-
-**批量创建（增量）PRIDE拓扑任务**
-
-#### Parameters
-
-| 名称 | 位置 | 类型 | 必填 | 说明 |
-|------|------|------|------|------|
-| rootAlias | query | string | 否 | 为该拓扑的根文件夹别名，body中的顶层节点应该创建在该目录下 |
-
-#### Request Body
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| instances | array<object> |  |
-| instances[].attributeValues | array<object> | 文件夹扩展属性键值对集合,最多三个 |
-| instances[].attributeValues[].attributeName | string | 扩展属性键 |
-| instances[].attributeValues[].attributeNamespace | string |  |
-| instances[].attributeValues[].attributeValue | string | 扩展属性值 |
-| instances[].attributes | array<object> | 当前文件夹下文件集合 |
-| instances[].attributes[].attributes | array<string> |  |
-| instances[].attributes[].bindSourceInstanceEnName | string | 属性所关联的采集器别名 |
-| instances[].attributes[].children | array<string> |  |
-| instances[].attributes[].dataType | string | 属性值数据类型 |
-| instances[].attributes[].defaultValue | string | 属性默认值（初始值），仅针对静态属性 |
-| instances[].attributes[].description | string | 属性描述 |
-| instances[].attributes[].displayName | string | 属性名称 |
-| instances[].attributes[].enName | string | 属性别名 |
-| instances[].attributes[].needToCreateBindRelation | boolean | 是否为动态属性（无该字段则或为true时表示动态属性，为false时表示静态属性） |
-| instances[].attributes[].templateFullName | string |  |
-| instances[].bindSourceInstanceEnName | string | 文件及所对应的采集器别名 |
-| instances[].children | array<string> | 子文件夹集合 |
-| instances[].description | string | 文件夹描述 |
-| instances[].displayName | string | 文件夹名称 |
-| instances[].enName | string | 文件夹别名 |
-| instances[].templateFullName | string | 文件夹模版别名 |
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| taskId | string | 任务ID |
-| createdTime | string | 任务开始时间 |
-| finishedTime | string | 任务结束时间 |
-| status | integer | -1:执行失败，0:执行中，1:执行成功 |
-| message | string |  |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/pride/task/deletion-folders
-
-**批量删除PRIDE拓扑任务**
-
-#### Request Body
-
-*无定义*
-
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| taskId | string | 任务ID |
-| createdTime | string | 任务开始时间 |
-| finishedTime | string | 任务结束时间 |
-| status | integer | -1:执行失败，0:执行中，1:执行成功 |
-| message | string |  |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/pride/task/deletion-files
-
-**批量删除PRIDE属性任务**
-
-#### Request Body
-
-*无定义*
-
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| taskId | string | 任务ID |
-| createdTime | string | 任务开始时间 |
-| finishedTime | string | 任务结束时间 |
-| status | integer | -1:执行失败，0:执行中，1:执行成功 |
-| message | string |  |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### GET /os/open-api/uns/pride/task/query
-
-**任务结果查询**
-
-#### Parameters
-
-| 名称 | 位置 | 类型 | 必填 | 说明 |
-|------|------|------|------|------|
-| taskId | query | string | 是 | 任务ID |
-
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| taskId | string | 任务ID |
-| createdTime | string | 任务开始时间 |
-| finishedTime | string | 任务结束时间 |
-| status | integer | -1:执行失败，0:执行中，1:执行成功 |
-| message | string |  |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/pride/tree
-
-**查询数据模型树**
-
-只返回文件夹数据
-
-#### Request Body
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| parentId | string | 指定根文件夹ID。如果和parentAlias同时存在，则parentAlias参数输入无效。 |
-| parentAlias | string | 指定根文件夹别名。如果为空表示查询全部 |
-| returnParentInfo | boolean | 返回数据是否包含parentId/parentAlias中指定的文件夹信息。ture-包含该信息（默认值），false-不包含该信息。 |
-| deep | integer | 查询深度。-1为默认值，表示全深度；1表示1层，以此类推。 |
-| displayName | string | 指定文件夹显示名称。模糊匹配 |
-| templateAlias | string | 指定模版别名。精确匹配 |
-| description | string | 文件夹描述。模糊匹配 |
-| createStartTime | string | 文件夹创建起始时间。使用RFC3339格式查询。 |
-| createEndTime | string | 文件夹创建结束时间。使用RFC3339格式查询。 |
-| updateStartTime | string | 文件夹更新起始时间。使用RFC3339格式查询。 |
-| updateEndTime | string | 文件夹更新结束时间。使用RFC3339格式查询。 |
-| extend | object | 指定查询扩展Attribute。精确匹配 |
-| extend.k1 | string |  |
-| extend.k2 | string |  |
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer |  |
-| msg | string |  |
-| data | array<object> |  |
-| data[].pathType | integer | *节点类型。0-文件夹，2-文件 |
-| data[].displayName | string | *文件夹显示名。 |
-| data[].name | string | *文件夹名， |
-| data[].alias | string | 文件夹别名。 |
-| data[].id | string | 文件夹ID（LONG的字符串表示）。 |
-| data[].parentAlias | string | 所属父文件夹别名。 |
-| data[].description | string | 文件夹描述。 |
-| data[].templateAlias | string | 模版别名 |
-| data[].createTime | integer | 创建时间 |
-| data[].updateTime | integer | 更新时间 |
-| data[].countChildren | integer | 包含文件个数 |
-| data[].extend | object | 文件夹扩展Attributes |
-| data[].extend.k1 | string |  |
-| data[].extend.k2 | string |  |
-| data[].hasChildren | boolean | 是否有子级 |
-| data[].children | array<string> | 所有子文件夹 |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/condition/folder
-
-**多条件分页查询文件夹**
-
-#### Request Body
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| aliasList | array<string> | 根据文件夹别名获取指定文件夹信息。精确匹配 |
-| displayName | string | 指定文件夹显示名称。模糊匹配 |
-| parentAlias | string | 指定父文件夹别名，当为空字符串时表示顶层节点 |
-| templateAlias | string | 指定模版别名。精确匹配 |
-| description | string | 文件夹描述。模糊匹配 |
-| createStartTime | string | 文件夹创建起始时间。使用RFC3339格式查询。 |
-| createEndTime | string | 文件夹创建结束时间。使用RFC3339格式查询。 |
-| updateStartTime | string | 文件夹更新起始时间。使用RFC3339格式查询。 |
-| updateEndTime | string | 文件夹更新结束时间。使用RFC3339格式查询。 |
-| extend | object | 指定查询扩展Attribute。精确匹配 |
-| extend.k1 | string |  |
-| extend.k2 | string |  |
-| pageNo | integer | 指定查询页码，默认1 |
-| pageSize | integer | 指定分页大小。默认100，最大10000。 |
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer |  |
-| msg | string |  |
-| pageNo | integer |  |
-| pageSize | integer |  |
-| total | integer |  |
-| data | array<object> |  |
-| data[].pathType | integer | *节点类型。0-文件夹，2-文件 |
-| data[].displayName | string | *文件夹显示名。 |
-| data[].name | string | *文件夹名， |
-| data[].alias | string | 文件夹别名。 |
-| data[].parentAlias | string | 所属父文件夹别名。 |
-| data[].description | string | 文件夹描述。 |
-| data[].templateAlias | string | 模版别名 |
-| data[].createAt | integer | 创建时间 |
-| data[].updateAt | integer | 更新时间 |
-| data[].filesCount | integer | 包含文件个数 |
-| data[].extend | object | 文件夹扩展Attributes |
-| data[].extend.k1 | string |  |
-| data[].extend.k2 | string |  |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/condition/file
-
-**多条件分页查询文件**
-
-#### Request Body
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| parentAliasList | array<string> | 指定文件夹别名集合（查询范围限制在这些文件夹下的属性，不含其下子文件夹中的属性）。 |
-| displayName | string | 指定文件显示名称。模糊匹配 |
-| description | string | 文件描述。模糊匹配 |
-| createStartTime | string | 文件创建起始时间。使用RFC3339格式查询。 |
-| createEndTime | string | 文件创建结束时间。使用RFC3339格式查询。 |
-| updateStartTime | string | 文件更新起始时间。使用RFC3339格式查询。 |
-| updateEndTime | string | 文件更新结束时间。使用RFC3339格式查询。 |
-| extend | object | 指定查询扩展Attribute。精确匹配 |
-| extend.k1 | string |  |
-| extend.k2 | string |  |
-| withValues | boolean | 是否包含文件的当前值。默认false |
-| pageNo | integer | 指定查询页码，默认1 |
-| pageSize | integer | 指定分页大小。默认100，最大10000。 |
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer |  |
-| msg | string |  |
-| pageNo | integer |  |
-| pageSize | integer |  |
-| total | integer |  |
-| data | array<object> |  |
-| data[].pathType | integer | 节点类型。0-文件夹，2-文件 |
-| data[].displayName | string | 文件显示名。 |
-| data[].name | string | 文件名， |
-| data[].alias | string | 文件别名。 |
-| data[].parentAlias | string | 所属父文件夹别名。 |
-| data[].description | string | 文件描述。 |
-| data[].createAt | integer | 创建时间 |
-| data[].updateAt | integer | 更新时间 |
-| data[].labels | string | 标签名称多个用,分割 |
-| data[].extend | object | 扩展Attributes |
-| data[].extend.k1 | string |  |
-| data[].extend.k2 | string |  |
-| data[].save2db | boolean | 是否存储历史。 |
-| data[].accessLevel | string | 北向访问级别。READ_ONLY-只读，READ_WRITE-读写。 |
-| data[].dataType | integer | 1-时序，2-关系，3-时序实时计算，4-历史计算，5-告警，6-聚合，7-时序引用。 |
-| data[].valueType | string | 当dataType=1/3/7时表示时序数据值类型。 |
-| data[].strMaxLen | integer | 当valueType=STRING时，表示STRING最大字符数。 |
-| data[].refers | array<object> |  |
-| data[].refers[].alias | string |  |
-| data[].refers[].field | string |  |
-| data[].expression | string | 时序计算类型表达式。 |
-| data[].payload | object | 文件当前值 |
-| data[].payload.value | integer |  |
-| data[].payload.status | string |  |
-| data[].payload.timeStamp | integer |  |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-### POST /os/open-api/uns/batch/pride
-
-**批量创建/修改文件夹和文件**
-
-#### Request Body
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| pathType | integer | *节点类型。0-文件夹，2-文件
- |
-| displayName | string | 文件显示名。最大长度128字符，允许字符保持supOS工厂版一致。 |
-| name | string | 文件名称，和文件夹显示名一致。 |
-| alias | string | *文件别名。最大长度63字符，允许字符包括英文、数字、下划线。 |
-| parentAlias | string | 所属父文件夹别名。 |
-| description | string | 文件描述。 |
-| templateAlias | string | 模版别名 |
-| save2db | boolean | 是否存储历史。当为dataType=7时，无需持久化。 |
-| accessLevel | string | 北向访问级别。READ_ONLY-只读，READ_WRITE-读写。目前暂不支持 |
-| dataType | integer | 1-时序，2-关系，3-实时计算，4-历史计算，6-聚合，7-引用。为1/3时supOS系统默认创建"value"，"timeStamp"，"status"三个键。其中value的数据类型要和文件数据类型一致。 |
-| valueType | string | 当dataType=1/3时可指定时序数据值类型。 |
-| initValue | number | 当dataType=1/3时可以为该文件设置初值。创建该文件后即将此值作为value的初值 |
-| strMaxLen | integer | 当valueType=STRING时，可以设置该参数。默认512字符。 |
-| refers | array<object> | 当dataType=3时可指定表达式中使用到的文件别名和field名称。当dataType=7时可指定引用源文件别名，仅第一个有效，不可设置为引用类型文件别名，避免循环引用 |
-| refers[].alias | string | 引用的文件别名 |
-| refers[].field | string | 引用的字段 |
-| refers[].variableName | string | 计算文件使用的变量名，按a1、a2依次顺延 |
-| expression | string | 当dataType=3时可指定表达式，a1表示refers中第一个，a2表示第二个，以此类推。允许为空或无该字段，表示暂无表达式，此时可按照1-时序的特性来处理。 |
-| extend | object | 扩展Attributes键值对 |
-| extend.k1 | string |  |
-| extend.k2 | string |  |
-#### Responses
-
-**200**: OK
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) |  |
-| msg | string |  |
-| data | object |  |
-
-**400**: Bad Request
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
-**405**: Method Not Allowed
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| code | integer (int32) | 状态码 200-成功 400-参数错误 500-接口异常 |
-| msg | string | 响应消息 |
-| data | object | 响应数据 |
-
----
-
-
 ## 实时服务
 
-### POST /os/open-api/uns/realtime/v3/read
+### POST /realtime/v3/read
 
 **批量读当前值**
 
@@ -2029,7 +1474,7 @@
 
 ## 历史服务
 
-### POST /os/open-api/uns/history/v3/aggregation
+### POST /history/v3/aggregation
 
 **聚合查询**
 
@@ -2081,7 +1526,7 @@
 
 ---
 
-### POST /os/open-api/uns/history/v3/sample
+### POST /history/v3/sample
 
 **采样值查询**
 
@@ -2130,7 +1575,7 @@
 
 ---
 
-### POST /os/open-api/uns/history/v3/raw
+### POST /history/v3/raw
 
 **原始值查询**
 

@@ -11,37 +11,30 @@ metadata:
 ---
 # supOS Open API
 
-## 认证初始化
+## ⚠️ 重要规则
 
-每次调用前执行，优先使用已登录的 ticket，否则使用 AK：
+**禁止自行编写 Python 代码调用 API，必须使用 `scripts/client.py`！**
 
-```python
-import os, requests, json
+## 调用方式
 
-# 优先用已登录 ticket
-_token_info = {}
-try:
-    _token_info = requests.get("http://127.0.0.1:8088/api/supos/token", timeout=3).json()
-except Exception:
-    pass
+```bash
+# GET 请求
+python scripts/client.py get /os/open-api/auth/v1/users
 
-if _token_info.get("ticket"):
-    # 用户已通过登录页面登录
-    SUPOS_URL = _token_info["supos_url"].rstrip("/")
-    HEADERS = {"Authorization": f"Bearer {_token_info['ticket']}"}
-else:
-    # 使用内置 AK（适合自动化场景）
-    AK = os.environ.get("SUPOS_AK", "")
-    if not AK:
-        print("错误：未找到 SUPOS_AK 且未登录，请在登录页面登录或联系管理员")
-        exit()
-    cfg = requests.get("http://127.0.0.1:8088/api/supos/config", timeout=3).json()
-    SUPOS_URL = cfg.get("supos_url", "").rstrip("/")
-    if not SUPOS_URL:
-        print("错误：未配置 supOS 平台地址，请在登录页面设置")
-        exit()
-    HEADERS = {"Authorization": f"Bearer {AK}"}
+# POST 请求（带 JSON 参数）
+python scripts/client.py post /os/open-api/uns/condition/tree '{"parentId":"0","pageSize":100}'
+
+# PUT 请求
+python scripts/client.py put /os/open-api/auth/v1/users/zhangsan '{"name":"张三"}'
+
+# DELETE 请求
+python scripts/client.py delete /os/open-api/rbac/v1/roles?codes=role_001
 ```
+
+参数说明：
+- `<method>`：get / post / put / delete
+- `<path>`：文档中的完整 API 路径（含 basePath）
+- `[data]`：JSON 字符串，仅 POST/PUT 使用；GET 的 query 参数直接拼在 path 里
 
 ---
 
@@ -49,8 +42,8 @@ else:
 
 **操作步骤**：
 1. 根据用户意图从下表确定分类
-2. 用 `read_file` 读取对应文档（路径相对于工作区根目录）
-3. 按文档中的接口说明拼接 `{SUPOS_URL}{path}` 发起请求
+2. 用 `read_file` 读取对应文档，获取接口路径和参数说明
+3. 用上面的 `scripts/client.py` 调用，**不要自己写 requests 代码**
 
 | 分类 | 文档路径 | 覆盖能力 |
 |------|----------|----------|
@@ -66,19 +59,3 @@ else:
 | 桌面管理 | `src/copaw/agents/skills/supos_api/docs/supOS_桌面管理服务_API文档.md` | 组件和公司动态增删改查，basePath: `/os/open-api/desktop/v1/` |
 | 文件服务 | `src/copaw/agents/skills/supos_api/docs/supOS_文件服务_API文档.md` | 文件上传/下载/删除/列表，basePath: `/os/open-api/file-server/v2/` |
 | OAuth2 | `src/copaw/agents/skills/supos_api/docs/supOS_身份认证oauth2_API文档.md` | 授权码获取、令牌刷新，basePath: `/os/open-api/auth/v1/` |
-
----
-
-## 通用错误处理
-
-```python
-if r.status_code == 401:
-    print("认证失败：ticket 或 AK 无效，请重新登录或检查 SUPOS_AK")
-elif r.status_code == 400:
-    err = r.json()
-    print(f"参数错误 {err.get('code', '')}: {err.get('message', r.text[:200])}")
-elif r.status_code == 502:
-    print("无法连接 supOS 平台，请检查平台地址和网络")
-elif r.status_code not in (200, 204):
-    print(f"请求失败 {r.status_code}: {r.text[:300]}")
-```
