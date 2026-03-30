@@ -1,12 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/x-symbol.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>xClaw</title>
-    <script type="module" crossorigin src="/assets/index-Ckjh59jw.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CbXZ2QsX.css">
+    <!-- 桌面 exe 内嵌页默认中文（与 web 端可共用同一构建） -->
+    <script>
+      try {
+        localStorage.setItem("language", "zh");
+        localStorage.setItem("language_user_set", "1");
+      } catch (e) {}
+    </script>
+    <script type="module" crossorigin src="/assets/index-DwjpAQj1.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-fihm9bvs.css">
   </head>
   <body>
     <div id="root"></div>

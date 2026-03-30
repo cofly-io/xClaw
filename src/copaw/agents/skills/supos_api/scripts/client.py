@@ -40,6 +40,7 @@ def get_supos_url() -> str:
 def get_headers() -> dict:
     """获取认证 headers"""
     ak = os.environ.get("SUPOS_AK", "")
+    print(f"[DEBUG client.py] SUPOS_AK from env = '{ak}'")
     if not ak:
         raise RuntimeError("未找到 SUPOS_AK 环境变量")
     return {"Authorization": f"Bearer {ak}"}

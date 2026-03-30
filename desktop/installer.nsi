@@ -30,15 +30,15 @@ RequestExecutionLevel user
 Section "Install"
     SetOutPath "$INSTDIR"
 
-    ; 复制所有文件
-    File /r "dist\supOS X\*.*"
+    ; 复制 PyInstaller 产物（含 xClaw.exe、xclaw.env、_internal 等）
+    File /r "dist\xClaw\*.*"
 
     ; 创建桌面快捷方式
-    CreateShortCut "$DESKTOP\supOS X 个人助手.lnk" "$INSTDIR\supOS X.exe" "" "$INSTDIR\supOS X.exe" 0
+    CreateShortCut "$DESKTOP\supOS X 个人助手.lnk" "$INSTDIR\xClaw.exe" "" "$INSTDIR\xClaw.exe" 0
 
     ; 创建开始菜单
     CreateDirectory "$SMPROGRAMS\supOS X"
-    CreateShortCut "$SMPROGRAMS\supOS X\supOS X 个人助手.lnk" "$INSTDIR\supOS X.exe" "" "$INSTDIR\supOS X.exe" 0
+    CreateShortCut "$SMPROGRAMS\supOS X\supOS X 个人助手.lnk" "$INSTDIR\xClaw.exe" "" "$INSTDIR\xClaw.exe" 0
     CreateShortCut "$SMPROGRAMS\supOS X\卸载.lnk" "$INSTDIR\uninstall.exe"
 
     ; 写卸载程序
@@ -47,7 +47,7 @@ Section "Install"
     ; 写注册表（添加/删除程序）
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\supOS X" "DisplayName" "supOS X 个人助手"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\supOS X" "UninstallString" "$INSTDIR\uninstall.exe"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\supOS X" "DisplayIcon" "$INSTDIR\supOS X.exe"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\supOS X" "DisplayIcon" "$INSTDIR\xClaw.exe"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\supOS X" "Publisher" "xClaw"
 SectionEnd
 

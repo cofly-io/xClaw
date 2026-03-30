@@ -20,12 +20,8 @@ import ModelSelector from "./ModelSelector";
 import SessionList from "./SessionList";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAgentStore } from "../../stores/agentStore";
-import { useChatAnywhereInput } from "@agentscope-ai/chat";
 import styles from "./index.module.less";
 import { IconButton } from "@agentscope-ai/design";
-import ChatActionGroup from "./components/ChatActionGroup";
-import ChatHeaderTitle from "./components/ChatHeaderTitle";
-import ChatSessionInitializer from "./components/ChatSessionInitializer";
 import {
   toDisplayUrl,
   copyText,
@@ -34,7 +30,6 @@ import {
   normalizeContentUrls,
   extractUserMessageText,
   type CopyableResponse,
-  type RuntimeLoadingBridgeApi,
 } from "./utils";
 
 const CHAT_ATTACHMENT_MAX_MB = 10;
@@ -224,40 +219,6 @@ function useMultimodalCapabilities(
   return multimodalCaps;
 }
 
-function RuntimeLoadingBridge({
-  bridgeRef,
-}: {
-  bridgeRef: { current: RuntimeLoadingBridgeApi | null };
-}) {
-  const { setLoading, getLoading } = useChatAnywhereInput(
-    (value) =>
-      ({
-        setLoading: value.setLoading,
-        getLoading: value.getLoading,
-      }) as RuntimeLoadingBridgeApi,
-  );
-
-  useEffect(() => {
-    if (!setLoading || !getLoading) {
-      bridgeRef.current = null;
-      return;
-    }
-
-    bridgeRef.current = {
-      setLoading,
-      getLoading,
-    };
-
-    return () => {
-      if (bridgeRef.current?.setLoading === setLoading) {
-        bridgeRef.current = null;
-      }
-    };
-  }, [getLoading, setLoading, bridgeRef]);
-
-  return null;
-}
-
 export default function ChatPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -270,8 +231,6 @@ export default function ChatPage() {
   const [showModelPrompt, setShowModelPrompt] = useState(false);
   const { selectedAgent } = useAgentStore();
   const [refreshKey, setRefreshKey] = useState(0);
-  const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
-
   const isChatActiveRef = useRef(false);
   isChatActiveRef.current =
     location.pathname === "/" || location.pathname.startsWith("/chat");

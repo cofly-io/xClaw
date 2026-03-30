@@ -10,11 +10,36 @@ import sys
 import threading
 import time
 
+def _load_bundled_env() -> None:
+    """Load env vars from xclaw.env next to the exe (Windows)."""
+    if not getattr(sys, "frozen", False):
+        return
+
+    exe_dir = os.path.dirname(sys.executable)
+    env_path = os.path.join(exe_dir, "xclaw.env")
+    if not os.path.exists(env_path):
+        return
+
+    try:
+        with open(env_path, "r", encoding="utf-8-sig") as f:
+            for raw in f.read().splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                k = k.strip()
+                v = v.strip().strip('"').strip("'")
+                if k and v:
+                    os.environ.setdefault(k, v)
+    except OSError:
+        return
+
 # ---------------------------------------------------------------------------
 # PyInstaller 兼容：确保打包后能找到资源
 # ---------------------------------------------------------------------------
 if getattr(sys, "frozen", False):
     BASE_DIR = sys._MEIPASS
+    _load_bundled_env()
     os.environ.setdefault("COPAW_STATIC_DIR", os.path.join(BASE_DIR, "copaw", "console"))
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))

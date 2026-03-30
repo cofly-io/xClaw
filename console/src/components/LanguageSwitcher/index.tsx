@@ -19,6 +19,9 @@ export default function LanguageSwitcher() {
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem("language", lang);
+    // Mark that the user explicitly changed language so we won't override it
+    // back to the default on next startup.
+    localStorage.setItem("language_user_set", "1");
     languageApi
       .updateLanguage(lang)
       .catch((err) =>

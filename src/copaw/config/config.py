@@ -936,6 +936,11 @@ def _default_builtin_tools() -> Dict[str, BuiltinToolConfig]:
             enabled=True,
             description="Get llm token usage",
         ),
+        "supos_api_call": BuiltinToolConfig(
+            name="supos_api_call",
+            enabled=True,
+            description="Call supOS Open API using SUPOS_AK (Bearer) in-process; no external python needed.",
+        ),
     }
 
 
@@ -968,6 +973,7 @@ def build_qa_agent_tools_config() -> ToolsConfig:
             "write_file",
             "edit_file",
             "view_image",
+            "supos_api_call",
         },
     )
     builtin_tools = {

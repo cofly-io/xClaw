@@ -40,6 +40,7 @@ from .tools import (
     edit_file,
     execute_shell_command,
     get_current_time,
+    supos_api_call,
     get_token_usage,
     glob_search,
     grep_search,
@@ -236,6 +237,7 @@ class CoPawAgent(ToolGuardMixin, ReActAgent):
             "get_current_time": get_current_time,
             "set_user_timezone": set_user_timezone,
             "get_token_usage": get_token_usage,
+            "supos_api_call": supos_api_call,
         }
 
         multimodal = get_active_model_supports_multimodal()

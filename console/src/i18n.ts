@@ -21,8 +21,15 @@ const resources = {
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: localStorage.getItem("language") || "en",
-  fallbackLng: "en",
+  // For desktop EXE: many users may already have `localStorage.language="en"`
+  // from visiting the website. We want "default Chinese" behavior until the
+  // user explicitly changes language via LanguageSwitcher.
+  lng: (() => {
+    const stored = localStorage.getItem("language") || "";
+    const userSet = localStorage.getItem("language_user_set") === "1";
+    return userSet ? stored || "zh" : "zh";
+  })(),
+  fallbackLng: "zh",
   interpolation: {
     escapeValue: false,
   },
