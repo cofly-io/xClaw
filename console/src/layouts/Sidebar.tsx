@@ -2,20 +2,17 @@ import {
   Layout,
   Menu,
   Button,
-  Badge,
   Modal,
-  Spin,
-  Tooltip,
   Input,
   Form,
   message,
+  Tooltip,
   type MenuProps,
 } from "antd";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import AgentSelector from "../components/AgentSelector";
 import {
   Copy,
   Check,
@@ -91,18 +88,13 @@ function CopyButton({ text }: { text: string }) {
 
 export default function Sidebar({ selectedKey }: SidebarProps) {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { isDark } = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
-  const [openKeys, setOpenKeys] = useState<string[]>(DEFAULT_OPEN_KEYS);
-  const [version, setVersion] = useState<string>("");
-  const [latestVersion, setLatestVersion] = useState<string>("");
-  const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [updateMarkdown, setUpdateMarkdown] = useState<string>("");
   const [authEnabled, setAuthEnabled] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     authApi
@@ -251,6 +243,115 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       setAccountLoading(false);
     }
   };
+
+  // ── Collapsed nav items (all leaf pages) ──────────────────────────────
+
+  const collapsedNavItems = [
+    {
+      key: "chat",
+      icon: <SparkChatTabFill size={18} />,
+      path: "/chat",
+      label: t("nav.chat"),
+    },
+    {
+      key: "channels",
+      icon: <SparkWifiLine size={18} />,
+      path: "/channels",
+      label: t("nav.channels"),
+    },
+    {
+      key: "sessions",
+      icon: <SparkUserGroupLine size={18} />,
+      path: "/sessions",
+      label: t("nav.sessions"),
+    },
+    {
+      key: "cron-jobs",
+      icon: <SparkDateLine size={18} />,
+      path: "/cron-jobs",
+      label: t("nav.cronJobs"),
+    },
+    {
+      key: "heartbeat",
+      icon: <SparkVoiceChat01Line size={18} />,
+      path: "/heartbeat",
+      label: t("nav.heartbeat"),
+    },
+    {
+      key: "workspace",
+      icon: <SparkLocalFileLine size={18} />,
+      path: "/workspace",
+      label: t("nav.workspace"),
+    },
+    {
+      key: "skills",
+      icon: <SparkMagicWandLine size={18} />,
+      path: "/skills",
+      label: t("nav.skills"),
+    },
+    {
+      key: "skill-pool",
+      icon: <SparkOtherLine size={18} />,
+      path: "/skill-pool",
+      label: t("nav.skillPool", "Skill Pool"),
+    },
+    {
+      key: "tools",
+      icon: <SparkToolLine size={18} />,
+      path: "/tools",
+      label: t("nav.tools"),
+    },
+    {
+      key: "mcp",
+      icon: <SparkMcpMcpLine size={18} />,
+      path: "/mcp",
+      label: t("nav.mcp"),
+    },
+    {
+      key: "agent-config",
+      icon: <SparkModifyLine size={18} />,
+      path: "/agent-config",
+      label: t("nav.agentConfig"),
+    },
+    {
+      key: "agents",
+      icon: <SparkAgentLine size={18} />,
+      path: "/agents",
+      label: t("nav.agents"),
+    },
+    {
+      key: "models",
+      icon: <SparkModePlazaLine size={18} />,
+      path: "/models",
+      label: t("nav.models"),
+    },
+    {
+      key: "environments",
+      icon: <SparkInternetLine size={18} />,
+      path: "/environments",
+      label: t("nav.environments"),
+    },
+    {
+      key: "security",
+      icon: <SparkBrowseLine size={18} />,
+      path: "/security",
+      label: t("nav.security"),
+    },
+    {
+      key: "token-usage",
+      icon: <SparkDataLine size={18} />,
+      path: "/token-usage",
+      label: t("nav.tokenUsage"),
+    },
+    {
+      key: "voice-transcription",
+      icon: <SparkMicLine size={18} />,
+      path: "/voice-transcription",
+      label: t("nav.voiceTranscription"),
+    },
+  ];
+
+  // ── Menu items ────────────────────────────────────────────────────────────
 
   const menuItems: MenuProps["items"] = [
     {

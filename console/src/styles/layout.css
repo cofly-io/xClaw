@@ -7,6 +7,7 @@ body {
   overflow: hidden;
   margin: 0;
   padding: 0;
+  background: #f9f8f4;
 }
 
 /* ─── Dark mode global token overrides ─────────────────────────────────────── */
@@ -33,6 +34,7 @@ html.dark-mode .copaw-layout-content {
 /* Page content area background */
 html.dark-mode .page-content {
   background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* Card components — @agentscope-ai/design uses copaw prefix */
@@ -134,8 +136,8 @@ html.dark-mode .ant-pagination .ant-pagination-item a {
 
 html.dark-mode .copaw-pagination .copaw-pagination-item-active,
 html.dark-mode .ant-pagination .ant-pagination-item-active {
-  background: #615ced !important;
-  border-color: #615ced !important;
+  background: #ff7f16 !important;
+  border-color: #ff7f16 !important;
 }
 
 html.dark-mode .copaw-pagination .copaw-pagination-item-active a,
@@ -162,7 +164,7 @@ html.dark-mode .copaw-table-column-sorter-up.active,
 html.dark-mode .copaw-table-column-sorter-down.active,
 html.dark-mode .ant-table-column-sorter-up.active,
 html.dark-mode .ant-table-column-sorter-down.active {
-  color: #8b87f0 !important;
+  color: #ff7f16 !important;
 }
 
 /* Checkbox in table */
@@ -174,8 +176,8 @@ html.dark-mode .ant-checkbox-inner {
 
 html.dark-mode .copaw-checkbox-checked .copaw-checkbox-inner,
 html.dark-mode .ant-checkbox-checked .ant-checkbox-inner {
-  background: #615ced !important;
-  border-color: #615ced !important;
+  background: #ff7f16 !important;
+  border-color: #ff7f16 !important;
 }
 
 /* Page titles (h1) */
@@ -263,7 +265,7 @@ html.dark-mode .ant-select-item-option-active {
 html.dark-mode .copaw-select-item-option-selected,
 html.dark-mode .ant-select-item-option-selected {
   background: rgba(97, 92, 237, 0.2) !important;
-  color: #8b87f0 !important;
+  color: #ff7f16 !important;
 }
 
 /* Form labels */
@@ -344,7 +346,7 @@ html.dark-mode
   .ant-picker-time-panel-cell-selected
   .ant-picker-time-panel-cell-inner {
   background: rgba(97, 92, 237, 0.2) !important;
-  color: #8b87f0 !important;
+  color: #ff7f16 !important;
 }
 
 /* DatePicker / RangePicker calendar panel */
@@ -414,7 +416,7 @@ html.dark-mode .ant-picker-cell-disabled {
 /* Today marker */
 html.dark-mode .copaw-picker-cell-today .copaw-picker-cell-inner::before,
 html.dark-mode .ant-picker-cell-today .ant-picker-cell-inner::before {
-  border-color: #615ced !important;
+  border-color: #ff7f16 !important;
 }
 
 /* Selected start/end cell */
@@ -424,7 +426,7 @@ html.dark-mode .copaw-picker-cell-range-start .copaw-picker-cell-inner,
 html.dark-mode .ant-picker-cell-range-start .ant-picker-cell-inner,
 html.dark-mode .copaw-picker-cell-range-end .copaw-picker-cell-inner,
 html.dark-mode .ant-picker-cell-range-end .ant-picker-cell-inner {
-  background: #615ced !important;
+  background: #ff7f16 !important;
   color: #fff !important;
 }
 
@@ -449,7 +451,7 @@ html.dark-mode
 html.dark-mode
   .copaw-picker-cell-in-view.copaw-picker-cell-range-hover-end::after,
 html.dark-mode .ant-picker-cell-in-view.ant-picker-cell-range-hover-end::after {
-  border-color: #8b87f0 !important;
+  border-color: #ff7f16 !important;
 }
 
 /* Panel footer (OK button area) */
@@ -461,7 +463,7 @@ html.dark-mode .ant-picker-footer {
 
 html.dark-mode .copaw-picker-today-btn,
 html.dark-mode .ant-picker-today-btn {
-  color: #8b87f0 !important;
+  color: #ff7f16 !important;
 }
 
 /* Divider between two panels in RangePicker */
@@ -608,12 +610,22 @@ html.dark-mode .ant-slider-rail {
 
 html.dark-mode .copaw-slider-track,
 html.dark-mode .ant-slider-track {
-  background-color: #615ced !important;
+  background-color: #ff7f16 !important;
+}
+
+html.dark-mode .copaw-slider-mark-text,
+html.dark-mode .ant-slider-mark-text {
+  color: #ff7f16 !important;
+}
+
+html.dark-mode .copaw-form-item-label > label .copaw-form-item-tooltip,
+html.dark-mode .ant-form-item-label > label .ant-form-item-tooltip {
+  color: rgba(255, 255, 255, 0.45) !important;
 }
 
 html.dark-mode .copaw-slider-handle::after,
 html.dark-mode .ant-slider-handle::after {
-  box-shadow: 0 0 0 2px #615ced !important;
+  box-shadow: 0 0 0 2px #ff7f16 !important;
   background-color: #1f1f1f !important;
 }
 
@@ -635,6 +647,18 @@ html.dark-mode .ant-tooltip-arrow::before {
   background: #2a2a2a !important;
 }
 
+/* Tooltip global override — force opaque background in light mode */
+.copaw-tooltip-inner,
+.ant-tooltip-inner {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  color: #fff !important;
+}
+
+.copaw-tooltip-arrow::before,
+.ant-tooltip-arrow::before {
+  background: rgba(0, 0, 0, 0.75) !important;
+}
+
 /* Disabled chat input overlay in dark mode */
 html.dark-mode
   [class*="chatDisabledOverlay"]
@@ -649,6 +673,37 @@ html.dark-mode [class*="chatDisabledOverlay"] :global(input[type="text"]) {
 html.dark-mode [class*="copaw-sender-content"],
 html.dark-mode [class*="sender-content"] {
   background: #2a2a2a !important;
+}
+
+/* Chat page bottom input area container */
+html.dark-mode .copaw-chat-anywhere-input,
+html.dark-mode [class*="chat-anywhere-input"],
+html.dark-mode [class*="copaw-chat-anywhere-default-footer"],
+html.dark-mode [class*="chat-anywhere-footer"] {
+  background: #141414 !important;
+}
+
+/* Chat input placeholder text in dark mode */
+html.dark-mode .copaw-sender textarea::placeholder,
+html.dark-mode .copaw-sender input::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Chat input text color */
+html.dark-mode .copaw-sender textarea,
+html.dark-mode .copaw-sender input {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Chat input action buttons (mic, attachment, send) */
+html.dark-mode .copaw-sender-actions button,
+html.dark-mode [class*="sender-actions"] button {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+html.dark-mode .copaw-sender-actions button:hover,
+html.dark-mode [class*="sender-actions"] button:hover {
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 /* Chat message bubble text in dark mode */
@@ -679,7 +734,7 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] code {
 }
 
 html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
-  color: #8b87f5 !important;
+  color: #ff7f16 !important;
 }
 
 #root {
@@ -712,6 +767,8 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding-bottom: 8px;
+  padding-right: 8px;
 }
 
 .page-header {
@@ -894,6 +951,7 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   margin: 0 auto 0 0 !important;
   justify-content: flex-start !important;
 }
+
 [class*="chat-anywhere-default-header-right"] > *,
 [class*="default-header-right"] > * {
   margin-right: auto !important;

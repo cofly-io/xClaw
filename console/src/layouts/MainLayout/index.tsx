@@ -13,6 +13,7 @@ import CronJobsPage from "../../pages/Control/CronJobs";
 import HeartbeatPage from "../../pages/Control/Heartbeat";
 import AgentConfigPage from "../../pages/Agent/Config";
 import SkillsPage from "../../pages/Agent/Skills";
+import SkillPoolPage from "../../pages/Agent/SkillPool";
 import ToolsPage from "../../pages/Agent/Tools";
 import WorkspacePage from "../../pages/Agent/Workspace";
 import MCPPage from "../../pages/Agent/MCP";
@@ -32,6 +33,7 @@ const pathToKey: Record<string, string> = {
   "/cron-jobs": "cron-jobs",
   "/heartbeat": "heartbeat",
   "/skills": "skills",
+  "/skill-pool": "skill-pool",
   "/tools": "tools",
   "/mcp": "mcp",
   "/workspace": "workspace",
