@@ -97,6 +97,7 @@ export default function MainLayout() {
                 <Route path="/cron-jobs" element={<CronJobsPage />} />
                 <Route path="/heartbeat" element={<HeartbeatPage />} />
                 <Route path="/skills" element={<SkillsPage />} />
+                <Route path="/skill-pool" element={<SkillPoolPage />} />
                 <Route path="/tools" element={<ToolsPage />} />
                 <Route path="/mcp" element={<MCPPage />} />
                 <Route path="/workspace" element={<WorkspacePage />} />

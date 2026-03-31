@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@agentscope-ai/chat':
-        specifier: ^1.1.54
-        version: 1.1.54(@agentscope-ai/design@1.0.30(@babel/runtime@7.28.6)(@codemirror/language@6.12.2)(@codemirror/search@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@rc-component/util@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(classnames@2.5.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@ant-design/icons@5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(use-sync-external-store@1.6.0(react@18.3.1))(workerize-loader@2.0.2(webpack@5.105.4))
+        specifier: ^1.1.55-beta.1774850799465
+        version: 1.1.56(@agentscope-ai/design@1.0.30(@babel/runtime@7.28.6)(@codemirror/language@6.12.2)(@codemirror/search@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@rc-component/util@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(classnames@2.5.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@ant-design/icons@5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(use-sync-external-store@1.6.0(react@18.3.1))(workerize-loader@2.0.2(webpack@5.105.4))
       '@agentscope-ai/design':
         specifier: ^1.0.14
         version: 1.0.30(@babel/runtime@7.28.6)(@codemirror/language@6.12.2)(@codemirror/search@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@rc-component/util@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(classnames@2.5.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@agentscope-ai/icons':
-        specifier: ^1.0.46
-        version: 1.0.59
+        specifier: ^1.0.63
+        version: 1.0.63
       '@ant-design/icons':
         specifier: ^5.0.1
         version: 5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -123,8 +123,8 @@ importers:
 
 packages:
 
-  '@agentscope-ai/chat@1.1.54':
-    resolution: {integrity: sha512-01YpMtVYLC/jFyajU/LBAQVdMZYQXEeuNHIGoboHGtjHB7mY8mygkKCj7/+We/MGYDDa2vf1H5pFxQVkbSAlsA==}
+  '@agentscope-ai/chat@1.1.56':
+    resolution: {integrity: sha512-mivU6wKKgkeI+dMboJtBVwgOaiYjelSgIYU6gHtJcFP1itF8k5bvz4cvY0O5JyIy7Hb3XpBskUTdmYt1NvJoPA==}
     hasBin: true
     peerDependencies:
       '@agentscope-ai/design': ^1.0.0
@@ -154,8 +154,8 @@ packages:
   '@agentscope-ai/icons-svg-override-antd@4.4.2':
     resolution: {integrity: sha512-zCDu9GR2WEW7vXOu3ja9+cfWpgoNG89LzVYJTgTy5lOKQjgoBw4pEWA3gcKmJEpx1eCwRqLUtjAcPluMxQgzvA==}
 
-  '@agentscope-ai/icons@1.0.59':
-    resolution: {integrity: sha512-/6J/58iIvRi7UXYYwcZjrsBtEkTsjbiQTaq7wjPnLBb5QqQo6w0BMM8cdGM+cbx4iGWNGLQ2pefSdIvLrWp2iQ==}
+  '@agentscope-ai/icons@1.0.63':
+    resolution: {integrity: sha512-3eUcjGQV7HYF4DdKQxAjouXrbSvD3ZhayGHhdf+c4G5jUNXs9zKcR7lbnnPrf2ctgDErGrcNRAzyBG9FyyXS1Q==}
 
   '@ant-design/charts-util@0.0.1-alpha.7':
     resolution: {integrity: sha512-Yh0o6EdO6SvdSnStFZMbnUzjyymkVzV+TQ9ymVW9hlVgO/fUkUII3JYSdV+UVcFnYwUF0YiDKuSTLCZNAzg2bQ==}
@@ -3979,10 +3979,10 @@ packages:
 
 snapshots:
 
-  '@agentscope-ai/chat@1.1.54(@agentscope-ai/design@1.0.30(@babel/runtime@7.28.6)(@codemirror/language@6.12.2)(@codemirror/search@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@rc-component/util@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(classnames@2.5.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@ant-design/icons@5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(use-sync-external-store@1.6.0(react@18.3.1))(workerize-loader@2.0.2(webpack@5.105.4))':
+  '@agentscope-ai/chat@1.1.56(@agentscope-ai/design@1.0.30(@babel/runtime@7.28.6)(@codemirror/language@6.12.2)(@codemirror/search@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@rc-component/util@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(classnames@2.5.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@ant-design/icons@5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(use-sync-external-store@1.6.0(react@18.3.1))(workerize-loader@2.0.2(webpack@5.105.4))':
     dependencies:
       '@agentscope-ai/design': 1.0.30(@babel/runtime@7.28.6)(@codemirror/language@6.12.2)(@codemirror/search@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@rc-component/util@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(classnames@2.5.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@agentscope-ai/icons': 1.0.59
+      '@agentscope-ai/icons': 1.0.63
       '@agentscope-ai/icons-override-antd': 6.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@agentscope-ai/icons-svg-override-antd': 4.4.2
       '@ant-design/cssinjs-utils': 1.1.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4024,7 +4024,7 @@ snapshots:
 
   '@agentscope-ai/design@1.0.30(@babel/runtime@7.28.6)(@codemirror/language@6.12.2)(@codemirror/search@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@rc-component/util@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(antd@5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(classnames@2.5.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@agentscope-ai/icons': 1.0.59
+      '@agentscope-ai/icons': 1.0.63
       '@agentscope-ai/icons-override-antd': 6.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@codemirror/autocomplete': 6.20.1
       '@codemirror/lang-cpp': 6.0.3
@@ -4086,7 +4086,7 @@ snapshots:
 
   '@agentscope-ai/icons-svg-override-antd@4.4.2': {}
 
-  '@agentscope-ai/icons@1.0.59': {}
+  '@agentscope-ai/icons@1.0.63': {}
 
   '@ant-design/charts-util@0.0.1-alpha.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:

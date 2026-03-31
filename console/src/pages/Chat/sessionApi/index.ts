@@ -9,8 +9,8 @@ import api, {
   type ChatStatus,
   type Message,
 } from "../../../api";
-import { chatApi } from "../../../api/modules/chat";
 import i18n from "../../../i18n";
+import { toDisplayUrl } from "../utils";
 
 // ---------------------------------------------------------------------------
 // Session date grouping

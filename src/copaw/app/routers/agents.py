@@ -578,6 +578,45 @@ def _ensure_default_heartbeat_md(workspace_dir: Path, language: str) -> None:
         f.write(content.strip())
 
 
+def _refresh_bundled_supos_api_if_changed(workspace_dir: Path) -> None:
+    """If workspace already has ``skills/supos_api``, sync it from the package when
+    ``SKILL.md`` differs. Other skills are not touched.
+    """
+    from ...agents.skills_manager import (
+        get_builtin_skills_dir,
+        reconcile_workspace_manifest,
+    )
+
+    bundled = get_builtin_skills_dir() / "supos_api"
+    ws_supos = workspace_dir / "skills" / "supos_api"
+    bundled_md = bundled / "SKILL.md"
+    if not bundled.is_dir() or not bundled_md.is_file():
+        return
+    if not ws_supos.is_dir():
+        return
+    ws_md = ws_supos / "SKILL.md"
+    if not ws_md.is_file():
+        return
+    try:
+        if bundled_md.read_text(encoding="utf-8") == ws_md.read_text(
+            encoding="utf-8",
+        ):
+            return
+    except OSError as exc:
+        logger.warning("Failed to read supos_api SKILL.md: %s", exc)
+        return
+    try:
+        shutil.rmtree(ws_supos)
+        shutil.copytree(bundled, ws_supos)
+        reconcile_workspace_manifest(workspace_dir)
+        logger.debug(
+            "Refreshed workspace skill 'supos_api' from bundled package "
+            "(SKILL.md changed).",
+        )
+    except OSError as exc:
+        logger.warning("Failed to refresh supos_api skill: %s", exc)
+
+
 def _initialize_agent_workspace(  # pylint: disable=too-many-branches
     workspace_dir: Path,
     agent_config: AgentProfileConfig,  # pylint: disable=unused-argument
@@ -647,6 +686,8 @@ def _initialize_agent_workspace(  # pylint: disable=too-many-branches
             if source.exists() and not target.exists():
                 shutil.copytree(source, target)
         reconcile_workspace_manifest(workspace_dir)
+
+    _refresh_bundled_supos_api_if_changed(workspace_dir)
 
     # Create empty jobs.json for cron jobs
     jobs_file = workspace_dir / "jobs.json"

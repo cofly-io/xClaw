@@ -17,6 +17,7 @@ from agentscope.message import TextBlock
 from agentscope.tool import ToolResponse
 
 from ...constant import WORKING_DIR
+from ...security.xclaw_env_crypto import decrypt_from_b64
 
 
 def _load_supos_url() -> str:
@@ -37,6 +38,15 @@ def _load_supos_url() -> str:
 
 def _load_supOS_ak() -> str:
     ak = (os.environ.get("SUPOS_AK") or "").strip()
+    if not ak:
+        enc = (os.environ.get("SUPOS_AK_ENC") or "").strip()
+        if enc:
+            try:
+                ak = decrypt_from_b64(enc).strip()
+                if ak:
+                    os.environ["SUPOS_AK"] = ak
+            except Exception:
+                ak = ""
     if not ak:
         raise RuntimeError(
             "未找到 SUPOS_AK 环境变量（Open API 认证所需）。"

@@ -15,6 +15,8 @@ import shutil
 import subprocess
 import sys
 
+from copaw.security.xclaw_env_crypto import encrypt_to_b64
+
 
 def _pnpm_executable() -> str:
     # Prefer .cmd on Windows so subprocess does not need PowerShell for .ps1 shims.
@@ -123,14 +125,51 @@ def _run_console_build() -> None:
 
 
 def _write_env_file(supos_ak: str) -> None:
-    """Write SUPOS_AK into dist/xClaw/xclaw.env; exe 同级加载，供运行时 os.environ。"""
+    """Write encrypted SUPOS_AK into dist/xClaw/xclaw.env (SUPOS_AK_ENC)."""
     env_path = os.path.join(DIST_DIR, "xclaw.env")
     v = (supos_ak or "").replace("\r", "").replace("\n", "").strip()
     if not v:
         return
+    enc = encrypt_to_b64(v)
     with open(env_path, "w", encoding="utf-8") as f:
-        f.write(f"SUPOS_AK={v}\n")
-    print(f"==> Wrote xclaw.env -> {DIST_DIR} (SUPOS_AK length={len(v)})")
+        f.write(f"SUPOS_AK_ENC={enc}\n")
+    print(
+        f"==> Wrote xclaw.env -> {DIST_DIR} (SUPOS_AK_ENC length={len(enc)})",
+    )
+
+
+def _purge_dist_user_data() -> None:
+    """Ensure no developer machine data is shipped in dist/xClaw.
+
+    Normally user data lives under WORKING_DIR (~/.copaw). However during local
+    testing it's possible to point working dir into the dist folder, or drop
+    workspace files next to the exe. This removes common persisted artifacts.
+    """
+    if not os.path.isdir(DIST_DIR):
+        return
+    candidates = [
+        os.path.join(DIST_DIR, "sessions"),
+        os.path.join(DIST_DIR, "memory"),
+        os.path.join(DIST_DIR, "chats.json"),
+        os.path.join(DIST_DIR, "jobs.json"),
+        os.path.join(DIST_DIR, "config.json"),
+        os.path.join(DIST_DIR, "supos_token.json"),
+        os.path.join(DIST_DIR, "supos_config.json"),
+        os.path.join(DIST_DIR, "token_usage.json"),
+    ]
+    removed = 0
+    for p in candidates:
+        if os.path.isdir(p):
+            shutil.rmtree(p, ignore_errors=True)
+            removed += 1
+        elif os.path.isfile(p):
+            try:
+                os.remove(p)
+                removed += 1
+            except OSError:
+                pass
+    if removed:
+        print(f"==> Purged {removed} persisted data paths from dist/xClaw/")
 
 def main():
     import argparse
@@ -212,6 +251,9 @@ def main():
         _write_env_file(supos_ak)
     else:
         print("==> WARN: SUPOS_AK missing; xclaw.env not written (--allow-missing-supos-ak).")
+
+    # 4. 打包前清理 dist 里的用户数据（避免把开发机记录带进安装包）
+    _purge_dist_user_data()
 
     print(f"\n==> Build complete: {DIST_DIR}")
     print(f"    EXE: {os.path.join(DIST_DIR, 'xClaw.exe')}")

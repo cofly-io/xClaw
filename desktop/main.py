@@ -10,6 +10,8 @@ import sys
 import threading
 import time
 
+from copaw.security.xclaw_env_crypto import decrypt_from_b64
+
 def _load_bundled_env() -> None:
     """Load env vars from xclaw.env next to the exe (Windows)."""
     if not getattr(sys, "frozen", False):
@@ -33,6 +35,17 @@ def _load_bundled_env() -> None:
                     os.environ.setdefault(k, v)
     except OSError:
         return
+
+    # Back-compat and safety: decrypt bundled SUPOS_AK_ENC into SUPOS_AK
+    # at runtime, so the env file does not contain plaintext.
+    if not os.environ.get("SUPOS_AK"):
+        enc = (os.environ.get("SUPOS_AK_ENC") or "").strip()
+        if enc:
+            try:
+                os.environ["SUPOS_AK"] = decrypt_from_b64(enc).strip()
+            except Exception:
+                # Leave SUPOS_AK unset; downstream will show a clear error.
+                pass
 
 # ---------------------------------------------------------------------------
 # PyInstaller 兼容：确保打包后能找到资源
