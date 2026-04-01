@@ -88,6 +88,8 @@ interface ExtendedSession extends IAgentScopeRuntimeWebUISession {
   status?: ChatStatus;
   /** ISO 8601 creation timestamp from backend. */
   createdAt?: string | null;
+  /** ISO 8601 updated timestamp from backend. */
+  updatedAt?: string | null;
   /** Whether the backend is still generating a response for this session. */
   generating?: boolean;
 }
@@ -264,7 +266,9 @@ const convertMessages = (
 };
 
 const chatSpecToSession = (chat: ChatSpec): ExtendedSession => {
-  const updateAt = chat.updated_at ? new Date(chat.updated_at).getTime() : Date.now();
+  const updateAt = chat.updated_at
+    ? new Date(chat.updated_at).getTime()
+    : Date.now();
   return {
     id: chat.id,
     name: (chat as ChatSpec & { name?: string }).name || DEFAULT_SESSION_NAME,
@@ -273,6 +277,8 @@ const chatSpecToSession = (chat: ChatSpec): ExtendedSession => {
     sessionId: chat.session_id,
     userId: chat.user_id,
     channel: chat.channel,
+    createdAt: chat.created_at ?? null,
+    updatedAt: chat.updated_at ?? null,
     messages: [],
     meta: chat.meta || {},
     status: chat.status ?? "idle",

@@ -4,7 +4,8 @@ import {
   type IAgentScopeRuntimeWebUIRef,
 } from "@agentscope-ai/chat";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Modal, Result, Tooltip, message } from "antd";
+import { Button, Modal, Result, Tooltip } from "antd";
+import { useAppMessage } from "../../hooks/useAppMessage";
 import { ExclamationCircleOutlined, SettingOutlined } from "@ant-design/icons";
 import { SparkCopyLine, SparkAttachmentLine } from "@agentscope-ai/icons";
 import { useTranslation } from "react-i18next";
@@ -19,8 +20,13 @@ import type { ProviderInfo, ModelInfo } from "../../api/types";
 import ModelSelector from "./ModelSelector";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAgentStore } from "../../stores/agentStore";
+import { useChatAnywhereInput } from "@agentscope-ai/chat";
 import styles from "./index.module.less";
 import { IconButton } from "@agentscope-ai/design";
+import ChatActionGroup from "./components/ChatActionGroup";
+import ChatHeaderTitle from "./components/ChatHeaderTitle";
+import ChatSessionInitializer from "./components/ChatSessionInitializer";
+import ChatSessionDrawer from "./components/ChatSessionDrawer";
 import {
   toDisplayUrl,
   copyText,
@@ -29,6 +35,7 @@ import {
   normalizeContentUrls,
   extractUserMessageText,
   type CopyableResponse,
+  type RuntimeLoadingBridgeApi,
 } from "./utils";
 
 const CHAT_ATTACHMENT_MAX_MB = 10;
@@ -218,6 +225,40 @@ function useMultimodalCapabilities(
   return multimodalCaps;
 }
 
+function RuntimeLoadingBridge({
+  bridgeRef,
+}: {
+  bridgeRef: { current: RuntimeLoadingBridgeApi | null };
+}) {
+  const { setLoading, getLoading } = useChatAnywhereInput(
+    (value) =>
+      ({
+        setLoading: value.setLoading,
+        getLoading: value.getLoading,
+      }) as RuntimeLoadingBridgeApi,
+  );
+
+  useEffect(() => {
+    if (!setLoading || !getLoading) {
+      bridgeRef.current = null;
+      return;
+    }
+
+    bridgeRef.current = {
+      setLoading,
+      getLoading,
+    };
+
+    return () => {
+      if (bridgeRef.current?.setLoading === setLoading) {
+        bridgeRef.current = null;
+      }
+    };
+  }, [getLoading, setLoading, bridgeRef]);
+
+  return null;
+}
+
 export default function ChatPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -230,6 +271,9 @@ export default function ChatPage() {
   const [showModelPrompt, setShowModelPrompt] = useState(false);
   const { selectedAgent } = useAgentStore();
   const [refreshKey, setRefreshKey] = useState(0);
+  const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
+  const { message } = useAppMessage();
+  const [historyOpen, setHistoryOpen] = useState(false);
   const isChatActiveRef = useRef(false);
   isChatActiveRef.current =
     location.pathname === "/" || location.pathname.startsWith("/chat");
@@ -522,6 +566,21 @@ export default function ChatPage() {
       theme: {
         ...defaultConfig.theme,
         darkMode: isDark,
+        leftHeader: {
+          ...defaultConfig.theme.leftHeader,
+        },
+        rightHeader: (
+          <>
+            <ChatSessionInitializer />
+            <RuntimeLoadingBridge bridgeRef={runtimeLoadingBridgeRef} />
+            <ChatHeaderTitle />
+            <span style={{ flex: 1 }} />
+            <ChatSessionDrawer
+              open={historyOpen}
+              onClose={() => setHistoryOpen(false)}
+            />
+          </>
+        ),
       },
       welcome: {
         ...i18nConfig.welcome,
@@ -533,7 +592,20 @@ export default function ChatPage() {
         ...(i18nConfig as any)?.sender,
         beforeSubmit: handleBeforeSubmit,
         allowSpeech: true,
-        prefix: <span style={{ order: 999 }}><ModelSelector /></span>,
+        prefix: (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              gap: 8,
+            }}
+          >
+            <ModelSelector />
+            <div style={{ flex: 1 }} />
+            <ChatActionGroup onOpenHistory={() => setHistoryOpen(true)} />
+          </div>
+        ),
         attachments: {
           trigger: function (props: any) {
             const tooltipKey = multimodalCaps.supportsMultimodal
@@ -562,7 +634,7 @@ export default function ChatPage() {
       },
       session: {
         multiple: true,
-        hideBuiltInSessionList: false,
+        hideBuiltInSessionList: true,
         api: sessionApi,
       },
       api: {
@@ -615,7 +687,15 @@ export default function ChatPage() {
         replace: true,
       },
     } as unknown as IAgentScopeRuntimeWebUIOptions;
-  }, [customFetch, copyResponse, handleFileUpload, t, isDark, multimodalCaps]);
+  }, [
+    customFetch,
+    copyResponse,
+    handleFileUpload,
+    t,
+    isDark,
+    multimodalCaps,
+    historyOpen,
+  ]);
 
   return (
     <div

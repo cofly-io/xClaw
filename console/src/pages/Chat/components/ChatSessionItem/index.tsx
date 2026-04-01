@@ -2,7 +2,15 @@ import React from "react";
 import { Input } from "antd";
 import { IconButton } from "@agentscope-ai/design";
 import { SparkEditLine, SparkDeleteLine } from "@agentscope-ai/icons";
-import { getChannelIconUrl } from "../../../Control/Channels/components";
+import type { LucideIcon } from "lucide-react";
+import {
+  Bot,
+  MessageCircle,
+  Mic,
+  Monitor,
+  Send,
+  Smartphone,
+} from "lucide-react";
 import styles from "./index.module.less";
 
 interface ChatSessionItemProps {
@@ -35,6 +43,20 @@ interface ChatSessionItemProps {
   className?: string;
 }
 
+const CHANNEL_LUCIDE_ICONS: Record<string, LucideIcon> = {
+  console: Monitor,
+  dingtalk: MessageCircle,
+  feishu: Send,
+  telegram: Send,
+  discord: MessageCircle,
+  wecom: MessageCircle,
+  weixin: MessageCircle,
+  qq: MessageCircle,
+  imessage: MessageCircle,
+  voice: Mic,
+  mqtt: Smartphone,
+};
+
 const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
   const className = [
     styles.chatSessionItem,
@@ -44,6 +66,11 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
   ]
     .filter(Boolean)
     .join(" ");
+
+  const ChannelIcon =
+    props.channelKey && CHANNEL_LUCIDE_ICONS[props.channelKey]
+      ? CHANNEL_LUCIDE_ICONS[props.channelKey]
+      : Bot;
 
   return (
     <div
@@ -73,15 +100,9 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
               className={styles.channelTag}
               title={props.channelLabel || props.channelKey}
             >
-              {props.channelKey ? (
-                <img
-                  className={styles.channelIcon}
-                  src={getChannelIconUrl(props.channelKey)}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : null}
+              <span className={styles.channelIcon} aria-hidden="true">
+                <ChannelIcon size={14} color="#1677ff" strokeWidth={2} />
+              </span>
               {props.channelLabel ? (
                 <span className={styles.channelTagText}>
                   {props.channelLabel}
