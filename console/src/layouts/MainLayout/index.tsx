@@ -23,6 +23,7 @@ import LoginPage from "../../pages/Login";
 import SecurityPage from "../../pages/Settings/Security";
 import TokenUsagePage from "../../pages/Settings/TokenUsage";
 import AgentsPage from "../../pages/Settings/Agents";
+import VoiceTranscriptionPage from "../../pages/Settings/VoiceTranscription";
 
 const { Content } = Layout;
 
@@ -43,13 +44,13 @@ const pathToKey: Record<string, string> = {
   "/agent-config": "agent-config",
   "/security": "security",
   "/token-usage": "token-usage",
+  "/voice-transcription": "voice-transcription",
 };
 
 export default function MainLayout() {
   const location = useLocation();
   const currentPath = location.pathname;
   const selectedKey = pathToKey[currentPath] || "chat";
-  const isChatPage = currentPath === "/" || currentPath.startsWith("/chat");
 
   const token = localStorage.getItem("supos_token");
   const user = localStorage.getItem("supos_user");
@@ -75,23 +76,16 @@ export default function MainLayout() {
   return (
     <>
       {locked && <LockScreen onUnlock={() => setLocked(false)} />}
-    <Layout className={styles.mainLayout} style={{ background: '#f0f5ff' }}>
-      <Sidebar selectedKey={selectedKey} />
-      <Layout style={{ background: '#f0f5ff' }}>
-        <Header selectedKey={selectedKey} onLock={() => setLocked(true)} />
-        <Content className="page-container">
-          <ConsoleCronBubble />
-          <div className="page-content">
-            <div
-              style={{
-                display: isChatPage ? undefined : "none",
-                height: "100%",
-              }}
-            >
-              <Chat />
-            </div>
-            {!isChatPage && (
+      <Layout className={styles.mainLayout} style={{ background: "#f0f5ff" }}>
+        <Header onLock={() => setLocked(true)} />
+        <Layout style={{ background: "#f0f5ff" }}>
+          <Sidebar selectedKey={selectedKey} />
+          <Content className="page-container">
+            <ConsoleCronBubble />
+            <div className="page-content">
               <Routes>
+                <Route path="/" element={<Navigate to="/chat" replace />} />
+                <Route path="/chat/*" element={<Chat />} />
                 <Route path="/channels" element={<ChannelsPage />} />
                 <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/cron-jobs" element={<CronJobsPage />} />
@@ -107,12 +101,15 @@ export default function MainLayout() {
                 <Route path="/agent-config" element={<AgentConfigPage />} />
                 <Route path="/security" element={<SecurityPage />} />
                 <Route path="/token-usage" element={<TokenUsagePage />} />
+                <Route
+                  path="/voice-transcription"
+                  element={<VoiceTranscriptionPage />}
+                />
               </Routes>
-            )}
-          </div>
-        </Content>
+            </div>
+          </Content>
+        </Layout>
       </Layout>
-    </Layout>
     </>
   );
 }

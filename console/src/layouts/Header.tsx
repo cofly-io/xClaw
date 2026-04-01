@@ -4,6 +4,8 @@ import { FileText, Book, HelpCircle, Lock, LogOut } from "lucide-react";
 import { Button, Tooltip } from "@agentscope-ai/design";
 import { useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
+import { useTheme } from "../contexts/ThemeContext";
+import AgentSelector from "../components/AgentSelector";
 
 const { Header: AntHeader } = Layout;
 
@@ -15,31 +17,14 @@ const NAV_URLS = {
   github: "https://github.com/agentscope-ai/CoPaw",
 } as const;
 
-const keyToLabel: Record<string, string> = {
-  chat: "nav.chat",
-  channels: "nav.channels",
-  sessions: "nav.sessions",
-  "cron-jobs": "nav.cronJobs",
-  heartbeat: "nav.heartbeat",
-  skills: "nav.skills",
-  tools: "nav.tools",
-  mcp: "nav.mcp",
-  "agent-config": "nav.agentConfig",
-  workspace: "nav.workspace",
-  models: "nav.models",
-  environments: "nav.environments",
-  security: "nav.security",
-  "token-usage": "nav.tokenUsage",
-};
-
 interface HeaderProps {
-  selectedKey: string;
   onLock: () => void;
 }
 
-export default function Header({ selectedKey, onLock }: HeaderProps) {
+export default function Header({ onLock }: HeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   const handleNavClick = (url: string) => {
     if (url) {
@@ -61,15 +46,28 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
 
   return (
     <AntHeader className={styles.header}>
-      <span className={styles.headerTitle}>
-        {t(keyToLabel[selectedKey] || "nav.chat")}
-      </span>
+      <div className={styles.logoWrapper}>
+        <img
+          src={
+            isDark
+              ? `${import.meta.env.BASE_URL}dark-logo.png`
+              : `${import.meta.env.BASE_URL}logo.png`
+          }
+          alt="xClaw"
+          className={styles.logoImg}
+        />
+      </div>
+      <div className={styles.headerCenter}>
+        <div className={styles.headerAgentSelector}>
+          <AgentSelector hideLabel />
+        </div>
+      </div>
       <Space size="middle">
         <Tooltip title={t("header.changelog")}>
           <Button
             icon={<FileText />}
             type="text"
-            style={{ fontSize: '14px' }}
+            style={{ fontSize: "14px" }}
             onClick={() => handleNavClick(NAV_URLS.changelog)}
           >
             {t("header.changelog")}
@@ -79,7 +77,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
           <Button
             icon={<Book />}
             type="text"
-            style={{ fontSize: '14px' }}
+            style={{ fontSize: "14px" }}
             onClick={() => handleNavClick(NAV_URLS.docs)}
           >
             {t("header.docs")}
@@ -89,7 +87,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
           <Button
             icon={<HelpCircle size={14} />}
             type="text"
-            style={{ fontSize: '14px' }}
+            style={{ fontSize: "14px" }}
             onClick={() => handleNavClick(NAV_URLS.faq)}
           >
             {t("header.faq")}
@@ -100,7 +98,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
             icon={<Lock />}
             type="text"
             onClick={onLock}
-            style={{ fontSize: '14px' }}
+            style={{ fontSize: "14px" }}
           />
         </Tooltip>
         <Tooltip title={t("header.logout", "退出")}>
@@ -108,7 +106,7 @@ export default function Header({ selectedKey, onLock }: HeaderProps) {
             icon={<LogOut />}
             type="text"
             onClick={handleLogout}
-            style={{ fontSize: '12px', fontWeight: '400', color: '#ff4d4f' }}
+            style={{ fontSize: "12px", fontWeight: "400", color: "#ff4d4f" }}
           />
         </Tooltip>
       </Space>

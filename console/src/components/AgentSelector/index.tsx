@@ -11,10 +11,12 @@ import styles from "./index.module.less";
 
 interface AgentSelectorProps {
   collapsed?: boolean;
+  hideLabel?: boolean;
 }
 
 export default function AgentSelector({
   collapsed = false,
+  hideLabel = false,
 }: AgentSelectorProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -93,15 +95,21 @@ export default function AgentSelector({
   }
 
   return (
-    <div className={styles.agentSelectorWrapper}>
-      <div className={styles.agentSelectorLabel}>
-        <span>
-          {t("agent.currentWorkspace")}
-          {agentCount > 0 && (
-            <span className={styles.agentCountBadge}> ({agentCount})</span>
-          )}
-        </span>
-      </div>
+    <div
+      className={`${styles.agentSelectorWrapper} ${
+        hideLabel ? styles.agentSelectorWrapperCompact : ""
+      }`}
+    >
+      {!hideLabel && (
+        <div className={styles.agentSelectorLabel}>
+          <span>
+            {t("agent.currentWorkspace")}
+            {agentCount > 0 && (
+              <span className={styles.agentCountBadge}> ({agentCount})</span>
+            )}
+          </span>
+        </div>
+      )}
       <Select
         value={selectedAgent}
         onChange={handleChange}
@@ -110,24 +118,27 @@ export default function AgentSelector({
         placeholder={t("agent.selectAgent")}
         optionLabelProp="label"
         popupClassName={styles.agentSelectorDropdown}
+        getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
         onDropdownVisibleChange={setDropdownOpen}
         suffixIcon={
           dropdownOpen ? <SparkUpLine size={20} /> : <SparkDownLine size={20} />
         }
         dropdownRender={(menu) => (
           <>
-            <div className={styles.dropdownHeader}>
-              <span className={styles.dropdownHeaderTitle}>
-                {t("agent.currentWorkspace")}
-              </span>
-              <button
-                className={styles.managementLink}
-                onClick={() => navigate("/agents")}
-              >
-                {t("agent.management")}
-                <ChevronRight size={12} strokeWidth={2.5} />
-              </button>
-            </div>
+            {!hideLabel && (
+              <div className={styles.dropdownHeader}>
+                <span className={styles.dropdownHeaderTitle}>
+                  {t("agent.currentWorkspace")}
+                </span>
+                <button
+                  className={styles.managementLink}
+                  onClick={() => navigate("/agents")}
+                >
+                  {t("agent.management")}
+                  <ChevronRight size={12} strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
             {menu}
           </>
         )}

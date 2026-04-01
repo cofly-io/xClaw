@@ -13,6 +13,14 @@
   margin-bottom: 12px;
 }
 
+.agentSelectorWrapperCompact {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
 // ─── Collapsed (icon only) ────────────────────────────────────────────────────
 .agentSelectorCollapsed {
   width: 40px;
@@ -172,8 +180,6 @@
   border-radius: 12px !important;
   overflow: hidden;
   min-width: 242px !important;
-  left: 15px !important;
-  top: 140px !important;
   border: 1px solid rgba(26, 23, 22, 0.06) !important;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
@@ -330,6 +336,11 @@
   .agentSelectorWrapper {
     background: rgba(255, 255, 255, 0.03);
     border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .agentSelectorWrapperCompact {
+    background: transparent;
+    border-color: transparent;
   }
 
   .agentSelectorCollapsed {

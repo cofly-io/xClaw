@@ -259,11 +259,19 @@ class CoPawAgent(ToolGuardMixin, ReActAgent):
             # compatibility)
             async_exec = async_execution_tools.get(tool_name, False)
 
-            toolkit.register_tool_function(
-                tool_func,
-                namesake_strategy=namesake_strategy,
-                async_execution=async_exec,
-            )
+            # agentscope Toolkit API compatibility:
+            # Some versions do not accept the `async_execution` kwarg.
+            try:
+                toolkit.register_tool_function(
+                    tool_func,
+                    namesake_strategy=namesake_strategy,
+                    async_execution=async_exec,
+                )
+            except TypeError:
+                toolkit.register_tool_function(
+                    tool_func,
+                    namesake_strategy=namesake_strategy,
+                )
             logger.debug(
                 "Registered tool: %s (async_execution=%s)",
                 tool_name,

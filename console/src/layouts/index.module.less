@@ -10,12 +10,12 @@
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 .header {
-  height: 42px;
+  height: 50px;
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #ffffff;
+  background: linear-gradient(120deg, #F1F1F1 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%);
   border-bottom: 1px solid #e6eeff;
   box-shadow: 0 1px 4px rgba(24, 100, 255, 0.06);
 
@@ -40,6 +40,27 @@
   }
 }
 
+.headerCenter {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.headerAgentSelector {
+  width: 360px;
+  max-width: 60vw;
+  display: flex;
+  align-items: center;
+
+  :global {
+    .ant-select-selector,
+    .copaw-select-selector {
+      height: 32px !important;
+    }
+  }
+}
+
 .headerTitle {
   font-size: 15px;
   font-weight: 600;
@@ -49,9 +70,24 @@
 .sider {
   background: linear-gradient(180deg, #F1F1F1 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%) !important;
   border-right: 1px solid #e6eeff;
+  padding-top: 22px !important;
   overflow: hidden !important;
   height: 100vh;
   box-shadow: 2px 0 8px rgba(24, 100, 255, 0.04);
+
+  .agentSelectorContainer {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: transparent;
+    padding: 12px 12px 6px;
+  }
+
+  .sideMenu {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 
   :global {
     .xClaw-layout-sider-children {
@@ -67,24 +103,22 @@
       overflow-x: hidden;
       border-inline-end: 0 !important;
       background: transparent !important;
-      padding: 10px 0 !important;
+      padding: 0 !important;
 
-      /*第一层group header*/
+      /* Group title */
       .xClaw-menu-submenu-title {
-        color: #aab4d4 !important;
-        font-size: 10px !important;
-        font-weight: 600 !important;
-        letter-spacing: 1px !important;
-        text-transform: uppercase;
-        height: auto !important;
-        line-height: 1.4 !important;
-        padding: 6px 16px 4px !important;
+        font-family: "PingFang SC", sans-serif !important;
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        line-height: 32px !important;
+        letter-spacing: normal !important;
+        color: rgba(0, 0, 0, 0.466) !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
         margin: 0 !important;
-        width: 100% !important;
 
         &:hover {
           background: transparent !important;
-          color: #7a8ab8 !important;
         }
 
         .xClaw-menu-submenu-arrow {
@@ -110,50 +144,31 @@
         }
       }
 
-      /*第二层nav item*/
+      /* Menu items */
       .xClaw-menu-item {
-        color: #696969 !important;
-        border-radius: 8px !important;
-        font-size: 13px !important;
-        height: auto !important;
-        line-height: 1 !important;
-        padding: 9px 16px !important;
-        margin: 2px 8px !important;
-        width: calc(100% - 16px) !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
+        margin: 0 !important;
+        height: 32px !important;
+        line-height: 32px !important;
+        margin-top: 6px !important;
+        padding-left: 16px !important;
+        // padding-right: 8px !important;
+        color: rgba(0, 0, 0, 0.65) !important;
 
         &:hover {
-          background: #f0f5ff !important;
-          color: #1864ff !important;
+          background: rgba(0, 0, 0, 0.06) !important;
+          color: rgba(0, 0, 0, 0.88) !important;
         }
 
         .xClaw-menu-item-icon,
         .anticon,
         svg {
-          color: #7a8ab8;
-          font-size: 15px;
-          width: 15px;
-          height: 15px;
-          flex-shrink: 0;
-          margin-inline-end: 0 !important;
+          color: rgba(0, 0, 0, 0.55);
         }
       }
 
       .xClaw-menu-item-selected {
-        background: linear-gradient(135deg, rgba(24, 100, 255, 0.08), rgba(79, 138, 255, 0.06)) !important;
-        color: #1864ff !important;
-
-        .xClaw-menu-item-icon,
-        .anticon,
-        svg {
-          color: #1864ff !important;
-        }
-
-        &:hover {
-          background: linear-gradient(135deg, rgba(24, 100, 255, 0.12), rgba(79, 138, 255, 0.08)) !important;
-        }
+        background: rgba(43, 18, 0, 0.08) !important;
+        color: inherit !important;
       }
     }
 
@@ -221,30 +236,26 @@
   }
 
   :global {
-    .copaw-menu {
-      background: #1a1a1a !important;
+    .xClaw-menu {
+      background: transparent !important;
       border-inline-end: 0 !important;
     }
 
-    /* Group title (sub-menu label) */
-    .copaw-menu-submenu-title {
+    .xClaw-menu-submenu-title {
       color: rgba(255, 255, 255, 0.45) !important;
     }
 
-    /* Regular menu item */
-    .copaw-menu-item {
+    .xClaw-menu-item {
       color: rgba(255, 255, 255, 0.75) !important;
     }
 
-    /* Hover state */
-    .copaw-menu-item:hover,
-    .copaw-menu-submenu-title:hover {
+    .xClaw-menu-item:hover,
+    .xClaw-menu-submenu-title:hover {
       background: rgba(255, 255, 255, 0.1) !important;
       color: rgba(255, 255, 255, 0.95) !important;
     }
 
-    /* Selected item */
-    .copaw-menu-item-selected {
+    .xClaw-menu-item-selected {
       background: rgba(255, 127, 22, 0.5) !important;
       color: #ff7f16 !important;
     }
@@ -402,8 +413,6 @@
 }
 
 .updateModalBanner {
-  background: url("https://gw.alicdn.com/imgextra/i3/O1CN013Tuw5Y1sFbMMVSqt7_!!6000000005737-2-tps-960-146.png")
-    no-repeat center top;
   background-size: contain;
   padding: 48px 28px 0px;
   display: flex;

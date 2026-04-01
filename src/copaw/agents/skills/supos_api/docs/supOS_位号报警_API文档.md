@@ -172,31 +172,39 @@
 ### 查询原始报警记录
 
 ```bash
-python scripts/client.py post /os/open-api/alarm/history/v1/raw '{
-  "clientId": "production-monitor-001",
-  "activeTimeBegin": "2024-08-01T00:00:00.000+08:00",
-  "activeTimeEnd": "2024-08-31T23:59:59.999+08:00",
-  "pageNum": 1,
-  "pageSize": 50,
-  "sortBy": "activeTime",
-  "sortOrder": "desc"
-}'
+supos_api_call(
+  method="post",
+  path="/os/open-api/alarm/history/v1/raw",
+  data={
+    "clientId": "production-monitor-001",
+    "activeTimeBegin": "2024-08-01T00:00:00.000+08:00",
+    "activeTimeEnd": "2024-08-31T23:59:59.999+08:00",
+    "pageNum": 1,
+    "pageSize": 50,
+    "sortBy": "activeTime",
+    "sortOrder": "desc"
+  }
+)
 ```
 
 ### 统计每日报警数量
 
 ```bash
-python scripts/client.py post /os/open-api/alarm/history/v1/statistics '{
-  "clientId": "production-analytics-002",
-  "beginTime": "2024-08-01T00:00:00.000+08:00",
-  "endTime": "2024-08-31T23:59:59.999+08:00",
-  "timeBucket": "day",
-  "groupBy": "name",
-  "categoryBy": "time",
-  "topN": 10,
-  "sortBy": "count",
-  "sortOrder": "desc"
-}'
+supos_api_call(
+  method="post",
+  path="/os/open-api/alarm/history/v1/statistics",
+  data={
+    "clientId": "production-analytics-002",
+    "beginTime": "2024-08-01T00:00:00.000+08:00",
+    "endTime": "2024-08-31T23:59:59.999+08:00",
+    "timeBucket": "day",
+    "groupBy": "name",
+    "categoryBy": "time",
+    "topN": 10,
+    "sortBy": "count",
+    "sortOrder": "desc"
+  }
+)
 ```
 
 ---

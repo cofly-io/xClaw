@@ -1440,6 +1440,61 @@
 ### POST /realtime/v3/write
 
 **批量写值**
+**⚠️ 强制规则（重要）**
+
+当向 **UNS 节点写数据**时，**无论是“实时点位数据”还是“模拟的关系型/结构化数据”**，
+都必须调用这个接口：`POST /realtime/v3/write`。
+
+如果用户让你“插入一条模拟的关系型记录/表数据/工单数据”，也同样要走本接口。
+做法是把“表的一行记录”**拆成多个点写入**：每个字段一个点（`datas[].name`），字段值写入
+`datas[].value.value`。
+
+#### ✅ 关系型/结构化数据的写入方式（示例）
+
+假设要在 UNS 下模拟一张表 `table1` 的一条记录，字段如下：
+- id (LONG)
+- work_order_code (STRING)
+- alarm_record_id (LONG)
+- alarm_status (INT)
+
+把这一行记录拆成 4 个写入点（每个字段一个点）：
+- `table1.id` = 1
+- `table1.work_order_code` = `"AROrder20260331MOCK"`
+- `table1.alarm_record_id` = 0
+- `table1.alarm_status` = 1
+
+调用内置工具 `supos_api_call`（推荐用毫秒时间戳；`status` 可省略或用 0）：
+
+```text
+method: post
+path: /os/open-api/realtime/v3/write
+data: {
+  "timestampPrecision": "ms",
+  "datas": [
+    { "name": "table1.id", "value": { "timeStamp": 1711872000000, "status": 0, "value": 1 } },
+    { "name": "table1.work_order_code", "value": { "timeStamp": 1711872000000, "status": 0, "value": "AROrder20260331MOCK" } },
+    { "name": "table1.alarm_record_id", "value": { "timeStamp": 1711872000000, "status": 0, "value": 0 } },
+    { "name": "table1.alarm_status", "value": { "timeStamp": 1711872000000, "status": 0, "value": 1 } }
+  ]
+}
+```
+
+#### ✅ 实时点位数据的写入方式（示例）
+
+例如写入一个实时温度点：
+
+```text
+method: post
+path: /os/open-api/realtime/v3/write
+data: {
+  "timestampPrecision": "ms",
+  "datas": [
+    { "name": "factory.device_01.temperature", "value": { "timeStamp": 1711872000000, "status": 0, "value": 36.8 } }
+  ]
+}
+```
+
+> 结论：**只要是“写 UNS 节点数据”这个动作，就统一用 `/realtime/v3/write`。**
 
 #### Parameters
 

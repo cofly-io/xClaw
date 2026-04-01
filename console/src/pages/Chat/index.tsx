@@ -17,7 +17,6 @@ import { buildAuthHeaders } from "../../api/authHeaders";
 import { providerApi } from "../../api/modules/provider";
 import type { ProviderInfo, ModelInfo } from "../../api/types";
 import ModelSelector from "./ModelSelector";
-import SessionList from "./SessionList";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAgentStore } from "../../stores/agentStore";
 import styles from "./index.module.less";
@@ -523,7 +522,6 @@ export default function ChatPage() {
       theme: {
         ...defaultConfig.theme,
         darkMode: isDark,
-        leftHeader: <SessionList />,
       },
       welcome: {
         ...i18nConfig.welcome,
@@ -564,7 +562,7 @@ export default function ChatPage() {
       },
       session: {
         multiple: true,
-        hideBuiltInSessionList: true,
+        hideBuiltInSessionList: false,
         api: sessionApi,
       },
       api: {
