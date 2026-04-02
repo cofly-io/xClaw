@@ -9,6 +9,19 @@
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
+:global {
+  .xClaw-chat-anywhere-layout-right-header {
+    height: 40px !important;
+    // 你的样式backdrop-filter
+  }
+  .xClaw-chat-anywhere-default-header-right :first-child{
+    font-size: 14px !important;
+    color: #636363 !important;  
+    font-weight: 600 !important;
+    margin-left: 12px !important;
+  }
+}
+
 .header {
   height: 50px;
   padding: 0 24px;
@@ -43,7 +56,7 @@
 .headerCenter {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: left;
   min-width: 0;
 }
 
@@ -52,11 +65,20 @@
   max-width: 60vw;
   display: flex;
   align-items: center;
+  outline: none !important;
 
   :global {
-    .ant-select-selector,
-    .copaw-select-selector {
-      height: 32px !important;
+    .xClaw-select-selector {
+      border: 0 !important;
+      background: transparent !important;
+
+      .xClaw-select-selection-item div:first-child {
+        color: #757575 !important;
+      }
+    }
+
+    .xClaw-select-arrow {
+      display: none !important;
     }
   }
 }
@@ -135,7 +157,8 @@
           align-items: center !important;
           width: 100% !important;
 
-          .anticon, svg {
+          .anticon,
+          svg {
             font-size: 18px !important;
             width: 18px !important;
             height: 18px !important;
@@ -190,7 +213,7 @@
 
     /* Always expand submenus */
     .copaw-menu-submenu {
-      > .copaw-menu {
+      >.copaw-menu {
         display: block !important;
       }
     }
@@ -256,11 +279,12 @@
     }
 
     .xClaw-menu-item-selected {
-      background: rgba(255, 127, 22, 0.5) !important;
-      color: #ff7f16 !important;
+      background: rgba(22, 201, 255, 0.5) !important;
+      color: #16b5ff !important;
     }
   }
 }
+
 
 .siderTop {
   height: 42px;
@@ -274,6 +298,7 @@
 }
 
 .logoWrapper {
+  width: 200px;
   display: flex;
   align-items: center;
 }
@@ -353,7 +378,7 @@
   justify-content: center;
 }
 
-.authBtn + .authBtn {
+.authBtn+.authBtn {
   margin-top: 4px;
 }
 
@@ -380,7 +405,7 @@
   justify-content: center;
 }
 
-.authBtn + .authBtn {
+.authBtn+.authBtn {
   margin-top: 4px;
 }
 
@@ -449,11 +474,11 @@
   font-weight: 500;
   line-height: 64.78px;
   letter-spacing: normal;
-  color: #ff7f16;
+  color: #1864ff;
 }
 
 .updateModalTitle {
-  color: #ff7f16;
+  color: #1864ff;
 }
 
 .updateModalBody {
@@ -472,19 +497,19 @@
 }
 
 .updateViewReleasesBtn {
-  background: #ff7f16 !important;
-  border-color: #ff7f16 !important;
+  background: #1864ff !important;
+  border-color: #1864ff !important;
   color: #fff !important;
 
   &:hover {
-    background: #d45b0a !important;
-    border-color: #d45b0a !important;
+    background: #0d4fd9 !important;
+    border-color: #0d4fd9 !important;
   }
 }
 
 .updateModalPrimaryBtn {
-  background: #ff7f16;
-  border-color: #ff7f16;
+  background: #1864ff;
+  border-color: #1864ff;
 }
 
 // ─── Code block inside update modal ──────────────────────────────────────────
@@ -619,11 +644,11 @@
   }
 
   .versionBadge {
-    color: #ff7f16;
+    color: #1864ff;
   }
 
   .collapseBtn {
-    color: #ff7f16;
+    color: #1864ff;
   }
 
   .authActions {

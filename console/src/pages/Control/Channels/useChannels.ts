@@ -21,7 +21,7 @@ export function useChannels() {
         setChannels(data as unknown as Record<string, Record<string, unknown>>);
       if (types) setChannelTypes(types);
     } catch (error) {
-      console.error("❌ Failed to load channels:", error);
+      console.error("Failed to load channels:", error);
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,6 @@ export function useChannels() {
       "console",
       "dingtalk",
       "feishu",
-      "wecom",
       "imessage",
       "discord",
       "telegram",
