@@ -5,61 +5,67 @@ import {
   Modal,
   Input,
   Form,
-  message,
   Tooltip,
   type MenuProps,
 } from "antd";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAppMessage } from "../hooks/useAppMessage";
+import AgentSelector from "../components/AgentSelector";
 import {
-  SparkAgentLine,
-  SparkBrowseLine,
   SparkChatTabFill,
-  SparkDataLine,
+  SparkWifiLine,
+  SparkUserGroupLine,
   SparkDateLine,
-  SparkExitFullscreenLine,
-  SparkInternetLine,
-  SparkLocalFileLine,
+  SparkVoiceChat01Line,
   SparkMagicWandLine,
+  SparkLocalFileLine,
+  SparkModePlazaLine,
+  SparkInternetLine,
+  SparkModifyLine,
+  SparkBrowseLine,
   SparkMcpMcpLine,
+  SparkToolLine,
+  SparkDataLine,
+  SparkMicLine,
+  SparkAgentLine,
+  SparkExitFullscreenLine,
+  SparkSearchUserLine,
   SparkMenuExpandLine,
   SparkMenuFoldLine,
-  SparkModePlazaLine,
-  SparkModifyLine,
   SparkOtherLine,
-  SparkSearchUserLine,
-  SparkToolLine,
-  SparkUserGroupLine,
-  SparkVoiceChat01Line,
-  SparkWifiLine,
-  SparkMicLine,
 } from "@agentscope-ai/icons";
 import { clearAuthToken } from "../api/config";
 import { authApi } from "../api/modules/auth";
 import styles from "./index.module.less";
 import { useTheme } from "../contexts/ThemeContext";
-import {
-  DEFAULT_OPEN_KEYS,
-  KEY_TO_PATH,
-} from "./constants";
+import { KEY_TO_PATH, DEFAULT_OPEN_KEYS } from "./constants";
+
+// ── Layout ────────────────────────────────────────────────────────────────
 
 const { Sider } = Layout;
+
+// ── Types ─────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
   selectedKey: string;
 }
 
+// ── Sidebar ───────────────────────────────────────────────────────────────
+
 export default function Sidebar({ selectedKey }: SidebarProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { message } = useAppMessage();
   const { isDark } = useTheme();
   const [authEnabled, setAuthEnabled] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
   const [collapsed, setCollapsed] = useState(false);
-  const [openKeys, setOpenKeys] = useState<string[]>(DEFAULT_OPEN_KEYS);
+
+  // ── Effects ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     authApi
@@ -68,9 +74,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!collapsed) setOpenKeys(DEFAULT_OPEN_KEYS);
-  }, [collapsed]);
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleUpdateProfile = async (values: {
     currentPassword: string;
@@ -124,6 +128,8 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       setAccountLoading(false);
     }
   };
+
+  // ── Collapsed nav items (all leaf pages) ──────────────────────────────
 
   const collapsedNavItems = [
     {
@@ -338,182 +344,172 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     },
   ];
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <>
-      {/* Dot grip — fixed on sidebar right edge */}
-      <div
-        className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ""}`}
-        onClick={() => setCollapsed(!collapsed)}
-      >
-        {[0, 1, 2, 3, 4, 5].map((col) => (
-          <div key={col} className={styles.dotRow}>
-            {[0, 1].map((row) => (
-              <div key={row} className={styles.dot} />
-            ))}
-          </div>
-        ))}
+    <Sider
+      width={collapsed ? 72 : 240}
+      className={`${styles.sider}${
+        collapsed ? ` ${styles.siderCollapsed}` : ""
+      }${isDark ? ` ${styles.siderDark}` : ""}`}
+    >
+      <div className={styles.agentSelectorContainer}>
+        <AgentSelector collapsed={collapsed} />
       </div>
-      <Sider
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        width={220}
-        className={`${styles.sider}${isDark ? ` ${styles.siderDark}` : ""}`}
-      >
-        {collapsed ? (
-          <nav className={styles.collapsedNav}>
-            {collapsedNavItems.map((item) => {
-              const isActive = selectedKey === item.key;
-              return (
-                <Tooltip
-                  key={item.key}
-                  title={item.label}
-                  placement="right"
-                  overlayInnerStyle={{
-                    background: "rgba(0,0,0,0.75)",
-                    color: "#fff",
-                  }}
+
+      {collapsed ? (
+        <nav className={styles.collapsedNav}>
+          {collapsedNavItems.map((item) => {
+            const isActive = selectedKey === item.key;
+            return (
+              <Tooltip
+                key={item.key}
+                title={item.label}
+                placement="right"
+                overlayInnerStyle={{
+                  background: "rgba(0,0,0,0.75)",
+                  color: "#fff",
+                }}
+              >
+                <button
+                  className={`${styles.collapsedNavItem} ${
+                    isActive ? styles.collapsedNavItemActive : ""
+                  }`}
+                  onClick={() => navigate(item.path)}
                 >
-                  <button
-                    className={`${styles.collapsedNavItem} ${
-                      isActive ? styles.collapsedNavItemActive : ""
-                    }`}
-                    onClick={() => navigate(item.path)}
-                  >
-                    {item.icon}
-                  </button>
-                </Tooltip>
-              );
-            })}
-          </nav>
-        ) : (
-          <Menu
-            mode="inline"
-            selectedKeys={[selectedKey]}
-            openKeys={openKeys}
-            onOpenChange={(keys) => setOpenKeys(keys as string[])}
-            onClick={({ key }) => {
-              const path = KEY_TO_PATH[String(key)];
-              if (path) navigate(path);
-            }}
-            items={menuItems}
-            theme={isDark ? "dark" : "light"}
-            className={styles.sideMenu}
-          />
-        )}
+                  {item.icon}
+                </button>
+              </Tooltip>
+            );
+          })}
+        </nav>
+      ) : (
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          openKeys={DEFAULT_OPEN_KEYS}
+          onClick={({ key }) => {
+            const path = KEY_TO_PATH[String(key)];
+            if (path) navigate(path);
+          }}
+          items={menuItems}
+          theme={isDark ? "dark" : "light"}
+          className={styles.sideMenu}
+        />
+      )}
 
-        {authEnabled && !collapsed && (
-          <div className={styles.authActions}>
-            <Button
-              type="text"
-              icon={<SparkSearchUserLine size={16} />}
-              onClick={() => {
-                accountForm.resetFields();
-                setAccountModalOpen(true);
-              }}
-              block
-              className={`${styles.authBtn} ${
-                collapsed ? styles.authBtnCollapsed : ""
-              }`}
-            >
-              {!collapsed && t("account.title")}
-            </Button>
-            <Button
-              type="text"
-              icon={<SparkExitFullscreenLine size={16} />}
-              onClick={() => {
-                clearAuthToken();
-                window.location.href = "/login";
-              }}
-              block
-              className={`${styles.authBtn} ${
-                collapsed ? styles.authBtnCollapsed : ""
-              }`}
-            >
-              {!collapsed && t("login.logout")}
-            </Button>
-          </div>
-        )}
-
-        <div className={styles.collapseToggleContainer}>
+      {authEnabled && !collapsed && (
+        <div className={styles.authActions}>
           <Button
             type="text"
-            icon={
-              collapsed ? (
-                <SparkMenuExpandLine size={20} />
-              ) : (
-                <SparkMenuFoldLine size={20} />
-              )
-            }
-            onClick={() => setCollapsed(!collapsed)}
-            className={styles.collapseToggle}
-          />
-        </div>
-
-        <Modal
-          open={accountModalOpen}
-          onCancel={() => setAccountModalOpen(false)}
-          title={t("account.title")}
-          footer={null}
-          destroyOnHidden
-          centered
-        >
-          <Form
-            form={accountForm}
-            layout="vertical"
-            onFinish={handleUpdateProfile}
+            icon={<SparkSearchUserLine size={16} />}
+            onClick={() => {
+              accountForm.resetFields();
+              setAccountModalOpen(true);
+            }}
+            block
+            className={`${styles.authBtn} ${
+              collapsed ? styles.authBtnCollapsed : ""
+            }`}
           >
-            <Form.Item
-              name="currentPassword"
-              label={t("account.currentPassword")}
-              rules={[
-                { required: true, message: t("account.currentPasswordRequired") },
-              ]}
+            {!collapsed && t("account.title")}
+          </Button>
+          <Button
+            type="text"
+            icon={<SparkExitFullscreenLine size={16} />}
+            onClick={() => {
+              clearAuthToken();
+              window.location.href = "/login";
+            }}
+            block
+            className={`${styles.authBtn} ${
+              collapsed ? styles.authBtnCollapsed : ""
+            }`}
+          >
+            {!collapsed && t("login.logout")}
+          </Button>
+        </div>
+      )}
+
+      <div className={styles.collapseToggleContainer}>
+        <Button
+          type="text"
+          icon={
+            collapsed ? (
+              <SparkMenuExpandLine size={20} />
+            ) : (
+              <SparkMenuFoldLine size={20} />
+            )
+          }
+          onClick={() => setCollapsed(!collapsed)}
+          className={styles.collapseToggle}
+        />
+      </div>
+
+      <Modal
+        open={accountModalOpen}
+        onCancel={() => setAccountModalOpen(false)}
+        title={t("account.title")}
+        footer={null}
+        destroyOnHidden
+        centered
+      >
+        <Form
+          form={accountForm}
+          layout="vertical"
+          onFinish={handleUpdateProfile}
+        >
+          <Form.Item
+            name="currentPassword"
+            label={t("account.currentPassword")}
+            rules={[
+              { required: true, message: t("account.currentPasswordRequired") },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item name="newUsername" label={t("account.newUsername")}>
+            <Input placeholder={t("account.newUsernamePlaceholder")} />
+          </Form.Item>
+          <Form.Item name="newPassword" label={t("account.newPassword")}>
+            <Input.Password placeholder={t("account.newPasswordPlaceholder")} />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label={t("account.confirmPassword")}
+            dependencies={["newPassword"]}
+            rules={[
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value && !getFieldValue("newPassword")) {
+                    return Promise.resolve();
+                  }
+                  if (value === getFieldValue("newPassword")) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error(t("account.passwordMismatch")),
+                  );
+                },
+              }),
+            ]}
+          >
+            <Input.Password
+              placeholder={t("account.confirmPasswordPlaceholder")}
+            />
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={accountLoading}
+              block
             >
-              <Input.Password />
-            </Form.Item>
-            <Form.Item name="newUsername" label={t("account.newUsername")}>
-              <Input placeholder={t("account.newUsernamePlaceholder")} />
-            </Form.Item>
-            <Form.Item name="newPassword" label={t("account.newPassword")}>
-              <Input.Password placeholder={t("account.newPasswordPlaceholder")} />
-            </Form.Item>
-            <Form.Item
-              name="confirmPassword"
-              label={t("account.confirmPassword")}
-              dependencies={["newPassword"]}
-              rules={[
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value && !getFieldValue("newPassword")) {
-                      return Promise.resolve();
-                    }
-                    if (value === getFieldValue("newPassword")) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(
-                      new Error(t("account.passwordMismatch")),
-                    );
-                  },
-                }),
-              ]}
-            >
-              <Input.Password
-                placeholder={t("account.confirmPasswordPlaceholder")}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={accountLoading}
-                block
-              >
-                {t("account.save")}
-              </Button>
-            </Form.Item>
-          </Form>
-        </Modal>
-      </Sider>
-    </>
+              {t("account.save")}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </Sider>
   );
 }

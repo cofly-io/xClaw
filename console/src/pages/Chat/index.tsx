@@ -26,7 +26,6 @@ import { IconButton } from "@agentscope-ai/design";
 import ChatActionGroup from "./components/ChatActionGroup";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
-import ChatSessionDrawer from "./components/ChatSessionDrawer";
 import {
   toDisplayUrl,
   copyText,
@@ -273,7 +272,7 @@ export default function ChatPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
   const { message } = useAppMessage();
-  const [historyOpen, setHistoryOpen] = useState(false);
+
   const isChatActiveRef = useRef(false);
   isChatActiveRef.current =
     location.pathname === "/" || location.pathname.startsWith("/chat");
@@ -575,37 +574,21 @@ export default function ChatPage() {
             <RuntimeLoadingBridge bridgeRef={runtimeLoadingBridgeRef} />
             <ChatHeaderTitle />
             <span style={{ flex: 1 }} />
-            <ChatSessionDrawer
-              open={historyOpen}
-              onClose={() => setHistoryOpen(false)}
-            />
+            <ModelSelector />
+            <ChatActionGroup />
           </>
         ),
       },
       welcome: {
         ...i18nConfig.welcome,
-        avatar: isDark
-          ? `${import.meta.env.BASE_URL}dark-logo.png`
-          : `${import.meta.env.BASE_URL}x-symbol.svg`,
+        nick: "CoPaw",
+        avatar:
+          "https://gw.alicdn.com/imgextra/i2/O1CN01pyXzjQ1EL1PuZMlSd_!!6000000000334-2-tps-288-288.png",
       },
       sender: {
         ...(i18nConfig as any)?.sender,
         beforeSubmit: handleBeforeSubmit,
         allowSpeech: true,
-        prefix: (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: "100%",
-              gap: 8,
-            }}
-          >
-            <ModelSelector />
-            <div style={{ flex: 1 }} />
-            <ChatActionGroup onOpenHistory={() => setHistoryOpen(true)} />
-          </div>
-        ),
         attachments: {
           trigger: function (props: any) {
             const tooltipKey = multimodalCaps.supportsMultimodal
@@ -687,15 +670,7 @@ export default function ChatPage() {
         replace: true,
       },
     } as unknown as IAgentScopeRuntimeWebUIOptions;
-  }, [
-    customFetch,
-    copyResponse,
-    handleFileUpload,
-    t,
-    isDark,
-    multimodalCaps,
-    historyOpen,
-  ]);
+  }, [customFetch, copyResponse, handleFileUpload, t, isDark, multimodalCaps]);
 
   return (
     <div

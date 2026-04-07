@@ -8,6 +8,7 @@ import {
   type IAgentScopeRuntimeWebUISession,
 } from "@agentscope-ai/chat";
 import { useTranslation } from "react-i18next";
+import type { ChatStatus } from "../../../../api/types/chat";
 import { chatApi } from "../../../../api/modules/chat";
 import sessionApi from "../../sessionApi";
 import ChatSessionItem from "../ChatSessionItem";
@@ -21,9 +22,9 @@ interface ExtendedChatSession extends IAgentScopeRuntimeWebUISession {
   userId?: string;
   channel?: string;
   createdAt?: string | null;
-  updatedAt?: string | null;
   meta?: Record<string, unknown>;
-  status?: "idle" | "running";
+  status?: ChatStatus;
+  generating?: boolean;
 }
 
 interface ChatSessionDrawerProps {
@@ -52,15 +53,6 @@ const getBackendId = (session: ExtendedChatSession): string | null => {
   const id = session.id;
   if (!/^\d+$/.test(id)) return id;
   return null;
-};
-
-const getSessionGroupLabel = (t: (k: string) => string, tsMs: number): string => {
-  const now = Date.now();
-  const diffDays = (now - tsMs) / (1000 * 60 * 60 * 24);
-  if (diffDays < 1) return t("chat.group.today");
-  if (diffDays < 3) return t("chat.group.last3Days");
-  if (diffDays < 7) return t("chat.group.last7Days");
-  return t("chat.group.monthAgo");
 };
 
 const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
@@ -93,39 +85,36 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
     });
   }, [sessions]);
 
-  const grouped = useMemo(() => {
-    const rows: Array<
-      | { kind: "header"; key: string; label: string }
-      | { kind: "session"; session: IAgentScopeRuntimeWebUISession }
-    > = [];
-    let lastGroupKey = "";
-    for (const s of sortedSessions) {
-      const ext = s as ExtendedChatSession & { updateAt?: number };
-      const tsMs =
-        (ext.createdAt ? new Date(ext.createdAt).getTime() : NaN) ||
-        (typeof ext.updateAt === "number" ? ext.updateAt : Date.now());
-      const label = getSessionGroupLabel(t, tsMs);
-      const key = label;
-      if (key !== lastGroupKey) {
-        rows.push({ kind: "header", key, label });
-        lastGroupKey = key;
-      }
-      rows.push({ kind: "session", session: s });
-    }
-    return rows;
-  }, [sortedSessions, t]);
-
   /** Re-fetch session list from the backend and sync to context state */
   const refreshSessions = useCallback(async () => {
     const list = await sessionApi.getSessionList();
     setSessions(list);
   }, [setSessions]);
 
-  // Ensure sessions are loaded when opening the drawer.
+  /** Open drawer → refresh session list (same deduped fetch as getSessionList). */
   useEffect(() => {
     if (!props.open) return;
-    refreshSessions().catch(() => {});
-  }, [props.open, refreshSessions]);
+
+    let isCancelled = false;
+
+    const fetchSessions = async () => {
+      try {
+        const list = await sessionApi.getSessionList();
+        if (!isCancelled) {
+          setSessions(list);
+        }
+      } catch (error) {
+        // It's good practice to log errors.
+        console.error("Failed to refresh session list:", error);
+      }
+    };
+
+    void fetchSessions();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [props.open, setSessions]);
 
   const handleSessionClick = useCallback(
     (sessionId: string) => {
@@ -170,7 +159,7 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
     setEditValue(value);
   }, []);
 
-  /** Submit rename: call updateChat with all original fields overriding only name, then refresh */
+  /** Submit rename: send a minimal patch so stale session fields cannot overwrite the title. */
   const handleEditSubmit = useCallback(async () => {
     if (!editingSessionId) return;
 
@@ -181,26 +170,8 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
     const newName = editValue.trim();
 
     if (backendId && newName && session) {
-      // Backend PUT expects full ChatSpec incl. created_at / updated_at (non-null).
-      const createdAt =
-        session.createdAt && String(session.createdAt).trim()
-          ? String(session.createdAt)
-          : new Date().toISOString();
-      const updatedAt =
-        session.updatedAt && String(session.updatedAt).trim()
-          ? String(session.updatedAt)
-          : new Date().toISOString();
-
       await chatApi.updateChat(backendId, {
-        id: backendId,
         name: newName,
-        session_id: session.sessionId as string,
-        user_id: session.userId as string,
-        channel: session.channel as string,
-        created_at: createdAt,
-        updated_at: updatedAt,
-        meta: session.meta,
-        status: session.status,
       });
     }
 
@@ -261,16 +232,7 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
       <div className={styles.listWrapper}>
         <div className={styles.topGradient} />
         <div className={styles.list}>
-          {grouped.map((row) => {
-            if (row.kind === "header") {
-              return (
-                <div key={`g-${row.key}`} className={styles.groupHeader}>
-                  {row.label}
-                </div>
-              );
-            }
-
-            const session = row.session;
+          {sortedSessions.map((session) => {
             const ext = session as ExtendedChatSession;
             const channelKey = ext.channel?.trim() || "";
             const channelLabel = channelKey
@@ -283,6 +245,8 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
                 time={formatCreatedAt(ext.createdAt ?? null)}
                 channelKey={channelKey || undefined}
                 channelLabel={channelLabel}
+                chatStatus={ext.status}
+                generating={ext.generating}
                 active={session.id === currentSessionId}
                 editing={editingSessionId === session.id}
                 editValue={

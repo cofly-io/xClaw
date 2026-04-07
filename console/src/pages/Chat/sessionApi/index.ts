@@ -9,21 +9,7 @@ import api, {
   type ChatStatus,
   type Message,
 } from "../../../api";
-import i18n from "../../../i18n";
 import { toDisplayUrl } from "../utils";
-
-// ---------------------------------------------------------------------------
-// Session date grouping
-// ---------------------------------------------------------------------------
-
-function getSessionGroup(updateAt: number): string {
-  const now = Date.now();
-  const diffDays = (now - updateAt) / (1000 * 60 * 60 * 24);
-  if (diffDays < 1) return i18n.t("chat.group.today");
-  if (diffDays < 3) return i18n.t("chat.group.last3Days");
-  if (diffDays < 7) return i18n.t("chat.group.last7Days");
-  return i18n.t("chat.group.monthAgo");
-}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -88,8 +74,6 @@ interface ExtendedSession extends IAgentScopeRuntimeWebUISession {
   status?: ChatStatus;
   /** ISO 8601 creation timestamp from backend. */
   createdAt?: string | null;
-  /** ISO 8601 updated timestamp from backend. */
-  updatedAt?: string | null;
   /** Whether the backend is still generating a response for this session. */
   generating?: boolean;
 }
@@ -265,25 +249,18 @@ const convertMessages = (
   return result;
 };
 
-const chatSpecToSession = (chat: ChatSpec): ExtendedSession => {
-  const updateAt = chat.updated_at
-    ? new Date(chat.updated_at).getTime()
-    : Date.now();
-  return {
+const chatSpecToSession = (chat: ChatSpec): ExtendedSession =>
+  ({
     id: chat.id,
-    name: (chat as ChatSpec & { name?: string }).name || DEFAULT_SESSION_NAME,
-    updateAt,
-    group: getSessionGroup(updateAt),
+    name: chat.name || DEFAULT_SESSION_NAME,
     sessionId: chat.session_id,
     userId: chat.user_id,
     channel: chat.channel,
-    createdAt: chat.created_at ?? null,
-    updatedAt: chat.updated_at ?? null,
     messages: [],
     meta: chat.meta || {},
     status: chat.status ?? "idle",
-  } as ExtendedSession;
-};
+    createdAt: chat.created_at ?? null,
+  }) as ExtendedSession;
 
 /** Returns true when id is a pure numeric local timestamp (not a backend UUID). */
 const isLocalTimestamp = (id: string): boolean => /^\d+$/.test(id);
@@ -357,7 +334,7 @@ function clearPendingUserMessage(sessionId: string): void {
 // ---------------------------------------------------------------------------
 
 class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
-  sessionList: IAgentScopeRuntimeWebUISession[] = [];
+  private sessionList: IAgentScopeRuntimeWebUISession[] = [];
 
   /**
    * When set, getSessionList will move the matching session to the front on the first call,
@@ -502,30 +479,50 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     return s?.realId ?? null;
   }
 
+  /** Apply listChats to sessionList; merge realId and generating by session_id. */
+  private applyChatsToSessionList(
+    chats: ChatSpec[],
+  ): IAgentScopeRuntimeWebUISession[] {
+    const newList = chats
+      .filter((c) => c.id && c.id !== "undefined" && c.id !== "null")
+      .map(chatSpecToSession)
+      .reverse();
+
+    this.sessionList = newList.map((s) => {
+      const existing = this.sessionList.find(
+        (e) =>
+          (e as ExtendedSession).sessionId === (s as ExtendedSession).sessionId,
+      ) as ExtendedSession | undefined;
+      if (!existing) return s;
+      const next = { ...s } as ExtendedSession;
+      if (existing.realId) {
+        next.id = existing.id;
+        next.realId = existing.realId;
+      }
+      if (existing.generating !== undefined) {
+        next.generating = existing.generating;
+      }
+      return next as IAgentScopeRuntimeWebUISession;
+    });
+    if (this.preferredChatId) {
+      const preferredId = this.preferredChatId;
+      this.preferredChatId = null;
+      const idx = this.sessionList.findIndex((s) => s.id === preferredId);
+      if (idx > 0) {
+        const [preferred] = this.sessionList.splice(idx, 1);
+        this.sessionList.unshift(preferred);
+      }
+    }
+    return [...this.sessionList];
+  }
+
   async getSessionList() {
     if (this.sessionListRequest) return this.sessionListRequest;
 
     this.sessionListRequest = (async () => {
       try {
         const chats = await api.listChats();
-        const newList = chats
-          .filter((c) => c.id && c.id !== "undefined" && c.id !== "null")
-          .map(chatSpecToSession)
-          .reverse();
-
-        this.sessionList = newList.map((s) => {
-          const existing = this.sessionList.find(
-            (e) =>
-              (e as ExtendedSession).sessionId ===
-              (s as ExtendedSession).sessionId,
-          ) as ExtendedSession | undefined;
-          return existing?.realId
-            ? { ...s, id: existing.id, realId: existing.realId }
-            : s;
-        });
-
-        this.notifySubscribers();
-        return [...this.sessionList];
+        return this.applyChatsToSessionList(chats);
       } finally {
         this.sessionListRequest = null;
       }
@@ -689,7 +686,6 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
       });
     }
 
-    this.notifySubscribers();
     return [...this.sessionList];
   }
 
@@ -728,23 +724,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     const resolvedId = existing?.realId ?? sessionId;
     this.onSessionRemoved?.(resolvedId);
 
-    this.notifySubscribers();
     return [...this.sessionList];
-  }
-
-  // ---------------------------------------------------------------------------
-  // Subscriber mechanism for external React components
-  // ---------------------------------------------------------------------------
-
-  private subscribers: Set<() => void> = new Set();
-
-  subscribe(fn: () => void): () => void {
-    this.subscribers.add(fn);
-    return () => this.subscribers.delete(fn);
-  }
-
-  private notifySubscribers(): void {
-    this.subscribers.forEach((fn) => fn());
   }
 }
 
