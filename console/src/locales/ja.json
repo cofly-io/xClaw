@@ -1036,6 +1036,7 @@
     "description": "私はあなたの質問をサポートするAIアシスタントです。",
     "prompt1": "新しい旅を始めましょう！",
     "prompt2": "あなたのスキルを教えてください。",
+    "prompt3": "supOS プラットフォームについて教えてもらえますか？",
     "inputPlaceholder": "/ を入力してコマンドを表示。承認時は /approve または /deny を使えます...",
     "commands": {
       "clear": {

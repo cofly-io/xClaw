@@ -40,7 +40,6 @@ from .tools import (
     edit_file,
     execute_shell_command,
     get_current_time,
-    supos_api_call,
     get_token_usage,
     glob_search,
     grep_search,
@@ -239,7 +238,6 @@ class CoPawAgent(ToolGuardMixin, ReActAgent):
             "get_current_time": get_current_time,
             "set_user_timezone": set_user_timezone,
             "get_token_usage": get_token_usage,
-            "supos_api_call": supos_api_call,
         }
 
         multimodal = get_active_model_supports_multimodal()
@@ -262,19 +260,12 @@ class CoPawAgent(ToolGuardMixin, ReActAgent):
             # compatibility)
             async_exec = async_execution_tools.get(tool_name, False)
 
-            # agentscope Toolkit API compatibility:
-            # Some versions do not accept the `async_execution` kwarg.
-            try:
-                toolkit.register_tool_function(
-                    tool_func,
-                    namesake_strategy=namesake_strategy,
-                    async_execution=async_exec,
-                )
-            except TypeError:
-                toolkit.register_tool_function(
-                    tool_func,
-                    namesake_strategy=namesake_strategy,
-                )
+            self._register_tool_function_compat(
+                toolkit,
+                tool_func,
+                namesake_strategy=namesake_strategy,
+                async_execution=async_exec,
+            )
             logger.debug(
                 "Registered tool: %s (async_execution=%s)",
                 tool_name,
@@ -290,15 +281,18 @@ class CoPawAgent(ToolGuardMixin, ReActAgent):
         )
         if has_async_tools:
             try:
-                toolkit.register_tool_function(
+                self._register_tool_function_compat(
+                    toolkit,
                     toolkit.view_task,
                     namesake_strategy=namesake_strategy,
                 )
-                toolkit.register_tool_function(
+                self._register_tool_function_compat(
+                    toolkit,
                     toolkit.wait_task,
                     namesake_strategy=namesake_strategy,
                 )
-                toolkit.register_tool_function(
+                self._register_tool_function_compat(
+                    toolkit,
                     toolkit.cancel_task,
                     namesake_strategy=namesake_strategy,
                 )
@@ -312,6 +306,31 @@ class CoPawAgent(ToolGuardMixin, ReActAgent):
                 )
 
         return toolkit
+
+    @staticmethod
+    def _register_tool_function_compat(
+        toolkit: Toolkit,
+        tool_func,
+        namesake_strategy: NamesakeStrategy,
+        async_execution: bool | None = None,
+    ) -> None:
+        """Register tool function across Toolkit API versions."""
+        if async_execution is not None:
+            try:
+                toolkit.register_tool_function(
+                    tool_func,
+                    namesake_strategy=namesake_strategy,
+                    async_execution=async_execution,
+                )
+                return
+            except TypeError as exc:
+                if "async_execution" not in str(exc):
+                    raise
+
+        toolkit.register_tool_function(
+            tool_func,
+            namesake_strategy=namesake_strategy,
+        )
 
     def _register_skills(self, toolkit: Toolkit) -> None:
         """Load and register skills from workspace directory.
@@ -1013,7 +1032,7 @@ class CoPawAgent(ToolGuardMixin, ReActAgent):
                             max_results=ms.force_max_results,
                             min_score=ms.force_min_score,
                         ),
-                        timeout=1,
+                        timeout=ms.force_memory_search_timeout,
                     )
                     self.memory._long_term_memory = "\n".join(
                         block["text"]

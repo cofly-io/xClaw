@@ -12,6 +12,7 @@ import time
 
 from copaw.security.xclaw_env_crypto import decrypt_from_b64
 
+
 def _load_bundled_env() -> None:
     """Load env vars from xclaw.env next to the exe (Windows)."""
     if not getattr(sys, "frozen", False):
@@ -47,13 +48,19 @@ def _load_bundled_env() -> None:
                 # Leave SUPOS_AK unset; downstream will show a clear error.
                 pass
 
+
 # ---------------------------------------------------------------------------
 # PyInstaller 兼容：确保打包后能找到资源
 # ---------------------------------------------------------------------------
 if getattr(sys, "frozen", False):
     BASE_DIR = sys._MEIPASS
     _load_bundled_env()
-    os.environ.setdefault("COPAW_STATIC_DIR", os.path.join(BASE_DIR, "copaw", "console"))
+    os.environ.setdefault(
+        "COPAW_STATIC_DIR", os.path.join(BASE_DIR, "copaw", "console")
+    )
+    from copaw.runtime_paths import prepend_bundled_node_to_os_path
+
+    prepend_bundled_node_to_os_path()
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -123,7 +130,7 @@ def start_backend(port: int) -> None:
         app,
         host="127.0.0.1",
         port=port,
-        log_level="warning",   # 减少日志输出，略微提速
+        log_level="warning",  # 减少日志输出，略微提速
         timeout_keep_alive=30,
     )
 
@@ -132,7 +139,9 @@ def main() -> None:
     port = find_free_port()
 
     # ── 1. 后端线程尽早启动，与 webview 初始化并行 ──
-    backend_thread = threading.Thread(target=start_backend, args=(port,), daemon=True)
+    backend_thread = threading.Thread(
+        target=start_backend, args=(port,), daemon=True
+    )
     backend_thread.start()
 
     # ── 2. 导入 webview（耗时，与后端并行）──
@@ -141,7 +150,7 @@ def main() -> None:
     # ── 3. 立即显示加载页，用户不会看到黑屏 ──
     window = webview.create_window(
         title="supOS X 个人助手",
-        html=LOADING_HTML,          # 先显示本地加载页
+        html=LOADING_HTML,  # 先显示本地加载页
         width=1280,
         height=800,
         min_size=(900, 600),
@@ -155,7 +164,7 @@ def main() -> None:
         else:
             window.load_html(
                 "<h2 style='text-align:center;margin-top:40vh;font-family:sans-serif;color:#c00'>"
-                "后端启动失败，请检查日志</h2>"
+                "后端启动失败，请检查日志</h2>",
             )
 
     # ── 4. 用独立线程等待后端，不阻塞 GUI ──

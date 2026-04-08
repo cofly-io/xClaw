@@ -3,9 +3,20 @@
 ## 环境要求
 
 - Python 3.13+
-- Node.js + pnpm
+- Node.js + pnpm（仅用于构建 console；**最终用户无需安装 Node**）
 - PyInstaller 6.x：`pip install pyinstaller`
 - pywebview：`pip install pywebview`
+
+### 便携 Node（docx 等依赖 Node 的技能）
+
+在 **Windows 上** 执行 `python desktop/build.py` 时，脚本会从 nodejs.org 下载固定版本的
+`node-v*-win-x64.zip`，解压到 `dist/xClaw/node/`（与 `xClaw.exe` 同级）。 frozen 启动时会把该目录
+排在 `PATH` 最前，shell 技能执行 `node ...` 时会用到这里的 `node.exe`。
+
+- 离线构建：把上述 zip 放到 `desktop/node-v20.18.1-win-x64.zip` 或 `desktop/cache/` 下同名文件。
+- 跳过：加 `--skip-node-bundle`（需自行保证目标机有 Node 或手动拷贝 `node/` 目录）。
+- **npm 依赖**：若技能目录含 `package.json`，需在打包前于该目录执行 `npm ci` / `npm install`，
+  以便 `node_modules` 随 `copaw/agents/skills` 一并打进 PyInstaller（否则仅有 `node.exe` 仍缺包）。
 
 ## 打包步骤
 

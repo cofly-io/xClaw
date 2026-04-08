@@ -31,6 +31,7 @@ website/public/search-index.json
 
 # Desktop bundle secrets (do not commit)
 desktop/supos_ak.env
+desktop/cache/
 
 # misc
 .env

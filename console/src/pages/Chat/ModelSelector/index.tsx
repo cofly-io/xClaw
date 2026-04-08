@@ -1,14 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Dropdown, Spin, Tooltip } from "antd";
-import { useAppMessage } from "../../../hooks/useAppMessage";
-import {
-  CheckOutlined,
-  LoadingOutlined,
-  RightOutlined,
-} from "@ant-design/icons";
-import { SparkDownLine } from "@agentscope-ai/icons";
+import { Dropdown, message, Spin } from "antd";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ChevronDown, Check, Loader2, ChevronRight } from "lucide-react";
 import { providerApi } from "../../../api/modules/provider";
 import type { ProviderInfo, ActiveModelsInfo } from "../../../api/types";
 import { useAgentStore } from "../../../stores/agentStore";
@@ -32,7 +26,6 @@ export default function ModelSelector() {
   const savingRef = useRef(false);
   const location = useLocation();
   const { selectedAgent } = useAgentStore();
-  const { message } = useAppMessage();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -182,7 +175,7 @@ export default function ModelSelector() {
               ].join(" ")}
             >
               <span className={styles.providerName}>{provider.name}</span>
-              <RightOutlined className={styles.providerArrow} />
+              <ChevronRight className={styles.providerArrow} />
 
               {/* Level-2 submenu — shown on parent hover via CSS */}
               <div className={`${styles.submenu} modelSubmenu`}>
@@ -205,7 +198,7 @@ export default function ModelSelector() {
                         {model.name || model.id}
                       </span>
                       {isActive && (
-                        <CheckOutlined className={styles.checkIcon} />
+                        <Check className={styles.checkIcon} />
                       )}
                     </div>
                   );
@@ -226,24 +219,20 @@ export default function ModelSelector() {
       trigger={["click"]}
       placement="bottomLeft"
     >
-      <Tooltip title={t("chat.modelSelectTooltip")} mouseEnterDelay={0.5}>
-        <div
-          className={[styles.trigger, open ? styles.triggerActive : ""].join(
-            " ",
-          )}
-        >
-          {saving && (
-            <LoadingOutlined style={{ fontSize: 11, color: "#FF7F16" }} />
-          )}
-          <span className={styles.triggerName}>{activeModelName}</span>
-          <SparkDownLine
-            className={[
-              styles.triggerArrow,
-              open ? styles.triggerArrowOpen : "",
-            ].join(" ")}
-          />
-        </div>
-      </Tooltip>
+      <div
+        className={[styles.trigger, open ? styles.triggerActive : ""].join(" ")}
+      >
+        {saving && (
+          <Loader2 style={{ fontSize: 11, color: "#615ced", animation: "spin 1s linear infinite" }} />
+        )}
+        <span className={styles.triggerName}>{activeModelName}</span>
+        <ChevronDown
+          className={[
+            styles.triggerArrow,
+            open ? styles.triggerArrowOpen : "",
+          ].join(" ")}
+        />
+      </div>
     </Dropdown>
   );
 }

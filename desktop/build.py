@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 xClaw 打包脚本。
 
@@ -8,14 +9,27 @@ xClaw 打包脚本。
 
 会在 dist/xClaw/ 生成 xclaw.env（与 xClaw.exe 同级），运行时自动加载。
 本机若已在 CoPaw 里保存过 AK（~/.copaw.secret/envs.json），打包脚本会自动读取用于写入 xclaw.env。
+
+Windows 打包默认还会把官方便携 Node 解压到 dist/xClaw/node/（与 exe 同级），
+运行时会优先加入 PATH，技能里可直接使用 node/npm。可用 --skip-node-bundle 跳过。
 """
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
+import zipfile
 
 from copaw.security.xclaw_env_crypto import encrypt_to_b64
+
+# Windows portable Node (LTS) next to xClaw.exe: dist/xClaw/node/
+WIN_NODE_VERSION = "20.18.1"
+NODE_ZIP_NAME = f"node-v{WIN_NODE_VERSION}-win-x64.zip"
+NODE_DIST_URL = (
+    "https://nodejs.org/dist/"
+    f"v{WIN_NODE_VERSION}/{NODE_ZIP_NAME}"
+)
 
 
 def _pnpm_executable() -> str:
@@ -25,10 +39,11 @@ def _pnpm_executable() -> str:
         if p:
             return p
     print(
-        "ERROR: pnpm not found in PATH. Install Node.js + pnpm, or re-run with --skip-console "
-        "after manually building console and syncing to src/copaw/console.",
+        "ERROR: pnpm not found in PATH. Install Node.js + pnpm, or use "
+        "--skip-console after building console and syncing to src/copaw/console.",
     )
     sys.exit(1)
+
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # 统一产物目录（与 xclaw.spec 保持一致）
@@ -76,7 +91,7 @@ def _read_supos_ak_from_file(path: str) -> str:
 
 
 def resolve_supos_ak(cli_ak: str, cli_file: str) -> str:
-    """Priority: --supos-ak > env SUPOS_AK > --supos-ak-file > desktop/supos_ak.env > ~/.copaw.secret/envs.json"""
+    """Resolve SUPOS_AK: CLI, env, file, desktop/supos_ak.env, ~/.copaw.secret."""
     v = (cli_ak or "").strip()
     if v:
         return v
@@ -96,12 +111,14 @@ def _sync_console_dist_to_package() -> None:
     dist_dir = os.path.join(ROOT, "console", "dist")
     target = os.path.join(ROOT, "src", "copaw", "console")
     if not os.path.isdir(dist_dir):
-        print(f"ERROR: {dist_dir} not found. Run: pnpm --dir console install && pnpm --dir console build")
+        print(
+            f"ERROR: {dist_dir} not found. Run: pnpm --dir console install && pnpm --dir console build"
+        )
         sys.exit(1)
     if os.path.isdir(target):
         shutil.rmtree(target)
     shutil.copytree(dist_dir, target)
-    print(f"==> Synced console/dist -> src/copaw/console")
+    print("==> Synced console/dist -> src/copaw/console")
 
 
 def _run_console_build() -> None:
@@ -138,6 +155,94 @@ def _write_env_file(supos_ak: str) -> None:
     )
 
 
+def _download_file(url: str, dest_path: str) -> None:
+    """Download URL to dest_path (streaming, for large Node zip)."""
+    try:
+        from urllib.request import urlopen
+    except ImportError:
+        urlopen = None  # pragma: no cover
+    if urlopen is None:
+        raise RuntimeError("urllib not available")
+    os.makedirs(os.path.dirname(dest_path) or ".", exist_ok=True)
+    with urlopen(url) as resp, open(dest_path, "wb") as out:
+        chunk = resp.read(256 * 1024)
+        while chunk:
+            out.write(chunk)
+            chunk = resp.read(256 * 1024)
+
+
+def _bundle_portable_node_windows(dist_dir: str, skip: bool) -> None:
+    """Extract official Windows x64 Node zip to dist_dir/node/ (node.exe there)."""
+    if skip:
+        print("==> Skipping portable Node bundle (--skip-node-bundle)")
+        return
+    if sys.platform != "win32":
+        print(
+            "==> Skipping portable Node bundle (auto only on Windows; "
+            "on macOS/Linux copy node/ next to the exe yourself).",
+        )
+        return
+
+    dest = os.path.join(dist_dir, "node")
+    node_exe = os.path.join(dest, "node.exe")
+    if os.path.isfile(node_exe):
+        print(f"==> Portable Node already present: {node_exe}")
+        return
+
+    cache_dir = os.path.join(ROOT, "desktop", "cache")
+    cache_zip = os.path.join(cache_dir, NODE_ZIP_NAME)
+    manual_zip = os.path.join(ROOT, "desktop", NODE_ZIP_NAME)
+
+    zip_path = None
+    if os.path.isfile(manual_zip):
+        zip_path = manual_zip
+        print(f"==> Using manual Node zip: {manual_zip}")
+    elif os.path.isfile(cache_zip):
+        zip_path = cache_zip
+        print(f"==> Using cached Node zip: {cache_zip}")
+    else:
+        print(
+            f"==> Downloading portable Node {WIN_NODE_VERSION} ...", flush=True
+        )
+        os.makedirs(cache_dir, exist_ok=True)
+        try:
+            _download_file(NODE_DIST_URL, cache_zip)
+        except Exception as e:
+            zip_hint = (
+                f"desktop/{NODE_ZIP_NAME} or desktop/cache/{NODE_ZIP_NAME}"
+            )
+            print(
+                "ERROR: Could not download Node.js portable zip.\n"
+                f"  {e}\n"
+                f"  Download manually: {NODE_DIST_URL}\n"
+                f"  Save as: {zip_hint}\n"
+                "  Or use --skip-node-bundle and copy dist/xClaw/node/ yourself.",
+            )
+            sys.exit(1)
+        zip_path = cache_zip
+
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(tmp)
+            entries = [x for x in os.listdir(tmp) if not x.startswith(".")]
+            if len(entries) != 1:
+                print(f"ERROR: Unexpected Node zip layout: {entries!r}")
+                sys.exit(1)
+            inner = os.path.join(tmp, entries[0])
+            if os.path.isdir(dest):
+                shutil.rmtree(dest)
+            shutil.copytree(inner, dest)
+    except (OSError, zipfile.BadZipFile) as e:
+        print(f"ERROR: Failed to extract Node zip: {e}")
+        sys.exit(1)
+
+    if not os.path.isfile(node_exe):
+        print(f"ERROR: node.exe missing after extract: {node_exe}")
+        sys.exit(1)
+    print(f"==> Bundled portable Node -> {dest}")
+
+
 def _purge_dist_user_data() -> None:
     """Ensure no developer machine data is shipped in dist/xClaw.
 
@@ -171,6 +276,7 @@ def _purge_dist_user_data() -> None:
     if removed:
         print(f"==> Purged {removed} persisted data paths from dist/xClaw/")
 
+
 def main():
     import argparse
 
@@ -197,6 +303,11 @@ def main():
         action="store_true",
         help="Skip pnpm build and skip syncing console/dist -> src/copaw/console",
     )
+    parser.add_argument(
+        "--skip-node-bundle",
+        action="store_true",
+        help="Do not download/extract portable Node into dist/xClaw/node/",
+    )
     args = parser.parse_args()
 
     supos_ak = resolve_supos_ak(args.supos_ak, args.supos_ak_file)
@@ -218,7 +329,14 @@ def main():
     # 1. 运行 PyInstaller
     print("==> Running PyInstaller...", flush=True)
     result = subprocess.run(
-        [sys.executable, "-m", "PyInstaller", "desktop/xclaw.spec", "--clean", "--noconfirm"],
+        [
+            sys.executable,
+            "-m",
+            "PyInstaller",
+            "desktop/xclaw.spec",
+            "--clean",
+            "--noconfirm",
+        ],
         cwd=ROOT,
     )
     if result.returncode != 0:
@@ -250,13 +368,19 @@ def main():
     if supos_ak:
         _write_env_file(supos_ak)
     else:
-        print("==> WARN: SUPOS_AK missing; xclaw.env not written (--allow-missing-supos-ak).")
+        print(
+            "==> WARN: SUPOS_AK missing; xclaw.env not written (--allow-missing-supos-ak)."
+        )
+
+    # 3b. 便携 Node（与 exe 同级 node/），技能里可直接使用 node/npm 而无需用户安装
+    _bundle_portable_node_windows(DIST_DIR, args.skip_node_bundle)
 
     # 4. 打包前清理 dist 里的用户数据（避免把开发机记录带进安装包）
     _purge_dist_user_data()
 
     print(f"\n==> Build complete: {DIST_DIR}")
     print(f"    EXE: {os.path.join(DIST_DIR, 'xClaw.exe')}")
+
 
 if __name__ == "__main__":
     main()

@@ -127,21 +127,12 @@ def setup_logger(level: int | str = logging.INFO):
     logger.setLevel(level)
     logger.propagate = False
     if not logger.handlers:
-        # In PyInstaller windowed mode (runw.exe), sys.stderr/sys.stdout can be
-        # None or lack a `.buffer` attribute. Fall back to a plain stream.
-        stream = sys.stderr
-        if stream is None:
-            stream = sys.stdout
-        if stream is None:
-            stream = io.StringIO()
-
-        buf = getattr(stream, "buffer", None)
-        utf8_stream = (
-            io.TextIOWrapper(buf, encoding="utf-8", errors="replace")
-            if buf is not None
-            else stream
+        utf8_stderr = io.TextIOWrapper(
+            sys.stderr.buffer,
+            encoding="utf-8",
+            errors="replace",
         )
-        handler = logging.StreamHandler(utf8_stream)
+        handler = logging.StreamHandler(utf8_stderr)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 

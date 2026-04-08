@@ -259,6 +259,11 @@
 
 #### Responses
 
+**Request body**
+纯文本SQL查询语句
+Example value：select * from fqe_d084a6f7e0.public.intg_work_order_staging
+格式是:select * from 数据库名称.Schema 名称.表名
+
 **200**: 成功执行SQL并返回结果集
 
 | 字段 | 类型 | 说明 |

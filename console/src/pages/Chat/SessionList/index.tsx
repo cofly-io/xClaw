@@ -44,7 +44,7 @@ export default function SessionList() {
       label: session.name || t("chat.newChat"),
       group: getSessionGroup((session as any).updateAt ?? Date.now()),
     }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessions, t, tick]);
 
   return (

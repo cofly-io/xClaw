@@ -7,6 +7,10 @@
 
 .channelsContainer {
   overflow: auto;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: linear-gradient(135deg, #F1F1F1  0%, #F1F1F1  50%, #f5fce6 100%);
 }
 
 .pageHeader {
@@ -98,160 +102,224 @@
 
 .channelsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(346px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-  padding: 16px;
+  padding: 16px 20px;
 }
 
-/* ---- Channel Card Styles ---- */
+@media (max-width: 1199px) {
+  .channelsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 799px) {
+  .channelsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .channelsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Channel cards — Qwen_html_20260403_pp84set38.html glass style */
 
 .channelCard {
-  height: 138px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  gap: 12px;
-  border-radius: var(--border-radius, 8px);
-  background: var(--color-bg-base, #ffffff);
-  border: 1px solid var(--color-border-secondary, #eae8e7);
   box-sizing: border-box;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(16px);
+  // -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
 
   :global {
     .copaw-card-body {
-      padding: 0 !important;
+      /* Inner spacing scaled for 4-column layout; outer radii match Qwen ref */
+      padding: 20px 18px !important;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
     }
 
     .copaw-spark-card-wrapper {
       padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    .copaw-card {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
     }
   }
 
-  &.hover {
-    border-color: var(--color-border, #d9d9d9);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  &.cardHover {
+    // transform: translateY(-2px);
+    box-shadow:
+      0 12px 40px rgba(31, 38, 135, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
   }
 }
 
-/* Top section: Icon and Status */
-.cardTopSection {
+.cardHeader {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
+  margin-bottom: 16px;
 }
 
-.channelIcon {
+.cardHeaderMain {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.iconWrapper {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  color: #f07e26;
-  flex-shrink: 0;
+  background: linear-gradient(135deg, #cae5fd 0%, #aeecf0 100%);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.35);
 
   img {
-    border-radius: 8px;
     object-fit: cover;
   }
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  flex: 1;
+  min-width: 0;
+  margin-left: 16px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.5px;
+  color: #1a1a2e;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.builtinTag {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #2d7fd3;
+  background: rgba(79, 172, 254, 0.2);
+  border: 1px solid rgba(79, 172, 254, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.customTag {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #6b46c1;
+  background: rgba(128, 90, 213, 0.2);
+  border: 1px solid rgba(128, 90, 213, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .statusIndicator {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .statusText {
-  font-family: Lato;
-  font-size: 12px;
-  font-weight: normal;
-  line-height: 19px;
-  letter-spacing: normal;
-
-  &.enabled {
-    color: rgba(20, 184, 166, 1);
-  }
-
-  &.disabled {
-    color: rgba(20, 20, 19, 0.45);
-  }
+  font-size: 13px;
+  color: #718096;
 }
 
 .statusDot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 
-  &.enabled {
-    background-color: rgba(20, 184, 166, 1);
+  &.statusOn {
+    background: #48bb78;
+    box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
   }
 
-  &.disabled {
-    background-color: #d9d9d9;
+  &.statusOff {
+    background: #a0aec0;
+    box-shadow: 0 0 8px rgba(160, 174, 192, 0.4);
   }
 }
 
-/* Middle section: Name and Tag */
-.cardMiddleSection {
+.cardDivider {
+  height: 1px;
+  margin: 14px 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+}
+
+.cardFooterRow {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin-top: auto;
+  flex-wrap: wrap;
 }
 
-.cardTitle {
-  color: rgba(20, 20, 19, 0.88);
-  font-family: Inter;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 24px;
-  letter-spacing: normal;
-  margin: 12px 0;
-}
-
-.builtinTag {
-  color: #8e8c99;
-  background: rgba(239, 240, 243, 0.8);
-  border-radius: 2px;
-  padding: 0px 4px;
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 20px;
-  letter-spacing: normal;
-  margin-left: 12px;
-}
-
-.customTag {
-  color: #8e8c99;
-  background: rgba(239, 240, 243, 0.8);
-  border-radius: 2px;
-  padding: 0px 4px;
-  font-family: Inter;
-  font-size: 12px;
-  font-weight: normal;
-  line-height: 16px;
-  white-space: nowrap;
+.infoLabel {
+  font-size: 13px;
+  color: #718096;
   flex-shrink: 0;
-  margin-left: 12px;
 }
 
-/* Bottom section: Bot Prefix */
-.cardBottomSection {
-  margin-bottom: 12px;
-}
-
-.cardDescription {
-  font-size: 11px;
-  color: rgba(0, 0, 0, 0.45);
-  line-height: 1.4;
+.infoValue {
+  font-size: 13px;
+  color: #a0aec0;
+  font-style: italic;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: right;
 }
 
 .cardFooter {
@@ -353,55 +421,70 @@
     color: rgba(255, 255, 255, 0.35);
   }
 
-  /* Card background and text */
-  .channelCard {
-    &.normal {
-      border-color: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
+  .channelsContainer {
+    background: linear-gradient(
+      135deg,
+      #151b28 0%,
+      #1f1528 45%,
+      #152820 100%
+    );
   }
 
-  .channelIcon {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.65);
+  .channelCard {
+    background: rgba(30, 36, 48, 0.55);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+    &.cardHover {
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
   }
 
   .cardTitle {
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.92);
   }
 
-  .builtinTag,
+  .builtinTag {
+    color: #63b3ed;
+    background: rgba(99, 179, 237, 0.12);
+    border-color: rgba(99, 179, 237, 0.28);
+  }
+
   .customTag {
-    color: rgba(255, 255, 255, 0.45);
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  .statusIndicator {
-    &.enabled {
-      color: rgba(20, 184, 166, 1);
-    }
-
-    &.disabled {
-      color: rgba(255, 255, 255, 0.65);
-    }
+    color: #b794f4;
+    background: rgba(183, 148, 244, 0.1);
+    border-color: rgba(183, 148, 244, 0.25);
   }
 
   .statusText {
-    &.enabled {
-      color: rgba(20, 184, 166, 1);
-    }
-
-    &.disabled {
-      color: rgba(255, 255, 255, 0.65);
-    }
-  }
-
-  .statusDot.disabled {
-    background-color: rgba(255, 255, 255, 0.4);
-  }
-
-  .cardDescription {
     color: rgba(255, 255, 255, 0.45);
+  }
+
+  .statusDot.statusOff {
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+  }
+
+  .cardDivider {
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+  }
+
+  .infoLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .infoValue {
+    color: rgba(255, 255, 255, 0.35);
   }
 
   .cardHint {

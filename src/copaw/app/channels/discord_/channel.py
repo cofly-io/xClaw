@@ -10,7 +10,7 @@ import tempfile
 from collections import deque
 from pathlib import Path
 from urllib.parse import urlparse
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import aiohttp
 from agentscope_runtime.engine.schemas.agent_schemas import (
@@ -369,6 +369,10 @@ class DiscordChannel(BaseChannel):
         if len(text) <= max_len:
             return [text]
 
+        # Reserve space for a closing fence suffix ("\n```") that _flush()
+        # may append when a code block spans chunk boundaries.
+        fence_close_len = len("\n```")
+
         chunks: list[str] = []
         current: list[str] = []
         current_len = 0
@@ -394,7 +398,13 @@ class DiscordChannel(BaseChannel):
                     fence_open = stripped
 
             # Flush if adding this line would exceed the limit.
-            if current and current_len + len(line_with_nl) > max_len:
+            # When inside a code fence, reserve space for the closing
+            # suffix that _flush() appends.
+            reserved = fence_close_len if fence_open else 0
+            if (
+                current
+                and current_len + len(line_with_nl) + reserved > max_len
+            ):
                 saved_fence = fence_open
                 _flush()
                 current_len = 0
@@ -571,60 +581,6 @@ class DiscordChannel(BaseChannel):
                 pass
         if self._client:
             await self._client.close()
-
-    # ------------------------------------------------------------------
-    # Debounce: use per-channel keys so concurrent messages from the same
-    # user in different channels/threads are NOT merged together.
-    # ------------------------------------------------------------------
-
-    def get_debounce_key(self, payload: Any) -> str:
-        """Return a debounce key scoped to the Discord channel or DM.
-
-        The base class falls back to ``sender_id``, which causes
-        ``ChannelManager._drain_same_key()`` to incorrectly merge
-        messages when the same user sends to multiple channels at the
-        same time.  This override uses ``resolve_session_id`` so each
-        channel/thread gets its own isolated debounce bucket.
-        """
-        if isinstance(payload, dict):
-            meta = payload.get("meta") or {}
-            sender_id = payload.get("sender_id") or ""
-            return self.resolve_session_id(sender_id, meta)
-        return getattr(payload, "session_id", "") or ""
-
-    def merge_native_items(self, items: List[Any]) -> Any:
-        """Merge native payloads while preserving Discord metadata.
-
-        Extends the base implementation to also carry over
-        Discord-specific meta keys (``channel_id``, ``message_id``,
-        ``guild_id``, ``is_dm``, ``is_group``) from the first item.
-        """
-        if not items:
-            return None
-        first = items[0] if isinstance(items[0], dict) else {}
-        merged_parts: List[Any] = []
-        merged_meta: Dict[str, Any] = dict(first.get("meta") or {})
-        for it in items:
-            p = it if isinstance(it, dict) else {}
-            merged_parts.extend(p.get("content_parts") or [])
-            m = p.get("meta") or {}
-            for k in (
-                "reply_future",
-                "reply_loop",
-                "incoming_message",
-                "conversation_id",
-                "message_id",
-            ):
-                if k in m:
-                    merged_meta[k] = m[k]
-        return {
-            "channel_id": first.get("channel_id") or self.channel,
-            "sender_id": first.get("sender_id") or "",
-            "content_parts": merged_parts,
-            "meta": merged_meta,
-        }
-
-    # ------------------------------------------------------------------
 
     def resolve_session_id(
         self,

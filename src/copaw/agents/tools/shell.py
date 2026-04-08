@@ -151,12 +151,7 @@ def _execute_subprocess_sync(
             text=False,
             cwd=cwd,
             env=env,
-            # When running as a Windows GUI app (PyInstaller console=False),
-            # spawning cmd.exe without CREATE_NO_WINDOW will flash console windows.
-            creationflags=(
-                subprocess.CREATE_NEW_PROCESS_GROUP
-                | getattr(subprocess, "CREATE_NO_WINDOW", 0)
-            ),
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
         )
 
         # Parent copies are no longer needed — the child inherited its own
