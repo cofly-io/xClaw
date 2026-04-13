@@ -6,13 +6,18 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from agentscope_runtime.engine.schemas.exception import (
+    ModelNotFoundException,
+)
 
-import copaw.providers.provider_manager as provider_manager_module
-from copaw.providers.anthropic_provider import AnthropicProvider
-from copaw.providers.models import ModelSlotConfig
-from copaw.providers.openai_provider import OpenAIProvider
-from copaw.providers.provider import ModelInfo
-from copaw.providers.provider_manager import ProviderManager
+import qwenpaw.providers.provider_manager as provider_manager_module
+from qwenpaw.exceptions import ProviderError
+from qwenpaw.providers.anthropic_provider import AnthropicProvider
+from qwenpaw.providers.models import ModelSlotConfig
+from qwenpaw.providers.openai_provider import OpenAIProvider
+from qwenpaw.providers.provider import ModelInfo
+from qwenpaw.providers.provider_manager import ProviderManager
+from qwenpaw.local_models.llamacpp import LlamaCppServerSetupResult
 
 
 LEGACY_PROVIDER = {
@@ -78,7 +83,7 @@ LEGACY_PROVIDER = {
 
 @pytest.fixture
 def isolated_secret_dir(monkeypatch, tmp_path):
-    secret_dir = tmp_path / ".copaw.secret"
+    secret_dir = tmp_path / ".qwenpaw.secret"
     monkeypatch.setattr(provider_manager_module, "SECRET_DIR", secret_dir)
     return secret_dir
 
@@ -201,9 +206,9 @@ async def test_resume_local_model_restores_server_and_runtime_state(
     isolated_secret_dir,
 ) -> None:
     manager = ProviderManager()
-    model_id = "AgentScope/CoPaw-flash-2B-Q4_K_M"
+    model_id = "AgentScope/QwenPaw-Flash-2B-Q4_K_M"
     manager.update_provider(
-        "copaw-local",
+        "qwenpaw-local",
         {
             "base_url": "http://127.0.0.1:9000/v1",
             "extra_models": [
@@ -215,7 +220,7 @@ async def test_resume_local_model_restores_server_and_runtime_state(
         },
     )
     manager.active_model = ModelSlotConfig(
-        provider_id="copaw-local",
+        provider_id="qwenpaw-local",
         model=model_id,
     )
     manager.save_active_model(manager.active_model)
@@ -230,20 +235,37 @@ async def test_resume_local_model_restores_server_and_runtime_state(
         def is_model_downloaded(self, requested_model_id: str) -> bool:
             return requested_model_id == model_id
 
-        async def setup_server(self, requested_model_id: str) -> int:
+        async def setup_server(
+            self,
+            requested_model_id: str,
+        ) -> LlamaCppServerSetupResult:
             self.restored_model_id = requested_model_id
-            return 43111
+            return LlamaCppServerSetupResult(
+                port=43111,
+                model_info=ModelInfo(
+                    id=requested_model_id,
+                    name=requested_model_id,
+                    supports_multimodal=True,
+                    supports_image=True,
+                    supports_video=True,
+                    probe_source="documentation",
+                ),
+            )
 
     local_manager = FakeLocalManager()
 
     await manager._resume_local_model(local_manager)
 
-    provider = manager.get_provider("copaw-local")
+    provider = manager.get_provider("qwenpaw-local")
 
     assert local_manager.restored_model_id == model_id
     assert provider is not None
     assert provider.base_url == "http://127.0.0.1:43111/v1"
     assert [model.id for model in provider.extra_models] == [model_id]
+    assert provider.extra_models[0].supports_multimodal is True
+    assert provider.extra_models[0].supports_image is True
+    assert provider.extra_models[0].supports_video is True
+    assert provider.extra_models[0].probe_source == "documentation"
 
 
 async def test_remove_custom_provider_missing_file_is_safe(
@@ -387,7 +409,7 @@ async def test_activate_provider_invalid_provider_raises(
 ) -> None:
     manager = ProviderManager()
 
-    with pytest.raises(ValueError, match="Provider 'missing' not found"):
+    with pytest.raises(ProviderError, match="Provider 'missing' not found"):
         await manager.activate_model("missing", "gpt-5")
 
 
@@ -396,7 +418,7 @@ async def test_activate_provider_invalid_model_raises(
 ) -> None:
     manager = ProviderManager()
 
-    with pytest.raises(ValueError, match="Model 'not-exists' not found"):
+    with pytest.raises(ModelNotFoundException, match="not-exists"):
         await manager.activate_model("openai", "not-exists")
 
 
