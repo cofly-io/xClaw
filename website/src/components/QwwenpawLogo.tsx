@@ -2,7 +2,7 @@
  * QwenPaw logo: symbol only. When logo and brand text would both appear,
  * we show only the logo (no separate text).
  */
-import { CatPawIcon } from "./CatPawIcon.tsx";
+import { CatPawIcon } from "./CatPawIcon";
 
 interface QwenpawLogoProps {
   variant?: "full" | "mark";

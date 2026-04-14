@@ -260,8 +260,7 @@ class QwenPawAgent(ToolGuardMixin, ReActAgent):
             # compatibility)
             async_exec = async_execution_tools.get(tool_name, False)
 
-            self._register_tool_function_compat(
-                toolkit,
+            toolkit.register_tool_function(
                 tool_func,
                 namesake_strategy=namesake_strategy,
                 async_execution=async_exec,
@@ -281,18 +280,15 @@ class QwenPawAgent(ToolGuardMixin, ReActAgent):
         )
         if has_async_tools:
             try:
-                self._register_tool_function_compat(
-                    toolkit,
+                toolkit.register_tool_function(
                     toolkit.view_task,
                     namesake_strategy=namesake_strategy,
                 )
-                self._register_tool_function_compat(
-                    toolkit,
+                toolkit.register_tool_function(
                     toolkit.wait_task,
                     namesake_strategy=namesake_strategy,
                 )
-                self._register_tool_function_compat(
-                    toolkit,
+                toolkit.register_tool_function(
                     toolkit.cancel_task,
                     namesake_strategy=namesake_strategy,
                 )
@@ -306,31 +302,6 @@ class QwenPawAgent(ToolGuardMixin, ReActAgent):
                 )
 
         return toolkit
-
-    @staticmethod
-    def _register_tool_function_compat(
-        toolkit: Toolkit,
-        tool_func,
-        namesake_strategy: NamesakeStrategy,
-        async_execution: bool | None = None,
-    ) -> None:
-        """Register tool function across Toolkit API versions."""
-        if async_execution is not None:
-            try:
-                toolkit.register_tool_function(
-                    tool_func,
-                    namesake_strategy=namesake_strategy,
-                    async_execution=async_execution,
-                )
-                return
-            except TypeError as exc:
-                if "async_execution" not in str(exc):
-                    raise
-
-        toolkit.register_tool_function(
-            tool_func,
-            namesake_strategy=namesake_strategy,
-        )
 
     def _register_skills(self, toolkit: Toolkit) -> None:
         """Load and register skills from workspace directory.
