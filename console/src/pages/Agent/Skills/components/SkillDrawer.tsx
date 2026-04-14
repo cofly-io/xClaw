@@ -50,12 +50,16 @@ const CHANNEL_OPTIONS = [
   { label: "mqtt", value: "mqtt" },
 ];
 
+const MAX_TAGS = 8;
+const MAX_TAG_LENGTH = 16;
+
 export interface SkillDrawerFormValues {
   name: string;
   description?: string;
   content: string;
   enabled?: boolean;
   channels?: string[];
+  tags?: string[];
   source?: string;
   config?: Record<string, unknown>;
 }
@@ -64,6 +68,7 @@ interface SkillDrawerProps {
   open: boolean;
   editingSkill: SkillSpec | null;
   form: FormInstance<SkillDrawerFormValues>;
+  availableTags?: string[];
   onClose: () => void;
   onSubmit: (values: SkillSpec) => void;
   onContentChange?: (content: string) => void;
@@ -73,6 +78,7 @@ export function SkillDrawer({
   open,
   editingSkill,
   form,
+  availableTags = [],
   onClose,
   onSubmit,
   onContentChange,
@@ -319,6 +325,35 @@ export function SkillDrawer({
 
         <Form.Item name="channels" label={t("skills.channels")}>
           <Select mode="multiple" options={CHANNEL_OPTIONS} />
+        </Form.Item>
+
+        <Form.Item
+          name="tags"
+          label={t("skillPool.tags")}
+          rules={[
+            {
+              validator: (_, value: string[] | undefined) => {
+                const bad = (value || []).find(
+                  (v) => v.length > MAX_TAG_LENGTH,
+                );
+                if (bad)
+                  return Promise.reject(
+                    t("skillPool.tagTooLong", { max: MAX_TAG_LENGTH }),
+                  );
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
+          <Select
+            mode="tags"
+            options={availableTags.map((tag) => ({
+              label: tag,
+              value: tag,
+            }))}
+            placeholder={t("skillPool.tagsPlaceholder")}
+            maxCount={MAX_TAGS}
+          />
         </Form.Item>
 
         <Form.Item

@@ -813,6 +813,7 @@ function SkillsPage() {
         open={drawerOpen}
         editingSkill={editingSkill}
         form={form}
+        availableTags={allTags}
         onClose={handleDrawerClose}
         onSubmit={handleSubmit}
       />
