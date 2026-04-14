@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业微信卡片 - 玻璃效果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #d4fc79 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 背景装饰圆 */
+        body::before,
+        body::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        body::before {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            top: -50px;
+            right: -50px;
+            opacity: 0.4;
+        }
+
+        body::after {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            bottom: -30px;
+            left: -30px;
+            opacity: 0.35;
+        }
+
+        .card {
+            position: relative;
+            width: 420px;
+            padding: 28px 32px;
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 40px rgba(31, 38, 135, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        /* 头部区域 */
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        /* 图标 */
+        .icon-wrapper {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.35);
+        }
+
+        .icon-wrapper svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        /* 标题区域 */
+        .title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            margin-left: 16px;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a2e;
+            letter-spacing: 0.5px;
+        }
+
+        .badge {
+            padding: 3px 10px;
+            background: rgba(79, 172, 254, 0.2);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            border-radius: 20px;
+            font-size: 11px;
+            color: #2d7fd3;
+            font-weight: 500;
+        }
+
+        /* 状态 */
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #a0aec0;
+            box-shadow: 0 0 8px rgba(160, 174, 192, 0.4);
+        }
+
+        .status-dot.active {
+            background: #48bb78;
+            box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        /* 分割线 */
+        .divider {
+            height: 1px;
+            background: linear-gradient(
+                to right,
+                transparent,
+                rgba(255, 255, 255, 0.5),
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            margin: 20px 0;
+        }
+
+        /* 底部信息 */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .info-value {
+            font-size: 13px;
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        /* 操作按钮（可选） */
+        .action-btn {
+            padding: 6px 16px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <!-- 头部 -->
+        <div class="card-header">
+            <div style="display: flex; align-items: center;">
+                <div class="icon-wrapper">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.5 3C4.36 3 1 5.69 1 9c0 1.85 1.03 3.51 2.64 4.66L3 16l2.66-1.47C6.38 14.84 7.42 15 8.5 15c.17 0 .33-.01.5-.02C8.69 14.34 8.5 13.69 8.5 13c0-3.04 2.69-5.5 6-5.5.34 0 .67.03 1 .07C14.88 4.77 11.94 3 8.5 3zm-2 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm4 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm4 3c-2.76 0-5 1.79-5 4s2.24 4 5 4c.76 0 1.48-.15 2.12-.41L18.5 19l-.5-1.82C19.35 16.36 20 15.23 20 14c0-2.21-2.24-4-5-4zm-1.5 4.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zm3 0a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z"/>
+                    </svg>
+                </div>
+                <div class="title-group">
+                    <span class="title">企业微信</span>
+                    <span class="badge">内置</span>
+                </div>
+            </div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span class="status-text">已禁用</span>
+            </div>
+        </div>
+
+        <!-- 分割线 -->
+        <div class="divider"></div>
+
+        <!-- 底部信息 -->
+        <div class="card-footer">
+            <span class="info-label">机器人前缀</span>
+            <span class="info-value">未设置</span>
+            <button class="action-btn">配置</button>
+        </div>
+    </div>
+</body>
+</html>

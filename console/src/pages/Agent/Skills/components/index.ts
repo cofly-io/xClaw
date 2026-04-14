@@ -14,6 +14,10 @@ export { useConflictRenameModal } from "./useConflictRenameModal";
 export { ImportHubModal } from "./ImportHubModal";
 export { PoolTransferModal } from "./PoolTransferModal";
 
+/** Match backend `skills` router limits for skill tags. */
+export const MAX_TAGS = 8;
+export const MAX_TAG_LENGTH = 16;
+
 export const SUPPORTED_SKILL_URL_PREFIXES = [
   "https://skills.sh/",
   "https://clawhub.ai/",

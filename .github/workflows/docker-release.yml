@@ -1,4 +1,4 @@
-# Build QwenPaw multi-arch Docker image and push to DockerHub + Aliyun ACR on release.
+# Build xClaw multi-arch Docker image and push to DockerHub + Aliyun ACR on release.
 # Pre-release: update <version> and pre only.
 # Formal release: update <version>, pre and latest.
 name: Docker Build and Push on Release
@@ -20,7 +20,7 @@ on:
 
 env:
   ACR_REGISTRY: agentscope-registry.ap-southeast-1.cr.aliyuncs.com
-  IMAGE: agentscope/qwenpaw
+  IMAGE: agentscope/xclaw
 
 jobs:
   build-and-push:

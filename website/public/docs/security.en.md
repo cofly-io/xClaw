@@ -1,10 +1,10 @@
 # Security
 
-QwenPaw includes built-in security features to protect your agent from malicious inputs and unsafe skills. These are configured in the Console under **Settings → Security**, or via `config.json`.
+xClaw includes built-in security features to protect your agent from malicious inputs and unsafe skills. These are configured in the Console under **Settings → Security**, or via `config.json`.
 
 ## Overview
 
-QwenPaw's security system consists of three core security layers:
+xClaw's security system consists of three core security layers:
 
 ```
 Security Architecture:
@@ -230,7 +230,7 @@ File Guard operates as the "File Path Guardian" within the Tool Guard engine, wo
 4. **Recursive directory protection** — Paths ending with `/` are treated as directories; all files and subdirectories within are recursively blocked
 5. **Blocking mechanism** — When a match is found, the tool call is blocked with a HIGH-severity finding
 
-**Default protection**: The `{WORKING_DIR}.secret/` directory (which stores API keys, authentication credentials, and provider configurations) is included in the sensitive-file list by default. By default, `WORKING_DIR` is `~/.qwenpaw/`, making the full path `~/.qwenpaw.secret/`.
+**Default protection**: The `{WORKING_DIR}.secret/` directory (which stores API keys, authentication credentials, and provider configurations) is included in the sensitive-file list by default. By default, `WORKING_DIR` is `~/.xclaw/`, making the full path `~/.xclaw.secret/`.
 
 ### Configuration
 
@@ -241,7 +241,7 @@ In `config.json`:
   "security": {
     "file_guard": {
       "enabled": true,
-      "sensitive_files": ["~/.ssh/", "/etc/passwd", "~/.qwenpaw.secret/"]
+      "sensitive_files": ["~/.ssh/", "/etc/passwd", "~/.xclaw.secret/"]
     }
   }
 }
@@ -388,11 +388,11 @@ In the Console under **Settings → Security → Skill Scanner** tab, you can:
 
 For scenarios requiring deep customization, the scanner supports programmatic configuration:
 
-The scanner uses YAML rule files in `src/qwenpaw/security/skill_scanner/rules/signatures/`. You can customize the scan policy via a YAML policy file:
+The scanner uses YAML rule files in `src/xclaw/security/skill_scanner/rules/signatures/`. You can customize the scan policy via a YAML policy file:
 
 ```python
-from qwenpaw.security.skill_scanner import SkillScanner
-from qwenpaw.security.skill_scanner.scan_policy import ScanPolicy
+from xclaw.security.skill_scanner import SkillScanner
+from xclaw.security.skill_scanner.scan_policy import ScanPolicy
 
 policy = ScanPolicy.from_yaml("my_org_policy.yaml")
 scanner = SkillScanner(policy=policy)
@@ -508,7 +508,7 @@ Here's a complete `config.json` with all security features configured:
       "enabled": true,
       "sensitive_files": [
         "~/.ssh/",
-        "~/.qwenpaw.secret/",
+        "~/.xclaw.secret/",
         "/etc/passwd",
         "/etc/shadow",
         ".env",
@@ -534,13 +534,13 @@ Here's a complete `config.json` with all security features configured:
 
 ## Web Authentication
 
-QwenPaw supports optional web login authentication to protect the Console from unauthorized access. Authentication is **disabled by default** and must be explicitly enabled via the `QWENPAW_AUTH_ENABLED` environment variable.
+xClaw supports optional web login authentication to protect the Console from unauthorized access. Authentication is **disabled by default** and must be explicitly enabled via the `QWENPAW_AUTH_ENABLED` environment variable.
 
 ![login](https://img.alicdn.com/imgextra/i1/O1CN01wh3Sv01SxPEXpb6Wj_!!6000000002313-2-tps-3822-2070.png)
 
 ### How it works
 
-1. **Enable authentication** — Set `QWENPAW_AUTH_ENABLED=true` and start QwenPaw
+1. **Enable authentication** — Set `QWENPAW_AUTH_ENABLED=true` and start xClaw
 2. **Registration flow**:
    - On first visit, the Console shows a **registration page**
    - Create the single admin account (username + password)
@@ -551,9 +551,9 @@ QwenPaw supports optional web login authentication to protect the Console from u
    - Token is stored in browser localStorage and automatically attached to all API requests
 4. **Auto-registration** (optional):
    - Set `QWENPAW_AUTH_USERNAME` and `QWENPAW_AUTH_PASSWORD` environment variables
-   - QwenPaw automatically creates the admin account on startup, skipping web registration
+   - xClaw automatically creates the admin account on startup, skipping web registration
    - Useful for Docker, Kubernetes, server management panels, and other automated deployments
-5. **Localhost bypass** — Requests from localhost (`127.0.0.1` / `::1`) automatically skip authentication; CLI commands (`qwenpaw app`, `qwenpaw chat`, etc.) work without a token
+5. **Localhost bypass** — Requests from localhost (`127.0.0.1` / `::1`) automatically skip authentication; CLI commands (`xclaw app`, `xclaw chat`, etc.) work without a token
 
 **Security features**:
 
@@ -589,13 +589,13 @@ Set environment variables before starting:
 ```bash
 # Basic enable (web registration)
 export QWENPAW_AUTH_ENABLED=true
-qwenpaw app
+xclaw app
 
 # Or: Auto-registration mode
 export QWENPAW_AUTH_ENABLED=true
 export QWENPAW_AUTH_USERNAME=admin
 export QWENPAW_AUTH_PASSWORD=mypassword
-qwenpaw app
+xclaw app
 ```
 
 To make it permanent, add the `export` lines to your `~/.bashrc`, `~/.zshrc`, or equivalent.
@@ -607,7 +607,7 @@ set QWENPAW_AUTH_ENABLED=true
 rem Optional: auto-registration
 rem set QWENPAW_AUTH_USERNAME=admin
 rem set QWENPAW_AUTH_PASSWORD=mypassword
-qwenpaw app
+xclaw app
 ```
 
 **Windows (PowerShell):**
@@ -617,7 +617,7 @@ $env:QWENPAW_AUTH_ENABLED = "true"
 # Optional: auto-registration
 # $env:QWENPAW_AUTH_USERNAME = "admin"
 # $env:QWENPAW_AUTH_PASSWORD = "mypassword"
-qwenpaw app
+xclaw app
 ```
 
 #### Docker
@@ -629,9 +629,9 @@ docker run -e QWENPAW_AUTH_ENABLED=true \
   -e QWENPAW_AUTH_USERNAME=admin \
   -e QWENPAW_AUTH_PASSWORD=mypassword \
   -p 127.0.0.1:8088:8088 \
-  -v qwenpaw-data:/app/working \
-  -v qwenpaw-secrets:/app/working.secret \
-  agentscope/qwenpaw:latest
+  -v xclaw-data:/app/working \
+  -v xclaw-secrets:/app/working.secret \
+  agentscope/xclaw:latest
 ```
 
 > **Tip**: To skip auto-registration, remove `QWENPAW_AUTH_USERNAME` and `QWENPAW_AUTH_PASSWORD` and register via browser on first visit.
@@ -640,8 +640,8 @@ docker run -e QWENPAW_AUTH_ENABLED=true \
 
 ```yaml
 services:
-  qwenpaw:
-    image: agentscope/qwenpaw:latest
+  xclaw:
+    image: agentscope/xclaw:latest
     ports:
       - "127.0.0.1:8088:8088"
     environment:
@@ -649,8 +649,8 @@ services:
       - QWENPAW_AUTH_USERNAME=admin
       - QWENPAW_AUTH_PASSWORD=mypassword
     volumes:
-      - qwenpaw-data:/app/working
-      - qwenpaw-secrets:/app/working.secret
+      - xclaw-data:/app/working
+      - xclaw-secrets:/app/working.secret
 ```
 
 #### Environment file (.env)
@@ -663,19 +663,19 @@ QWENPAW_AUTH_USERNAME=admin
 QWENPAW_AUTH_PASSWORD=mypassword
 ```
 
-Then pass it to Docker with `--env-file .env`, or source it in your shell before running `qwenpaw app`.
+Then pass it to Docker with `--env-file .env`, or source it in your shell before running `xclaw app`.
 
 ### Disable authentication
 
-Remove or unset the environment variable and restart QwenPaw:
+Remove or unset the environment variable and restart xClaw:
 
 ```bash
 # Linux / macOS
 unset QWENPAW_AUTH_ENABLED
-qwenpaw app
+xclaw app
 
 # Docker — simply remove the -e flag. The example below includes volumes for persistence.
-docker run -p 127.0.0.1:8088:8088 -v qwenpaw-data:/app/working -v qwenpaw-secrets:/app/working.secret agentscope/qwenpaw:latest
+docker run -p 127.0.0.1:8088:8088 -v xclaw-data:/app/working -v xclaw-secrets:/app/working.secret agentscope/xclaw:latest
 ```
 
 ### Password reset
@@ -683,7 +683,7 @@ docker run -p 127.0.0.1:8088:8088 -v qwenpaw-data:/app/working -v qwenpaw-secret
 If you forget your password, use the CLI to reset:
 
 ```bash
-qwenpaw auth reset-password
+xclaw auth reset-password
 ```
 
 This command will:
@@ -695,7 +695,7 @@ This command will:
 **Docker deployments**:
 
 ```bash
-docker exec -it <container_name> qwenpaw auth reset-password
+docker exec -it <container_name> xclaw auth reset-password
 ```
 
 **Alternative approach**:
@@ -704,9 +704,9 @@ To completely reset the authentication system:
 
 ```bash
 # Delete the auth file
-rm ~/.qwenpaw.secret/auth.json  # or $WORKING_DIR.secret/auth.json
-# Restart QwenPaw; re-register on next visit
-qwenpaw app
+rm ~/.xclaw.secret/auth.json  # or $WORKING_DIR.secret/auth.json
+# Restart xClaw; re-register on next visit
+xclaw app
 ```
 
 ### Logout

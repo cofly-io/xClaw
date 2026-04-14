@@ -156,8 +156,8 @@ function AppInner() {
       <GlobalStyle />
       <ConfigProvider
         {...bailianTheme}
-        prefix="xClaw"
-        prefixCls="xClaw"
+        prefix="xclaw"
+        prefixCls="xclaw"
         locale={antdLocale}
         theme={{
           ...(bailianTheme as any)?.theme,

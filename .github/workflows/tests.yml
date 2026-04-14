@@ -64,9 +64,9 @@ jobs:
       - name: Copy console build into package
         shell: bash
         run: |
-          rm -rf src/qwenpaw/console/*
-          mkdir -p src/qwenpaw/console
-          cp -R console/dist/* src/qwenpaw/console/
+          rm -rf src/xclaw/console/*
+          mkdir -p src/xclaw/console
+          cp -R console/dist/* src/xclaw/console/
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -128,9 +128,9 @@ jobs:
       - name: Copy console build into package
         shell: bash
         run: |
-          rm -rf src/qwenpaw/console/*
-          mkdir -p src/qwenpaw/console
-          cp -R console/dist/* src/qwenpaw/console/
+          rm -rf src/xclaw/console/*
+          mkdir -p src/xclaw/console
+          cp -R console/dist/* src/xclaw/console/
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -195,9 +195,9 @@ jobs:
       - name: Copy console build into package
         shell: bash
         run: |
-          rm -rf src/qwenpaw/console/*
-          mkdir -p src/qwenpaw/console
-          cp -R console/dist/* src/qwenpaw/console/
+          rm -rf src/xclaw/console/*
+          mkdir -p src/xclaw/console
+          cp -R console/dist/* src/xclaw/console/
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -216,7 +216,7 @@ jobs:
         run: |
           pytest tests/ \
             -v \
-            --cov=src/qwenpaw \
+            --cov=src/xclaw \
             --cov-report=xml \
             --cov-report=term-missing \
             --cov-report=html

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint:disable=too-many-statements
 """
-Create a temporary conda env, install QwenPaw from a wheel, run conda-pack.
+Create a temporary conda env, install xClaw from a wheel, run conda-pack.
 Used by build_macos.sh and build_win.ps1. Run from repo root.
 """
 from __future__ import annotations
@@ -62,7 +62,7 @@ def _pick_wheel(wheel_arg: str | None) -> Path:
         return wheel_path
 
     wheels = sorted(
-        (REPO_ROOT / "dist").glob("qwenpaw-*.whl"),
+        (REPO_ROOT / "dist").glob("xclaw-*.whl"),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
@@ -75,7 +75,7 @@ def _pick_wheel(wheel_arg: str | None) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Conda-pack QwenPaw (temp env).",
+        description="Conda-pack xClaw (temp env).",
     )
     parser.add_argument(
         "--output",
@@ -100,7 +100,7 @@ def main() -> int:
         default=None,
         help=(
             "Wheel path to install. If omitted, pick the newest "
-            "dist/qwenpaw-*.whl."
+            "dist/xclaw-*.whl."
         ),
     )
     parser.add_argument(
@@ -192,7 +192,7 @@ def main() -> int:
                 # Step 2: Install from local wheel (no third-party index)
                 # Use --no-index to prevent fallback to PyPI, --find-links for
                 # local wheel dir. Dependencies will be resolved from PyPI when
-                # installing qwenpaw[full] later.
+                # installing xclaw[full] later.
                 print("Installing llama-cpp-python from downloaded wheel...")
                 _run(
                     [
@@ -214,11 +214,11 @@ def main() -> int:
         except subprocess.CalledProcessError:
             print(
                 "Prebuilt wheel not available, will compile from source when "
-                "installing qwenpaw[full]"
+                "installing xclaw[full]"
             )
             needs_llama_compile = True
 
-        # Install qwenpaw with all dependencies
+        # Install xclaw with all dependencies
         # Scope CMAKE_ARGS to this specific command to avoid affecting other
         # CMake-based packages. Only set if we need to compile from source.
         install_env = {}
@@ -239,7 +239,7 @@ def main() -> int:
                 "-m",
                 "pip",
                 "install",
-                f"qwenpaw[full] @ {wheel_uri}",
+                f"xclaw[full] @ {wheel_uri}",
             ],
             env=install_env,
         )

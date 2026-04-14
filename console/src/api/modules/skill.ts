@@ -417,6 +417,15 @@ export const skillApi = {
       { method: "DELETE" },
     ),
 
+  updatePoolSkillTags: (skillName: string, tags: string[]) =>
+    request<{ updated: boolean; tags: string[] }>(
+      `/skills/pool/${encodeURIComponent(skillName)}/tags`,
+      {
+        method: "PUT",
+        body: JSON.stringify(tags),
+      },
+    ),
+
   streamOptimizeSkill: async function (
     content: string,
     onChunk: (text: string) => void,

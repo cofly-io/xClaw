@@ -14,17 +14,17 @@ from typing import Any, cast
 import httpx
 import pytest
 
-import qwenpaw.local_models.llamacpp as downloader_module
-from qwenpaw.local_models.download_manager import (
+import xclaw.local_models.llamacpp as downloader_module
+from xclaw.local_models.download_manager import (
     DownloadTaskResult,
     DownloadTaskStatus,
 )
-from qwenpaw.utils.command_runner import (
+from xclaw.utils.command_runner import (
     CommandExecutionError,
     CommandResult,
     ShutdownResult,
 )
-from qwenpaw.local_models.llamacpp import LlamaCppBackend
+from xclaw.local_models.llamacpp import LlamaCppBackend
 
 
 class _FakeServerProcess:
@@ -574,7 +574,7 @@ def test_start_download_delegates_to_process_controller(
 
     assert controller.started_spec is not None
     assert controller.started_spec.command == [
-        "qwenpaw-llamacpp-download",
+        "xclaw-llamacpp-download",
         "https://example.com/releases/b1234/"
         "llama-b1234-bin-ubuntu-x64.tar.gz",
     ]

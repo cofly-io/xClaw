@@ -7,7 +7,7 @@ Set-Location $RepoRoot
 Write-Host "[build_win] REPO_ROOT=$RepoRoot"
 $PackDir = $PSScriptRoot
 $Dist = if ($env:DIST) { $env:DIST } else { "dist" }
-$Archive = Join-Path $Dist "qwenpaw-env.zip"
+$Archive = Join-Path $Dist "xclaw-env.zip"
 $Unpacked = Join-Path $Dist "win-unpacked"
 $NsiPath = Join-Path $PackDir "desktop.nsi"
 
@@ -24,7 +24,7 @@ New-Item -ItemType Directory -Force -Path $Dist | Out-Null
 
 Write-Host "== Building wheel (includes console frontend) =="
 # Skip wheel_build if dist already has a wheel for current version
-$VersionFile = Join-Path $RepoRoot "src\qwenpaw\__version__.py"
+$VersionFile = Join-Path $RepoRoot "src\xclaw\__version__.py"
 $CurrentVersion = ""
 if (Test-Path $VersionFile) {
   $m = (Get-Content $VersionFile -Raw) -match '__version__\s*=\s*"([^"]+)"'
@@ -32,14 +32,14 @@ if (Test-Path $VersionFile) {
 }
 $RunWheelBuild = $true
 if ($CurrentVersion) {
-  $wheelGlob = Join-Path $Dist "qwenpaw-$CurrentVersion-*.whl"
+  $wheelGlob = Join-Path $Dist "xclaw-$CurrentVersion-*.whl"
   $existingWheels = Get-ChildItem -Path $wheelGlob -ErrorAction SilentlyContinue
   if ($existingWheels.Count -gt 0) {
     Write-Host "dist/ already has wheel for version $CurrentVersion, skipping."
     $RunWheelBuild = $false
   } else {
     # Clean up old wheels to avoid confusion
-    $oldWheels = Get-ChildItem -Path (Join-Path $Dist "qwenpaw-*.whl") -ErrorAction SilentlyContinue
+    $oldWheels = Get-ChildItem -Path (Join-Path $Dist "xclaw-*.whl") -ErrorAction SilentlyContinue
     if ($oldWheels.Count -gt 0) {
       Write-Host "Removing old wheel files: $($oldWheels | ForEach-Object { $_.Name })"
       $oldWheels | Remove-Item -Force
@@ -153,7 +153,7 @@ if (Test-Path $pythonExe) {
 }
 
 # Main launcher .bat (will be hidden by VBS)
-$LauncherBat = Join-Path $EnvRoot "QwenPaw Desktop.bat"
+$LauncherBat = Join-Path $EnvRoot "xClaw Desktop.bat"
 @"
 @echo off
 cd /d "%~dp0"
@@ -179,14 +179,14 @@ if defined CERT_FILE (
   )
 )
 
-if not exist "%USERPROFILE%\.qwenpaw\config.json" (
-  "%~dp0python.exe" -u -m qwenpaw init --defaults --accept-security
+if not exist "%USERPROFILE%\.xclaw\config.json" (
+  "%~dp0python.exe" -u -m xclaw init --defaults --accept-security
 )
-"%~dp0python.exe" -u -m qwenpaw desktop --log-level %QWENPAW_LOG_LEVEL%
+"%~dp0python.exe" -u -m xclaw desktop --log-level %QWENPAW_LOG_LEVEL%
 "@ | Set-Content -Path $LauncherBat -Encoding ASCII
 
 # Debug launcher .bat (shows console)
-$DebugBat = Join-Path $EnvRoot "QwenPaw Desktop (Debug).bat"
+$DebugBat = Join-Path $EnvRoot "xClaw Desktop (Debug).bat"
 @"
 @echo off
 cd /d "%~dp0"
@@ -213,7 +213,7 @@ if defined CERT_FILE (
 )
 
 echo ====================================
-echo QwenPaw Desktop - Debug Mode
+echo xClaw Desktop - Debug Mode
 echo ====================================
 echo Working Directory: %cd%
 echo Python: "%~dp0python.exe"
@@ -223,35 +223,35 @@ echo SSL_CERT_FILE: %SSL_CERT_FILE%
 echo REQUESTS_CA_BUNDLE: %REQUESTS_CA_BUNDLE%
 echo CURL_CA_BUNDLE: %CURL_CA_BUNDLE%
 echo.
-if not exist "%USERPROFILE%\.qwenpaw\config.json" (
+if not exist "%USERPROFILE%\.xclaw\config.json" (
   echo [Init] Creating config...
-  "%~dp0python.exe" -u -m qwenpaw init --defaults --accept-security
+  "%~dp0python.exe" -u -m xclaw init --defaults --accept-security
 )
-echo [Launch] Starting QwenPaw Desktop with log-level=%QWENPAW_LOG_LEVEL%...
+echo [Launch] Starting xClaw Desktop with log-level=%QWENPAW_LOG_LEVEL%...
 echo Press Ctrl+C to stop
 echo.
-"%~dp0python.exe" -u -m qwenpaw desktop --log-level %QWENPAW_LOG_LEVEL%
+"%~dp0python.exe" -u -m xclaw desktop --log-level %QWENPAW_LOG_LEVEL%
 echo.
-echo [Exit] QwenPaw Desktop closed
+echo [Exit] xClaw Desktop closed
 pause
 "@ | Set-Content -Path $DebugBat -Encoding ASCII
 
 # VBScript launcher (no console window)
-$LauncherVbs = Join-Path $EnvRoot "QwenPaw Desktop.vbs"
+$LauncherVbs = Join-Path $EnvRoot "xClaw Desktop.vbs"
 @"
 Set WshShell = CreateObject("WScript.Shell")
-batPath = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName) & "\QwenPaw Desktop.bat"
+batPath = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName) & "\xClaw Desktop.bat"
 WshShell.Run Chr(34) & batPath & Chr(34), 0, False
 Set WshShell = Nothing
 "@ | Set-Content -Path $LauncherVbs -Encoding ASCII
 
-# Create qwenpaw.cmd wrapper in env root so "qwenpaw" resolves to this
-# instead of Scripts\qwenpaw.exe whose embedded Python path may be stale
+# Create xclaw.cmd wrapper in env root so "xclaw" resolves to this
+# instead of Scripts\xclaw.exe whose embedded Python path may be stale
 # after conda-pack/unpack.
-$QwenpawCmd = Join-Path $EnvRoot "qwenpaw.cmd"
+$xClawCmd = Join-Path $EnvRoot "xclaw.cmd"
 @"
-@"%~dp0python.exe" -u -m qwenpaw %*
-"@ | Set-Content -Path $QwenpawCmd -Encoding ASCII
+@"%~dp0python.exe" -u -m xclaw %*
+"@ | Set-Content -Path $xClawCmd -Encoding ASCII
 
 # Copy icon.ico to env root so NSIS can find it
 $IconSrc = Join-Path $PackDir "assets\icon.ico"
@@ -274,7 +274,7 @@ $Version = $CurrentVersion
 if (-not $Version) {
   # Fallback: try to get version from packed env metadata
   try {
-    $Version = (& (Join-Path $EnvRoot "python.exe") -c "from importlib.metadata import version; print(version('qwenpaw'))" 2>&1) -replace '\s+$', ''
+    $Version = (& (Join-Path $EnvRoot "python.exe") -c "from importlib.metadata import version; print(version('xclaw'))" 2>&1) -replace '\s+$', ''
     Write-Host "[build_win] Using version from packed env metadata: $Version"
   } catch {
     Write-Host "[build_win] version from packed env failed: $_"
@@ -283,7 +283,7 @@ if (-not $Version) {
 if (-not $Version) { $Version = "0.0.0"; Write-Host "[build_win] WARN: Using fallback version 0.0.0" }
 Write-Host "[build_win] Version determined: $Version"
 Write-Host "[build_win] QWENPAW_VERSION=$Version OUTPUT_EXE will be under $Dist"
-$OutInstaller = Join-Path (Join-Path $RepoRoot $Dist) "QwenPaw-Setup-$Version.exe"
+$OutInstaller = Join-Path (Join-Path $RepoRoot $Dist) "xClaw-Setup-$Version.exe"
 # Pass absolute paths to NSIS (keep backslashes).
 $UnpackedFull = (Resolve-Path $EnvRoot).Path
 $OutputExeNsi = [System.IO.Path]::GetFullPath($OutInstaller)

@@ -6,7 +6,7 @@ This page covers:
 - **Environment variables** — How to customize paths and behavior
 - **Configuration files** — Complete field description for `config.json` and `agent.json`
 
-From **v0.1.0**, QwenPaw supports **multi-agent**. Configuration is split into two layers:
+From **v0.1.0**, xClaw supports **multi-agent**. Configuration is split into two layers:
 
 1. **Global config** (`config.json`) — Model providers, agent list, global settings
 2. **Agent config** (`agent.json`) — Independent config for each agent (channels, heartbeat, tools, etc.)
@@ -15,10 +15,10 @@ From **v0.1.0**, QwenPaw supports **multi-agent**. Configuration is split into t
 
 ## Directory Structure
 
-The default working directory is `~/.qwenpaw`. After running `qwenpaw init`, the complete structure looks like:
+The default working directory is `~/.xclaw`. After running `xclaw init`, the complete structure looks like:
 
 ```
-$QWENPAW_WORKING_DIR/                      # Default ~/.qwenpaw
+$QWENPAW_WORKING_DIR/                      # Default ~/.xclaw
 ├── config.json                          # Global config
 ├── workspaces/
 │   ├── default/                         # Default agent workspace
@@ -41,23 +41,23 @@ $QWENPAW_WORKING_DIR/                      # Default ~/.qwenpaw
     ├── skill.json                       # Pool metadata
     └── ...
 
-$QWENPAW_SECRET_DIR/                       # Default ~/.qwenpaw.secret
+$QWENPAW_SECRET_DIR/                       # Default ~/.xclaw.secret
 ├── providers.json                       # Model provider config and API keys
 └── envs.json                            # Environment variables
 ```
 
-> **Path explanation:** `$QWENPAW_WORKING_DIR` and `$QWENPAW_SECRET_DIR` are environment variables, with default values of `~/.qwenpaw` and `~/.qwenpaw.secret` respectively. They can be customized via environment variables, see "Environment Variables" section below.
+> **Path explanation:** `$QWENPAW_WORKING_DIR` and `$QWENPAW_SECRET_DIR` are environment variables, with default values of `~/.xclaw` and `~/.xclaw.secret` respectively. They can be customized via environment variables, see "Environment Variables" section below.
 
 ### Directory Explanation
 
-**Global Directory (`~/.qwenpaw/`)**
+**Global Directory (`~/.xclaw/`)**
 
 | File / Directory | Purpose                                               |
 | ---------------- | ----------------------------------------------------- |
 | `config.json`    | Global config (model providers, env vars, agent list) |
 | `workspaces/`    | All agent workspace directories                       |
 
-**Agent Workspace (`~/.qwenpaw/workspaces/{agent_id}/`)**
+**Agent Workspace (`~/.xclaw/workspaces/{agent_id}/`)**
 
 | File / Directory   | Purpose                                                      |
 | ------------------ | ------------------------------------------------------------ |
@@ -75,7 +75,7 @@ $QWENPAW_SECRET_DIR/                       # Default ~/.qwenpaw.secret
 | `memory/`          | Daily memory files (see [Memory](./memory))                  |
 | `browser/`         | Browser user data (cookies, cache, localStorage, etc.)       |
 
-> **Persona files:** Agent behavior and personality are defined by persona files. Running `qwenpaw init` automatically creates template files based on your chosen language (`zh` / `en` / `ru`). For detailed explanation and management, see [Agent Persona](./persona).
+> **Persona files:** Agent behavior and personality are defined by persona files. Running `xclaw init` automatically creates template files based on your chosen language (`zh` / `en` / `ru`). For detailed explanation and management, see [Agent Persona](./persona).
 
 > **Multi-Agent:** See the [Multi-Agent](./multi-agent) documentation for details.
 
@@ -89,8 +89,8 @@ You can customize paths and behavior via environment variables:
 
 | Variable                   | Default             | Description                                                                                                 |
 | -------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `QWENPAW_WORKING_DIR`      | `~/.qwenpaw`        | Working directory root path                                                                                 |
-| `QWENPAW_SECRET_DIR`       | `~/.qwenpaw.secret` | Sensitive data directory (stores `providers.json` and `envs.json`). Docker default is `/app/working.secret` |
+| `QWENPAW_WORKING_DIR`      | `~/.xclaw`        | Working directory root path                                                                                 |
+| `QWENPAW_SECRET_DIR`       | `~/.xclaw.secret` | Sensitive data directory (stores `providers.json` and `envs.json`). Docker default is `/app/working.secret` |
 | `QWENPAW_CONFIG_FILE`      | `config.json`       | Config file name (relative to `QWENPAW_WORKING_DIR`)                                                        |
 | `QWENPAW_HEARTBEAT_FILE`   | `HEARTBEAT.md`      | Heartbeat file name (relative to agent workspace)                                                           |
 | `QWENPAW_JOBS_FILE`        | `jobs.json`         | Cron jobs file name (relative to agent workspace)                                                           |
@@ -128,7 +128,7 @@ Example — use a different working dir for this shell:
 
 ```bash
 export QWENPAW_WORKING_DIR=/home/me/my_qwenpaw
-qwenpaw app
+xclaw app
 ```
 
 Config, HEARTBEAT, jobs, memory, etc. will be read/written under
@@ -140,8 +140,8 @@ Config, HEARTBEAT, jobs, memory, etc. will be read/written under
 
 Starting from **v0.1.0**, configuration is split into two layers:
 
-1. **Global config** - `~/.qwenpaw/config.json` (providers, environment variables, agent list)
-2. **Agent config** - `~/.qwenpaw/workspaces/{agent_id}/agent.json` (per-agent settings)
+1. **Global config** - `~/.xclaw/config.json` (providers, environment variables, agent list)
+2. **Agent config** - `~/.xclaw/workspaces/{agent_id}/agent.json` (per-agent settings)
 
 ### Global config.json
 
@@ -180,8 +180,8 @@ Stores globally shared configuration:
 | --------------------- | -------------- | ------------------- | ----------------------------------------------------------------- |
 | `agents.active_agent` | string         | `"default"`         | Currently active agent ID                                         |
 | `agents.profiles`     | object         | `{}`                | Agent profile references (key is agent_id)                        |
-| `last_api.host`       | string \| null | `null`              | Host address from last `qwenpaw app` start                        |
-| `last_api.port`       | int \| null    | `null`              | Port from last `qwenpaw app` start                                |
+| `last_api.host`       | string \| null | `null`              | Host address from last `xclaw app` start                        |
+| `last_api.port`       | int \| null    | `null`              | Port from last `xclaw app` start                                |
 | `show_tool_details`   | bool           | `true`              | Whether to show tool call/return details in channel messages      |
 | `user_timezone`       | string         | _(system timezone)_ | IANA timezone name (e.g., `"Asia/Shanghai"`)                      |
 | `last_dispatch`       | object \| null | `null`              | Last message dispatch target (used for heartbeat `target="last"`) |
@@ -200,12 +200,12 @@ Stores globally shared configuration:
 >
 > **Configuration priority:** The agent's `agent.json` takes precedence over the global `config.json`. When the same field is configured in both places, the system uses the value from `agent.json`. For multi-agent mode, it's recommended to put all configurations in each agent's `agent.json`.
 
-> **Model provider configuration** is stored in `$QWENPAW_SECRET_DIR/providers.json` (default `~/.qwenpaw.secret/providers.json`).
-> **Environment variables** are stored in `$QWENPAW_SECRET_DIR/envs.json` (default `~/.qwenpaw.secret/envs.json`).
+> **Model provider configuration** is stored in `$QWENPAW_SECRET_DIR/providers.json` (default `~/.xclaw.secret/providers.json`).
+> **Environment variables** are stored in `$QWENPAW_SECRET_DIR/envs.json` (default `~/.xclaw.secret/envs.json`).
 
 ### Agent config (agent.json)
 
-Each agent has an independent `agent.json` in its workspace directory (`~/.qwenpaw/workspaces/{agent_id}/`) that stores all of its configuration (channels, tools, heartbeat, MCP, security, etc.). This allows different agents to have completely different configurations without interfering with each other.
+Each agent has an independent `agent.json` in its workspace directory (`~/.xclaw/workspaces/{agent_id}/`) that stores all of its configuration (channels, tools, heartbeat, MCP, security, etc.). This allows different agents to have completely different configurations without interfering with each other.
 
 ```json
 {
@@ -521,9 +521,9 @@ Auto-updated; no manual configuration needed.
 
 ## Model Providers
 
-QwenPaw needs an LLM provider to work. You can set it up in three ways:
+xClaw needs an LLM provider to work. You can set it up in three ways:
 
-- **`qwenpaw init`** — interactive wizard, the easiest way
+- **`xclaw init`** — interactive wizard, the easiest way
 - **Console UI** — in Settings → Models page
 - **API** — `PUT /providers/{id}` and `PUT /providers/active_llm`
 
@@ -531,7 +531,7 @@ QwenPaw needs an LLM provider to work. You can set it up in three ways:
 
 | Provider                     | ID                      | Default Base URL                                    | API Key Prefix |
 | ---------------------------- | ----------------------- | --------------------------------------------------- | -------------- |
-| QwenPaw Local                | `qwenpaw-local`         | _(local)_                                           | _(none)_       |
+| xClaw Local                | `xclaw-local`         | _(local)_                                           | _(none)_       |
 | Ollama                       | `ollama`                | `http://localhost:11434`                            | _(none)_       |
 | LM Studio                    | `lmstudio`              | `http://localhost:1234/v1`                          | _(none)_       |
 | ModelScope                   | `modelscope`            | `https://api-inference.modelscope.cn/v1`            | `ms`           |
@@ -567,11 +567,11 @@ Then choose which provider + model to activate:
 | `provider_id` | Which provider to use (e.g. `dashscope`) |
 | `model`       | Which model to use (e.g. `qwen3-max`)    |
 
-> **Tip:** Run `qwenpaw init` and follow the prompts — it will list available
+> **Tip:** Run `xclaw init` and follow the prompts — it will list available
 > models for each provider so you can pick one directly.
 >
 > **Note:** You are responsible for ensuring the API key and base URL are valid.
-> QwenPaw does not verify whether the key is correct or has sufficient quota —
+> xClaw does not verify whether the key is correct or has sufficient quota —
 > make sure the chosen provider and model are accessible.
 
 ---
@@ -581,7 +581,7 @@ Then choose which provider + model to activate:
 Some tools and MCP services need extra API keys (e.g. `TAVILY_API_KEY` for web search). You can
 manage them in three ways:
 
-- **`qwenpaw init`** — prompts "Configure environment variables?" during setup
+- **`xclaw init`** — prompts "Configure environment variables?" during setup
 - **Console UI** — edit on the settings page
 - **API** — `GET/PUT/DELETE /envs`
 
@@ -589,7 +589,7 @@ Set variables are auto-loaded at app startup, so all tools and child processes
 can read them via `os.environ`.
 
 > **Note:** You are responsible for ensuring the values (e.g. third-party API
-> keys) are valid. QwenPaw only stores and injects them — it does not verify
+> keys) are valid. xClaw only stores and injects them — it does not verify
 > correctness.
 
 ---
@@ -600,18 +600,18 @@ Skills extend the agent's capabilities. Skill files are distributed across two l
 
 | Directory                                  | Purpose                                           |
 | ------------------------------------------ | ------------------------------------------------- |
-| `~/.qwenpaw/skill_pool/`                   | Local shared pool for built-ins and shared skills |
-| `~/.qwenpaw/workspaces/{agent_id}/skills/` | Skills present in a specific agent's workspace    |
+| `~/.xclaw/skill_pool/`                   | Local shared pool for built-ins and shared skills |
+| `~/.xclaw/workspaces/{agent_id}/skills/` | Skills present in a specific agent's workspace    |
 
 Each skill is a directory with a `SKILL.md` file (YAML front matter with `name` and `description`), and optional `references/` and `scripts/` subdirectories.
 
-Skill enabled state and configuration are controlled by `~/.qwenpaw/workspaces/{agent_id}/skill.json`.
+Skill enabled state and configuration are controlled by `~/.xclaw/workspaces/{agent_id}/skill.json`.
 
 **Manage skills via:**
 
 - Console (Agent → Skills) — Visual management, import, create, enable/disable
-- `qwenpaw init` (choose all / none / custom during setup)
-- `qwenpaw skills config` (interactive toggle)
+- `xclaw init` (choose all / none / custom during setup)
+- `xclaw skills config` (interactive toggle)
 
 See [Skills](./skills) for detailed documentation.
 
@@ -619,14 +619,14 @@ See [Skills](./skills) for detailed documentation.
 
 ## Memory
 
-QwenPaw has persistent cross-conversation memory: it automatically compresses context and saves key information to Markdown files for long-term retention.
+xClaw has persistent cross-conversation memory: it automatically compresses context and saves key information to Markdown files for long-term retention.
 
 Memory files are stored in the agent workspace:
 
 | File / Directory                                        | Purpose                                                               |
 | ------------------------------------------------------- | --------------------------------------------------------------------- |
-| `~/.qwenpaw/workspaces/{agent_id}/MEMORY.md`            | Long-lived key information (decisions, preferences, persistent facts) |
-| `~/.qwenpaw/workspaces/{agent_id}/memory/YYYY-MM-DD.md` | Daily logs (notes, runtime context, auto-generated summaries)         |
+| `~/.xclaw/workspaces/{agent_id}/MEMORY.md`            | Long-lived key information (decisions, preferences, persistent facts) |
+| `~/.xclaw/workspaces/{agent_id}/memory/YYYY-MM-DD.md` | Daily logs (notes, runtime context, auto-generated summaries)         |
 
 ### Embedding Configuration
 
@@ -646,13 +646,13 @@ Recommended to configure in `agent.json` under `running.embedding_config`, which
 
 ## Summary
 
-- Everything lives under **`~/.qwenpaw`** by default; override with `QWENPAW_WORKING_DIR` (and related env vars) if needed.
+- Everything lives under **`~/.xclaw`** by default; override with `QWENPAW_WORKING_DIR` (and related env vars) if needed.
 - From **v0.1.0**, configuration is split into:
-  - **Global config** (`~/.qwenpaw/config.json`) — providers, environment variables, agent list
-  - **Agent config** (`~/.qwenpaw/workspaces/{agent_id}/agent.json`) — per-agent settings
+  - **Global config** (`~/.xclaw/config.json`) — providers, environment variables, agent list
+  - **Agent config** (`~/.xclaw/workspaces/{agent_id}/agent.json`) — per-agent settings
 - Daily management is primarily done through the **Console**, or by directly editing configuration files.
 - Agent personality is defined by Markdown files in the workspace directory. See [Agent Persona](./persona) for details.
-- LLM providers are globally configured via `qwenpaw init` or the Console.
+- LLM providers are globally configured via `xclaw init` or the Console.
 - Config changes are **auto-reloaded** without restart (polled every 2 seconds).
 - Call the Agent API: **POST** `/api/agent/process` with `X-Agent-Id` header, JSON body, SSE streaming; see [Quick start — Verify install](./quickstart#verify-install-optional) for examples.
 

@@ -14,8 +14,8 @@ from agentscope_runtime.engine.schemas.agent_schemas import (
     TextContent,
 )
 
-from qwenpaw.exceptions import ChannelError
-from qwenpaw.app.channels.qq.channel import (
+from xclaw.exceptions import ChannelError
+from xclaw.app.channels.qq.channel import (
     QQApiError,
     QQChannel,
     _as_bool,
@@ -860,11 +860,11 @@ class TestSendImages:
         # guild not supported, no exception
 
     @patch(
-        "qwenpaw.app.channels.qq.channel._upload_media_async",
+        "xclaw.app.channels.qq.channel._upload_media_async",
         new_callable=AsyncMock,
     )
     @patch(
-        "qwenpaw.app.channels.qq.channel._send_media_message_async",
+        "xclaw.app.channels.qq.channel._send_media_message_async",
         new_callable=AsyncMock,
     )
     async def test_upload_and_send(self, mock_send_media, mock_upload):
@@ -882,7 +882,7 @@ class TestSendImages:
         mock_send_media.assert_called_once()
 
     @patch(
-        "qwenpaw.app.channels.qq.channel._upload_media_async",
+        "xclaw.app.channels.qq.channel._upload_media_async",
         new_callable=AsyncMock,
     )
     async def test_upload_failure_skips(self, mock_upload):
@@ -906,7 +906,7 @@ class TestSendImages:
 
 class TestSendMessageAsync:
     @patch(
-        "qwenpaw.app.channels.qq.channel._api_request_async",
+        "xclaw.app.channels.qq.channel._api_request_async",
         new_callable=AsyncMock,
     )
     async def test_plain_text(self, mock_api):
@@ -929,7 +929,7 @@ class TestSendMessageAsync:
         assert body["msg_id"] == "m1"
 
     @patch(
-        "qwenpaw.app.channels.qq.channel._api_request_async",
+        "xclaw.app.channels.qq.channel._api_request_async",
         new_callable=AsyncMock,
     )
     async def test_markdown(self, mock_api):
@@ -949,7 +949,7 @@ class TestSendMessageAsync:
         assert body["msg_type"] == 2
 
     @patch(
-        "qwenpaw.app.channels.qq.channel._api_request_async",
+        "xclaw.app.channels.qq.channel._api_request_async",
         new_callable=AsyncMock,
     )
     async def test_channel_no_msg_seq(self, mock_api):

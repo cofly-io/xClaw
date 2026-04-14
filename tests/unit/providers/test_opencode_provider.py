@@ -7,9 +7,9 @@ from types import SimpleNamespace
 
 import pytest
 
-import qwenpaw.providers.provider_manager as provider_manager_module
-from qwenpaw.providers.openai_provider import OpenAIProvider
-from qwenpaw.providers.provider_manager import (
+import xclaw.providers.provider_manager as provider_manager_module
+from xclaw.providers.openai_provider import OpenAIProvider
+from xclaw.providers.provider_manager import (
     PROVIDER_OPENCODE,
     ProviderManager,
 )
@@ -31,7 +31,7 @@ def test_opencode_provider_config() -> None:
 
 @pytest.fixture
 def isolated_secret_dir(monkeypatch, tmp_path):
-    secret_dir = tmp_path / ".qwenpaw.secret"
+    secret_dir = tmp_path / ".xclaw.secret"
     monkeypatch.setattr(provider_manager_module, "SECRET_DIR", secret_dir)
     return secret_dir
 

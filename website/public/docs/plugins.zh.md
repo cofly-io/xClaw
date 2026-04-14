@@ -1,6 +1,6 @@
 # 插件系统
 
-QwenPaw 提供了插件系统，允许用户扩展 QwenPaw 的功能。
+xClaw 提供了插件系统，允许用户扩展 xClaw 的功能。
 
 ## 概述
 
@@ -17,27 +17,27 @@ QwenPaw 提供了插件系统，允许用户扩展 QwenPaw 的功能。
 从本地目录安装：
 
 ```bash
-qwenpaw plugin install /path/to/plugin
+xclaw plugin install /path/to/plugin
 ```
 
 从 URL 安装（支持 ZIP 文件）：
 
 ```bash
-qwenpaw plugin install https://example.com/plugin.zip
+xclaw plugin install https://example.com/plugin.zip
 ```
 
 强制重新安装：
 
 ```bash
-qwenpaw plugin install /path/to/plugin --force
+xclaw plugin install /path/to/plugin --force
 ```
 
-**注意**：插件操作只能在 QwenPaw 离线时执行。
+**注意**：插件操作只能在 xClaw 离线时执行。
 
 ### 列出已安装插件
 
 ```bash
-qwenpaw plugin list
+xclaw plugin list
 ```
 
 输出示例：
@@ -49,19 +49,19 @@ Installed Plugins:
 my-provider (v1.0.0)
   Custom LLM provider integration
   Author: Developer Name
-  Path: /Users/user/.qwenpaw/plugins/my-provider
+  Path: /Users/user/.xclaw/plugins/my-provider
 ```
 
 ### 查看插件详情
 
 ```bash
-qwenpaw plugin info <plugin-id>
+xclaw plugin info <plugin-id>
 ```
 
 ### 卸载插件
 
 ```bash
-qwenpaw plugin uninstall <plugin-id>
+xclaw plugin uninstall <plugin-id>
 ```
 
 ## 插件类型
@@ -165,7 +165,7 @@ my-plugin/
 # -*- coding: utf-8 -*-
 """My Plugin Entry Point."""
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 import logging
 
 logger = logging.getLogger(__name__)
@@ -232,8 +232,8 @@ cd my-llm-provider
 # -*- coding: utf-8 -*-
 """My LLM Provider Implementation."""
 
-from qwenpaw.providers.openai_provider import OpenAIProvider
-from qwenpaw.providers.provider import ModelInfo
+from xclaw.providers.openai_provider import OpenAIProvider
+from xclaw.providers.provider import ModelInfo
 from typing import List
 
 
@@ -275,7 +275,7 @@ import importlib.util
 import logging
 import os
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 
 logger = logging.getLogger(__name__)
 
@@ -323,10 +323,10 @@ plugin = MyLLMProviderPlugin()
 
 ```bash
 # 安装插件
-qwenpaw plugin install my-llm-provider
+xclaw plugin install my-llm-provider
 
-# 启动 QwenPaw
-qwenpaw app
+# 启动 xClaw
+xclaw app
 
 # 在 Web UI 中配置 API Key
 # 然后就可以使用新的 Provider 了
@@ -334,7 +334,7 @@ qwenpaw app
 
 ### 示例 2：添加启动钩子
 
-假设你想在 QwenPaw 启动时初始化一个监控服务。
+假设你想在 xClaw 启动时初始化一个监控服务。
 
 #### 1. 创建插件
 
@@ -364,7 +364,7 @@ cd monitoring-hook
 # -*- coding: utf-8 -*-
 """Monitoring Hook Plugin Entry Point."""
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 import logging
 
 logger = logging.getLogger(__name__)
@@ -388,7 +388,7 @@ class MonitoringHookPlugin:
 
                 # 初始化你的监控服务
                 # from my_monitoring import init_monitoring
-                # init_monitoring(app_name="QwenPaw")
+                # init_monitoring(app_name="xClaw")
 
                 logger.info("✓ Monitoring initialized successfully")
 
@@ -415,8 +415,8 @@ plugin = MonitoringHookPlugin()
 #### 4. 安装
 
 ```bash
-qwenpaw plugin install monitoring-hook
-qwenpaw app
+xclaw plugin install monitoring-hook
+xclaw app
 ```
 
 ### 示例 3：添加自定义命令
@@ -483,7 +483,7 @@ class StatusQueryRewriter:
 
 import logging
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 
 logger = logging.getLogger(__name__)
 
@@ -510,7 +510,7 @@ class StatusCommandPlugin:
 
     def _patch_query_handler(self):
         """Patch AgentRunner.query_handler to rewrite /status queries."""
-        from qwenpaw.app.runner.runner import AgentRunner
+        from xclaw.app.runner.runner import AgentRunner
         from .query_rewriter import StatusQueryRewriter
 
         original_query_handler = AgentRunner.query_handler
@@ -556,8 +556,8 @@ plugin = StatusCommandPlugin()
 #### 5. 安装和使用
 
 ```bash
-qwenpaw plugin install status-command
-qwenpaw app
+xclaw plugin install status-command
+xclaw app
 
 # 使用命令
 /status
@@ -659,18 +659,18 @@ api.register_startup_hook("late", callback, priority=200)
 1. 检查插件是否已安装：
 
    ```bash
-   qwenpaw plugin list
+   xclaw plugin list
    ```
 
-2. 查看 QwenPaw 日志：
+2. 查看 xClaw 日志：
 
    ```bash
-   tail -f ~/.qwenpaw/logs/qwenpaw.log | grep -i plugin
+   tail -f ~/.xclaw/logs/xclaw.log | grep -i plugin
    ```
 
 3. 验证插件清单格式：
    ```bash
-   qwenpaw plugin info <plugin-id>
+   xclaw plugin info <plugin-id>
    ```
 
 ### 依赖安装失败
@@ -684,7 +684,7 @@ api.register_startup_hook("late", callback, priority=200)
 
 ### Provider 未显示
 
-1. 确认插件已安装并重启 QwenPaw
+1. 确认插件已安装并重启 xClaw
 2. 检查 Web UI 的模型管理页面
 3. 查看日志中的 provider 注册信息
 
@@ -696,10 +696,10 @@ api.register_startup_hook("late", callback, priority=200)
 
 ## 安全注意事项
 
-1. **只安装可信插件**：插件代码会在 QwenPaw 进程中执行
+1. **只安装可信插件**：插件代码会在 xClaw 进程中执行
 2. **检查依赖**：确保插件依赖来自可信源
 3. **审查代码**：安装前审查插件源代码
-4. **离线操作**：插件安装/卸载需要 QwenPaw 离线
+4. **离线操作**：插件安装/卸载需要 xClaw 离线
 
 ## PluginApi 参考
 
@@ -745,12 +745,12 @@ api.register_shutdown_hook(
 
 ### Monkey Patch
 
-对于需要修改 QwenPaw 行为的插件（如自定义命令），可以使用 monkey patch：
+对于需要修改 xClaw 行为的插件（如自定义命令），可以使用 monkey patch：
 
 ```python
 def _patch_query_handler(self):
     """Patch AgentRunner to intercept queries."""
-    from qwenpaw.app.runner.runner import AgentRunner
+    from xclaw.app.runner.runner import AgentRunner
 
     original_handler = AgentRunner.query_handler
 
@@ -790,12 +790,12 @@ zip -r my-plugin-1.0.0.zip my-plugin/
 用户可以通过 URL 安装：
 
 ```bash
-qwenpaw plugin install https://example.com/my-plugin-1.0.0.zip
+xclaw plugin install https://example.com/my-plugin-1.0.0.zip
 ```
 
 ## 常见问题
 
-### Q: 插件可以访问哪些 QwenPaw API？
+### Q: 插件可以访问哪些 xClaw API？
 
 A: 插件通过 `PluginApi` 访问核心功能，包括：
 
@@ -803,7 +803,7 @@ A: 插件通过 `PluginApi` 访问核心功能，包括：
 - Hook 注册
 - Runtime helpers（provider_manager 等）
 
-### Q: 插件可以修改 QwenPaw 的核心行为吗？
+### Q: 插件可以修改 xClaw 的核心行为吗？
 
 A: 可以，通过 monkey patch 或 hook 机制。但请谨慎使用，确保不会破坏核心功能。
 

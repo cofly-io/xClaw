@@ -1,6 +1,6 @@
 # Plugin System
 
-QwenPaw provides a plugin system that allows users to extend QwenPaw's functionality.
+xClaw provides a plugin system that allows users to extend xClaw's functionality.
 
 ## Overview
 
@@ -17,27 +17,27 @@ The plugin system supports the following extension capabilities:
 Install from local directory:
 
 ```bash
-qwenpaw plugin install /path/to/plugin
+xclaw plugin install /path/to/plugin
 ```
 
 Install from URL (supports ZIP files):
 
 ```bash
-qwenpaw plugin install https://example.com/plugin.zip
+xclaw plugin install https://example.com/plugin.zip
 ```
 
 Force reinstall:
 
 ```bash
-qwenpaw plugin install /path/to/plugin --force
+xclaw plugin install /path/to/plugin --force
 ```
 
-**Note**: Plugin operations can only be performed when QwenPaw is offline.
+**Note**: Plugin operations can only be performed when xClaw is offline.
 
 ### List Installed Plugins
 
 ```bash
-qwenpaw plugin list
+xclaw plugin list
 ```
 
 Example output:
@@ -49,19 +49,19 @@ Installed Plugins:
 my-provider (v1.0.0)
   Custom LLM provider integration
   Author: Developer Name
-  Path: /Users/user/.qwenpaw/plugins/my-provider
+  Path: /Users/user/.xclaw/plugins/my-provider
 ```
 
 ### View Plugin Details
 
 ```bash
-qwenpaw plugin info <plugin-id>
+xclaw plugin info <plugin-id>
 ```
 
 ### Uninstall Plugin
 
 ```bash
-qwenpaw plugin uninstall <plugin-id>
+xclaw plugin uninstall <plugin-id>
 ```
 
 ## Plugin Types
@@ -165,7 +165,7 @@ my-plugin/
 # -*- coding: utf-8 -*-
 """My Plugin Entry Point."""
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 import logging
 
 logger = logging.getLogger(__name__)
@@ -232,8 +232,8 @@ cd my-llm-provider
 # -*- coding: utf-8 -*-
 """My LLM Provider Implementation."""
 
-from qwenpaw.providers.openai_provider import OpenAIProvider
-from qwenpaw.providers.provider import ModelInfo
+from xclaw.providers.openai_provider import OpenAIProvider
+from xclaw.providers.provider import ModelInfo
 from typing import List
 
 
@@ -275,7 +275,7 @@ import importlib.util
 import logging
 import os
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 
 logger = logging.getLogger(__name__)
 
@@ -323,10 +323,10 @@ plugin = MyLLMProviderPlugin()
 
 ```bash
 # Install plugin
-qwenpaw plugin install my-llm-provider
+xclaw plugin install my-llm-provider
 
-# Start QwenPaw
-qwenpaw start
+# Start xClaw
+xclaw start
 
 # Configure API Key in Web UI
 # Then you can use the new provider
@@ -334,7 +334,7 @@ qwenpaw start
 
 ### Example 2: Add Startup Hook
 
-Let's say you want to initialize a monitoring service when QwenPaw starts.
+Let's say you want to initialize a monitoring service when xClaw starts.
 
 #### 1. Create Plugin
 
@@ -364,7 +364,7 @@ cd monitoring-hook
 # -*- coding: utf-8 -*-
 """Monitoring Hook Plugin Entry Point."""
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 import logging
 
 logger = logging.getLogger(__name__)
@@ -388,7 +388,7 @@ class MonitoringHookPlugin:
 
                 # Initialize your monitoring service
                 # from my_monitoring import init_monitoring
-                # init_monitoring(app_name="QwenPaw")
+                # init_monitoring(app_name="xClaw")
 
                 logger.info("✓ Monitoring initialized successfully")
 
@@ -415,8 +415,8 @@ plugin = MonitoringHookPlugin()
 #### 4. Install
 
 ```bash
-qwenpaw plugin install monitoring-hook
-qwenpaw start
+xclaw plugin install monitoring-hook
+xclaw start
 ```
 
 ### Example 3: Add Custom Command
@@ -483,7 +483,7 @@ Please present this information in a clear format."""
 
 import logging
 
-from qwenpaw.plugins.api import PluginApi
+from xclaw.plugins.api import PluginApi
 
 logger = logging.getLogger(__name__)
 
@@ -510,7 +510,7 @@ class StatusCommandPlugin:
 
     def _patch_query_handler(self):
         """Patch AgentRunner.query_handler to rewrite /status queries."""
-        from qwenpaw.app.runner.runner import AgentRunner
+        from xclaw.app.runner.runner import AgentRunner
         from .query_rewriter import StatusQueryRewriter
 
         original_query_handler = AgentRunner.query_handler
@@ -556,8 +556,8 @@ plugin = StatusCommandPlugin()
 #### 5. Install and Use
 
 ```bash
-qwenpaw plugin install status-command
-qwenpaw app
+xclaw plugin install status-command
+xclaw app
 
 # Use the command
 /status
@@ -659,18 +659,18 @@ api.register_startup_hook("late", callback, priority=200)
 1. Check if plugin is installed:
 
    ```bash
-   qwenpaw plugin list
+   xclaw plugin list
    ```
 
-2. View QwenPaw logs:
+2. View xClaw logs:
 
    ```bash
-   tail -f ~/.qwenpaw/logs/qwenpaw.log | grep -i plugin
+   tail -f ~/.xclaw/logs/xclaw.log | grep -i plugin
    ```
 
 3. Verify plugin manifest format:
    ```bash
-   qwenpaw plugin info <plugin-id>
+   xclaw plugin info <plugin-id>
    ```
 
 ### Dependency Installation Failed
@@ -684,7 +684,7 @@ api.register_startup_hook("late", callback, priority=200)
 
 ### Provider Not Showing
 
-1. Confirm plugin is installed and restart QwenPaw
+1. Confirm plugin is installed and restart xClaw
 2. Check the model management page in Web UI
 3. Review provider registration info in logs
 
@@ -696,10 +696,10 @@ api.register_startup_hook("late", callback, priority=200)
 
 ## Security Considerations
 
-1. **Only install trusted plugins**: Plugin code executes in the QwenPaw process
+1. **Only install trusted plugins**: Plugin code executes in the xClaw process
 2. **Check dependencies**: Ensure plugin dependencies come from trusted sources
 3. **Review code**: Review plugin source code before installation
-4. **Offline operations**: Plugin install/uninstall requires QwenPaw to be offline
+4. **Offline operations**: Plugin install/uninstall requires xClaw to be offline
 
 ## PluginApi Reference
 
@@ -745,12 +745,12 @@ api.register_shutdown_hook(
 
 ### Monkey Patching
 
-For plugins that need to modify QwenPaw behavior (like custom commands), you can use monkey patching:
+For plugins that need to modify xClaw behavior (like custom commands), you can use monkey patching:
 
 ```python
 def _patch_query_handler(self):
     """Patch AgentRunner to intercept queries."""
-    from qwenpaw.app.runner.runner import AgentRunner
+    from xclaw.app.runner.runner import AgentRunner
 
     original_handler = AgentRunner.query_handler
 
@@ -790,12 +790,12 @@ zip -r my-plugin-1.0.0.zip my-plugin/
 Users can install via URL:
 
 ```bash
-qwenpaw plugin install https://example.com/my-plugin-1.0.0.zip
+xclaw plugin install https://example.com/my-plugin-1.0.0.zip
 ```
 
 ## FAQ
 
-### Q: What QwenPaw APIs can plugins access?
+### Q: What xClaw APIs can plugins access?
 
 A: Plugins access core functionality through `PluginApi`, including:
 
@@ -803,7 +803,7 @@ A: Plugins access core functionality through `PluginApi`, including:
 - Hook registration
 - Runtime helpers (provider_manager, etc.)
 
-### Q: Can plugins modify QwenPaw's core behavior?
+### Q: Can plugins modify xClaw's core behavior?
 
 A: Yes, through monkey patching or hook mechanisms. But use with caution to avoid breaking core functionality.
 

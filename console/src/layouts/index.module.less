@@ -10,11 +10,11 @@
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 :global {
-  .xClaw-chat-anywhere-layout-right-header {
+  .xclaw-chat-anywhere-layout-right-header {
     height: 40px !important;
     // 你的样式backdrop-filter
   }
-  .xClaw-chat-anywhere-default-header-right :first-child{
+  .xclaw-chat-anywhere-default-header-right :first-child{
     font-size: 14px !important;
     color: #636363 !important;  
     font-weight: 600 !important;
@@ -33,7 +33,7 @@
   box-shadow: 0 1px 4px rgba(24, 100, 255, 0.06);
 
   :global {
-    .xClaw-btn {
+    .xclaw-btn {
       color: #8b8b8b !important;
 
       &:hover {
@@ -68,16 +68,16 @@
   outline: none !important;
 
   :global {
-    .xClaw-select-selector {
+    .xclaw-select-selector {
       border: 0 !important;
       background: transparent !important;
 
-      .xClaw-select-selection-item div:first-child {
+      .xclaw-select-selection-item div:first-child {
         color: #757575 !important;
       }
     }
 
-    .xClaw-select-arrow {
+    .xclaw-select-arrow {
       display: none !important;
     }
   }
@@ -112,14 +112,14 @@
   }
 
   :global {
-    .xClaw-layout-sider-children {
+    .xclaw-layout-sider-children {
       display: flex;
       flex-direction: column;
       height: 100%;
       overflow: hidden;
     }
 
-    .xClaw-menu {
+    .xclaw-menu {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
@@ -128,7 +128,7 @@
       padding: 0 !important;
 
       /* Group title */
-      .xClaw-menu-submenu-title {
+      .xclaw-menu-submenu-title {
         font-family: "PingFang SC", sans-serif !important;
         font-size: 12px !important;
         font-weight: 400 !important;
@@ -143,14 +143,14 @@
           background: transparent !important;
         }
 
-        .xClaw-menu-submenu-arrow {
+        .xclaw-menu-submenu-arrow {
           display: none !important;
         }
       }
 
       // 折叠时 group icon 居中、间距加大
-      &.xClaw-menu-inline-collapsed {
-        .xClaw-menu-submenu-title {
+      &.xclaw-menu-inline-collapsed {
+        .xclaw-menu-submenu-title {
           padding: 14px 0 !important;
           display: flex !important;
           justify-content: center !important;
@@ -168,7 +168,7 @@
       }
 
       /* Menu items */
-      .xClaw-menu-item {
+      .xclaw-menu-item {
         margin: 0 !important;
         height: 32px !important;
         line-height: 32px !important;
@@ -182,21 +182,21 @@
           color: rgba(0, 0, 0, 0.88) !important;
         }
 
-        .xClaw-menu-item-icon,
+        .xclaw-menu-item-icon,
         .anticon,
         svg {
           color: rgba(0, 0, 0, 0.55);
         }
       }
 
-      .xClaw-menu-item-selected {
+      .xclaw-menu-item-selected {
         background: rgba(43, 18, 0, 0.08) !important;
         color: inherit !important;
       }
     }
 
     /* Group title (一级菜单分组) */
-    .copaw-menu-submenu-title {
+    .xclaw-menu-submenu-title {
       font-family: "PingFang SC", sans-serif !important;
       font-size: 12px !important;
       font-weight: 500 !important;
@@ -207,43 +207,43 @@
     }
 
     /* Hide submenu arrow */
-    .copaw-menu-submenu-arrow {
+    .xclaw-menu-submenu-arrow {
       display: none !important;
     }
 
     /* Always expand submenus */
-    .copaw-menu-submenu {
-      >.copaw-menu {
+    .xclaw-menu-submenu {
+      >.xclaw-menu {
         display: block !important;
       }
     }
 
     /* Menu item padding - align all items */
-    .copaw-menu-item {
+    .xclaw-menu-item {
       padding-left: 8px !important;
     }
 
     /* Remove submenu indent - align with parent */
-    .copaw-menu-submenu .copaw-menu-item {
+    .xclaw-menu-submenu .xclaw-menu-item {
       padding-left: 8px !important;
     }
 
     /* Selected item */
-    .copaw-menu-item-selected {
+    .xclaw-menu-item-selected {
       background: rgba(43, 18, 0, 0.08) !important;
       color: inherit !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
 
-      .copaw-menu-title-content {
+      .xclaw-menu-title-content {
         display: flex !important;
         align-items: center !important;
       }
     }
 
     /* Selected submenu item - keep text color unchanged */
-    .copaw-menu-submenu .copaw-menu-item-selected {
+    .xclaw-menu-submenu .xclaw-menu-item-selected {
       color: inherit !important;
     }
   }
@@ -259,26 +259,26 @@
   }
 
   :global {
-    .xClaw-menu {
+    .xclaw-menu {
       background: transparent !important;
       border-inline-end: 0 !important;
     }
 
-    .xClaw-menu-submenu-title {
+    .xclaw-menu-submenu-title {
       color: rgba(255, 255, 255, 0.45) !important;
     }
 
-    .xClaw-menu-item {
+    .xclaw-menu-item {
       color: rgba(255, 255, 255, 0.75) !important;
     }
 
-    .xClaw-menu-item:hover,
-    .xClaw-menu-submenu-title:hover {
+    .xclaw-menu-item:hover,
+    .xclaw-menu-submenu-title:hover {
       background: rgba(255, 255, 255, 0.1) !important;
       color: rgba(255, 255, 255, 0.95) !important;
     }
 
-    .xClaw-menu-item-selected {
+    .xclaw-menu-item-selected {
       background: rgba(22, 201, 255, 0.5) !important;
       color: #16b5ff !important;
     }
@@ -411,7 +411,7 @@
 
 // ─── Update Modal ─────────────────────────────────────────────────────────────
 .updateModal {
-  :global(.copaw-modal-content) {
+  :global(.xclaw-modal-content) {
     padding: 0 !important;
     border-radius: 12px !important;
     overflow: visible !important;
@@ -419,20 +419,20 @@
     border: none !important;
   }
 
-  :global(.copaw-modal-body) {
+  :global(.xclaw-modal-body) {
     padding: 0 !important;
   }
 
-  :global(.copaw-modal-footer) {
+  :global(.xclaw-modal-footer) {
     padding: 12px 24px;
     margin-top: 0;
   }
 
-  :global(.copaw-modal-header) {
+  :global(.xclaw-modal-header) {
     display: none !important;
   }
 
-  :global(.copaw-modal-close) {
+  :global(.xclaw-modal-close) {
     display: none !important;
   }
 }
@@ -610,7 +610,7 @@
     border-bottom-color: rgba(255, 255, 255, 0.08) !important;
     color: rgba(255, 255, 255, 0.85);
 
-    :global(.xClaw-btn-text),
+    :global(.xclaw-btn-text),
     :global(.ant-btn-text) {
       color: rgba(255, 255, 255, 0.75) !important;
 

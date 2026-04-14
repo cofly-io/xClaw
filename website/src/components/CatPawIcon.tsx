@@ -1,5 +1,5 @@
 /**
- * QwenPaw branding logo (logo.png). Favicon uses qwenpaw-symbol.svg.
+ * xClaw branding logo (logo.png). Favicon uses xclaw-symbol.svg.
  */
 interface CatPawIconProps {
   size: number;

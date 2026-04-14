@@ -29,6 +29,8 @@ export interface PoolSkillSpec {
   latest_version_text?: string;
   config?: Record<string, unknown>;
   last_updated?: string;
+  emoji?: string;
+  tags?: string[];
 }
 
 export interface WorkspaceSkillSummary {

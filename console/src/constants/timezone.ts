@@ -1,4 +1,10 @@
-export const TIMEZONE_OPTIONS = [
+export interface TimezoneOption {
+  value: string;
+  label: string;
+}
+
+/** IANA timezone list for settings UI; labels are English (locale hook may extend later). */
+export const TIMEZONE_OPTIONS: TimezoneOption[] = [
   { value: "America/Los_Angeles", label: "America/Los_Angeles (UTC-8)" },
   { value: "America/Denver", label: "America/Denver (UTC-7)" },
   { value: "America/Chicago", label: "America/Chicago (UTC-6)" },
@@ -19,3 +25,7 @@ export const TIMEZONE_OPTIONS = [
   { value: "Australia/Melbourne", label: "Australia/Melbourne (UTC+10)" },
   { value: "Pacific/Auckland", label: "Pacific/Auckland (UTC+12)" },
 ];
+
+export function getTimezoneOptions(_locale: string): TimezoneOption[] {
+  return TIMEZONE_OPTIONS;
+}

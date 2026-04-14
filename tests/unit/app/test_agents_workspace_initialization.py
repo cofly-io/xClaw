@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from qwenpaw.app.routers import agents as agents_router
+from xclaw.app.routers import agents as agents_router
 
 
 def _stub_global_config(language: str = "en") -> SimpleNamespace:
@@ -20,7 +20,7 @@ def test_initialize_agent_workspace_creates_runtime_compatible_files(
     tmp_path,
 ):
     """New workspaces should match the runtime file contract."""
-    import qwenpaw.config as config_module
+    import xclaw.config as config_module
 
     monkeypatch.setattr(
         config_module,
@@ -59,7 +59,7 @@ def test_initialize_agent_workspace_builtin_qa_seed_passes_language_first(
     tmp_path,
 ):
     """Builtin QA seeding should pass language before workspace."""
-    import qwenpaw.config as config_module
+    import xclaw.config as config_module
 
     recorded_calls: list[tuple[str, Path]] = []
 

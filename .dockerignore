@@ -38,8 +38,8 @@ console/.vite
 node_modules
 **/node_modules
 **/dist
-!src/qwenpaw/console/dist
-!src/qwenpaw/console/dist/**
+!src/xclaw/console/dist
+!src/xclaw/console/dist/**
 **/.vite
 
 # Example and local config (mount at runtime instead)

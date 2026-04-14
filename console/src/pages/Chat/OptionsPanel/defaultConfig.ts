@@ -4,7 +4,7 @@ const defaultConfig = {
   theme: {
     colorPrimary: "#1864ff",
     darkMode: false,
-    prefix: "xClaw",
+    prefix: "xclaw",
     leftHeader: {
       logo: "",
       title: "",
@@ -19,7 +19,7 @@ const defaultConfig = {
     greeting: "Hello, how can I help you today?",
     description:
       "I am a helpful assistant that can help you with your questions.",
-    avatar: `${import.meta.env.BASE_URL}x-symbol.svg`,
+    avatar: `${import.meta.env.BASE_URL}xclaw-symbol.svg`,
     prompts: [
       {
         value: "Let's start a new journey!",

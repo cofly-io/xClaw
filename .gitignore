@@ -18,8 +18,8 @@ dist/
 .wheelshim/
 # Console frontend build (generated in Docker/CI, do not commit)
 console/.cursor/
-src/qwenpaw/console/dist/
-src/qwenpaw/console/
+src/xclaw/console/dist/
+src/xclaw/console/
 
 # frontend (website)
 website/node_modules/

@@ -58,7 +58,7 @@
 
 ## 新闻
 
-[2026-04-12] **CoPaw 正式更名为 QwenPaw**：这是一次品牌名称焕新，也是我们迈向下一阶段开源的重要一步。
+[2026-04-12] **xClaw**：这是一次品牌名称焕新，也是我们迈向下一阶段开源的重要一步。
 
 新的名字，更好地体现了我们正在构建的开源生态，以及我们持续推进的整体开源方向：
 
@@ -108,9 +108,9 @@
 如果你习惯自行管理 Python 环境：
 
 ```bash
-pip install qwenpaw
-qwenpaw init --defaults
-qwenpaw app
+pip install xClaw
+xClaw init --defaults
+xClaw app
 ```
 
 然后在浏览器中打开控制台：**http://127.0.0.1:8088/**，配置模型后即可开始对话。

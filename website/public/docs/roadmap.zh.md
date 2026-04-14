@@ -24,9 +24,9 @@ _状态说明：**进行中** — 正在积极开发；**计划中** — 已排�
 
 ## 参与贡献
 
-QwenPaw 在开放协作中持续演进，欢迎各种形式的参与！请参考上表（尤其是标记为 **征集中** 的项）选择你感兴趣的方向，并阅读 [CONTRIBUTING](https://github.com/agentscope-ai/QwenPaw/blob/main/CONTRIBUTING.md) 了解如何开始。我们特别欢迎：
+xClaw 在开放协作中持续演进，欢迎各种形式的参与！请参考上表（尤其是标记为 **征集中** 的项）选择你感兴趣的方向，并阅读 [CONTRIBUTING](https://github.com/agentscope-ai/xClaw/blob/main/CONTRIBUTING.md) 了解如何开始。我们特别欢迎：
 
 - **横向拓展** — 新频道、模型提供商、技能、MCP。
 - **已有功能扩展与完善** — 展示与交互优化、下载提示、Windows 路径兼容等。
 
-欢迎在 [GitHub Issue - Open Tasks](https://github.com/agentscope-ai/QwenPaw/issues/2291) 参与讨论、提出想法或认领任务。
+欢迎在 [GitHub Issue - Open Tasks](https://github.com/agentscope-ai/xClaw/issues/2291) 参与讨论、提出想法或认领任务。

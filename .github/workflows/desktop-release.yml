@@ -1,7 +1,7 @@
-# Build QwenPaw Desktop: Windows (conda-pack + NSIS), macOS (conda-pack -> .app)
+# Build xClaw Desktop: Windows (conda-pack + NSIS), macOS (conda-pack -> .app)
 # Runs automatically on release publish; also manually via Actions tab.
 
-name: QwenPaw Desktop Build
+name: xClaw Desktop Build
 
 on:
   release:
@@ -30,7 +30,7 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $content = Get-Content src/qwenpaw/__version__.py -Raw
+          $content = Get-Content src/xclaw/__version__.py -Raw
           if ($content -match '__version__\s*=\s*"([^"]+)"') {
             $v = $Matches[1]
           } else {
@@ -52,7 +52,7 @@ jobs:
         with:
           auto-update-conda: true
           python-version: "3.10"
-          activate-environment: "qwenpaw-build"
+          activate-environment: "xclaw-build"
           condarc-file: .github/condarc
           conda-remove-defaults: false
 
@@ -69,7 +69,7 @@ jobs:
 
       - name: Build Windows installer
         shell: pwsh
-        run: conda run -n qwenpaw-build pwsh -File ./scripts/pack/build_win.ps1
+        run: conda run -n xclaw-build pwsh -File ./scripts/pack/build_win.ps1
 
       - name: List dist (on failure)
         if: failure()
@@ -85,8 +85,8 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QwenPaw-Desktop-Windows-${{ steps.version.outputs.version }}
-          path: dist/QwenPaw-Setup-*.exe
+          name: xClaw-Desktop-Windows-${{ steps.version.outputs.version }}
+          path: dist/xClaw-Setup-*.exe
 
   build-macos:
     runs-on: macos-14
@@ -98,7 +98,7 @@ jobs:
 
       - name: Get version
         id: version
-        run: echo "version=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' src/qwenpaw/__version__.py)" >> $GITHUB_OUTPUT
+        run: echo "version=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' src/xclaw/__version__.py)" >> $GITHUB_OUTPUT
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -112,7 +112,7 @@ jobs:
         with:
           auto-update-conda: true
           python-version: "3.10"
-          activate-environment: "qwenpaw-build"
+          activate-environment: "xclaw-build"
           condarc-file: .github/condarc
           conda-remove-defaults: false
 
@@ -122,13 +122,13 @@ jobs:
       - name: Build macOS .app
         run: |
           chmod +x scripts/pack/build_macos.sh
-          conda run -n qwenpaw-build bash -c 'CREATE_ZIP=1 ./scripts/pack/build_macos.sh'
+          conda run -n xclaw-build bash -c 'CREATE_ZIP=1 ./scripts/pack/build_macos.sh'
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QwenPaw-Desktop-macOS-${{ steps.version.outputs.version }}
-          path: dist/QwenPaw-*.zip
+          name: xClaw-Desktop-macOS-${{ steps.version.outputs.version }}
+          path: dist/xClaw-*.zip
 
   upload-release:
     needs: [build-windows, build-macos]
@@ -142,15 +142,15 @@ jobs:
 
       - name: Move artifacts to root for upload
         run: |
-          mv QwenPaw-Desktop-Windows-*/QwenPaw-Setup-*.exe . 2>/dev/null || true
-          mv QwenPaw-Desktop-macOS-*/QwenPaw-*.zip . 2>/dev/null || true
+          mv xClaw-Desktop-Windows-*/xClaw-Setup-*.exe . 2>/dev/null || true
+          mv xClaw-Desktop-macOS-*/xClaw-*.zip . 2>/dev/null || true
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            QwenPaw-Setup-*.exe
-            QwenPaw-*-macOS.zip
+            xClaw-Setup-*.exe
+            xClaw-*-macOS.zip
           fail-on-unmatched-files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -171,7 +171,7 @@ jobs:
 
       - name: Get version
         id: version
-        run: echo "version=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' src/qwenpaw/__version__.py)" >> $GITHUB_OUTPUT
+        run: echo "version=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' src/xclaw/__version__.py)" >> $GITHUB_OUTPUT
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -192,10 +192,10 @@ jobs:
             -L CH
 
       - name: Process and upload Windows artifacts
-        if: hashFiles('QwenPaw-Desktop-Windows-*/*.exe') != ''
+        if: hashFiles('xClaw-Desktop-Windows-*/*.exe') != ''
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          WIN_EXE=$(find QwenPaw-Desktop-Windows-* -name "QwenPaw-Setup-*.exe" | head -1)
+          WIN_EXE=$(find xClaw-Desktop-Windows-* -name "xClaw-Setup-*.exe" | head -1)
 
           if [ -z "$WIN_EXE" ]; then
             echo "No Windows exe found, skipping"
@@ -214,35 +214,35 @@ jobs:
 
           # Upload file (versioned)
           ossutil cp "$WIN_EXE" \
-            "oss://qwenpaw-download/files/apps/desktop/win/QwenPaw-Setup-${VERSION}.exe" \
+            "oss://xclaw-download/files/apps/desktop/win/xClaw-Setup-${VERSION}.exe" \
             --acl public-read \
             --force
 
           # Upload file (latest)
           ossutil cp "$WIN_EXE" \
-            "oss://qwenpaw-download/files/apps/desktop/win/QwenPaw-Setup-latest.exe" \
+            "oss://xclaw-download/files/apps/desktop/win/xClaw-Setup-latest.exe" \
             --acl public-read \
             --force
 
           # Upload metadata (versioned)
           ossutil cp win-metadata.json \
-            "oss://qwenpaw-download/metadata/apps/desktop/win/QwenPaw-Setup-${VERSION}.exe.json" \
+            "oss://xclaw-download/metadata/apps/desktop/win/xClaw-Setup-${VERSION}.exe.json" \
             --acl public-read \
             --force
 
           # Upload metadata (latest)
           ossutil cp win-metadata.json \
-            "oss://qwenpaw-download/metadata/apps/desktop/win/QwenPaw-Setup-latest.exe.json" \
+            "oss://xclaw-download/metadata/apps/desktop/win/xClaw-Setup-latest.exe.json" \
             --acl public-read \
             --force
 
           echo "✓ Windows artifacts uploaded"
 
       - name: Process and upload macOS artifacts
-        if: hashFiles('QwenPaw-Desktop-macOS-*/*.zip') != ''
+        if: hashFiles('xClaw-Desktop-macOS-*/*.zip') != ''
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          MAC_ZIP=$(find QwenPaw-Desktop-macOS-* -name "QwenPaw-*.zip" | head -1)
+          MAC_ZIP=$(find xClaw-Desktop-macOS-* -name "xClaw-*.zip" | head -1)
 
           if [ -z "$MAC_ZIP" ]; then
             echo "No macOS zip found, skipping"
@@ -261,25 +261,25 @@ jobs:
 
           # Upload file (versioned)
           ossutil cp "$MAC_ZIP" \
-            "oss://qwenpaw-download/files/apps/desktop/mac/QwenPaw-${VERSION}-macOS.zip" \
+            "oss://xclaw-download/files/apps/desktop/mac/xClaw-${VERSION}-macOS.zip" \
             --acl public-read \
             --force
 
           # Upload file (latest)
           ossutil cp "$MAC_ZIP" \
-            "oss://qwenpaw-download/files/apps/desktop/mac/QwenPaw-latest-macOS.zip" \
+            "oss://xclaw-download/files/apps/desktop/mac/xClaw-latest-macOS.zip" \
             --acl public-read \
             --force
 
           # Upload metadata (versioned)
           ossutil cp mac-metadata.json \
-            "oss://qwenpaw-download/metadata/apps/desktop/mac/QwenPaw-${VERSION}-macOS.zip.json" \
+            "oss://xclaw-download/metadata/apps/desktop/mac/xClaw-${VERSION}-macOS.zip.json" \
             --acl public-read \
             --force
 
           # Upload metadata (latest)
           ossutil cp mac-metadata.json \
-            "oss://qwenpaw-download/metadata/apps/desktop/mac/QwenPaw-latest-macOS.zip.json" \
+            "oss://xclaw-download/metadata/apps/desktop/mac/xClaw-latest-macOS.zip.json" \
             --acl public-read \
             --force
 
@@ -290,7 +290,7 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
 
           # Download existing desktop/index.json if exists
-          ossutil cp "oss://qwenpaw-download/metadata/apps/desktop/index.json" \
+          ossutil cp "oss://xclaw-download/metadata/apps/desktop/index.json" \
             desktop-index.json 2>/dev/null || cat > desktop-index.json << 'EOF'
           {
             "product": "desktop",
@@ -303,7 +303,7 @@ jobs:
           # Merge Windows metadata if exists
           if [ -f "win-metadata.json" ]; then
             python scripts/pack/generate_oss_metadata.py \
-              --file "$(find QwenPaw-Desktop-Windows-* -name 'QwenPaw-Setup-*.exe' | head -1)" \
+              --file "$(find xClaw-Desktop-Windows-* -name 'xClaw-Setup-*.exe' | head -1)" \
               --product desktop \
               --platform win \
               --version "$VERSION" \
@@ -315,7 +315,7 @@ jobs:
           # Merge macOS metadata if exists
           if [ -f "mac-metadata.json" ]; then
             python scripts/pack/generate_oss_metadata.py \
-              --file "$(find QwenPaw-Desktop-macOS-* -name 'QwenPaw-*.zip' | head -1)" \
+              --file "$(find xClaw-Desktop-macOS-* -name 'xClaw-*.zip' | head -1)" \
               --product desktop \
               --platform mac \
               --version "$VERSION" \
@@ -326,7 +326,7 @@ jobs:
 
           # Upload updated desktop/index.json
           ossutil cp desktop-index.json \
-            "oss://qwenpaw-download/metadata/apps/desktop/index.json" \
+            "oss://xclaw-download/metadata/apps/desktop/index.json" \
             --acl public-read \
             --force
 
@@ -335,7 +335,7 @@ jobs:
       - name: Update main index
         run: |
           # Download main index if exists
-          ossutil cp "oss://qwenpaw-download/metadata/index.json" \
+          ossutil cp "oss://xclaw-download/metadata/index.json" \
             main-index.json 2>/dev/null || cat > main-index.json << 'EOF'
           {
             "version": "1.0",
@@ -369,7 +369,7 @@ jobs:
 
           # Upload main index
           ossutil cp main-index.json \
-            "oss://qwenpaw-download/metadata/index.json" \
+            "oss://xclaw-download/metadata/index.json" \
             --acl public-read \
             --force
 

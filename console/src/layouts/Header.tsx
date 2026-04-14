@@ -11,10 +11,10 @@ const { Header: AntHeader } = Layout;
 
 // Navigation URLs
 const NAV_URLS = {
-  docs: "https://copaw.agentscope.io/docs/intro",
-  faq: "https://copaw.agentscope.io/docs/faq",
-  changelog: "https://github.com/agentscope-ai/CoPaw/releases",
-  github: "https://github.com/agentscope-ai/CoPaw",
+  docs: "https://xclaw.agentscope.io/docs/intro",
+  faq: "https://xclaw.agentscope.io/docs/faq",
+  changelog: "https://github.com/agentscope-ai/xClaw/releases",
+  github: "https://github.com/agentscope-ai/xClaw",
 } as const;
 
 interface HeaderProps {
