@@ -1097,9 +1097,16 @@
   },
   "chat": {
     "modelSelectTooltip": "Select model",
+    "newChat": "New session",
     "newChatTooltip": "New chat",
     "chatHistoryTooltip": "Chat history",
     "allChats": "All Chats",
+    "renameSession": "Rename",
+    "group": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "prev3Days": "Previous 3 days"
+    },
     "createNewChat": "Create New Chat",
     "statusIdle": "Idle",
     "statusInProgress": "In progress",

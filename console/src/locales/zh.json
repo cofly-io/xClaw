@@ -1069,9 +1069,16 @@
   },
   "chat": {
     "modelSelectTooltip": "模型选择",
+    "newChat": "新会话",
     "newChatTooltip": "新建聊天",
     "chatHistoryTooltip": "聊天历史",
     "allChats": "全部聊天",
+    "renameSession": "重命名",
+    "group": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "prev3Days": "近三天"
+    },
     "createNewChat": "创建新聊天",
     "statusIdle": "空闲",
     "statusInProgress": "进行中",

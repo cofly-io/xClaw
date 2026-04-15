@@ -8,9 +8,9 @@ import {
   Tooltip,
 } from "antd";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Ellipsis, MessageSquare, SquarePlus } from "lucide-react";
+import { Ellipsis, SquarePlus } from "lucide-react";
 import {
   SparkExitFullscreenLine,
   SparkSearchUserLine,
@@ -20,20 +20,18 @@ import { authApi } from "../api/modules/auth";
 import styles from "./index.module.less";
 import { useTheme } from "../contexts/ThemeContext";
 import AgentSelector from "../components/AgentSelector";
-import sessionApi from "../pages/Chat/sessionApi";
+import { requestNewChatSessionFromShell } from "../pages/Chat/chatNewSessionBridge";
+import SidebarSessionList from "../pages/Chat/components/SidebarSessionList";
 
 const { Sider } = Layout;
 
 interface SidebarProps {
-  selectedKey: string;
   onOpenSettingsMore: () => void;
 }
 
-export default function Sidebar({
-  selectedKey,
-  onOpenSettingsMore,
-}: SidebarProps) {
+export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const [authEnabled, setAuthEnabled] = useState(false);
@@ -114,16 +112,9 @@ export default function Sidebar({
       key: "new-chat",
       icon: <SquarePlus {...navIconProps} />,
       action: () => {
-        sessionApi.createSession({});
-        navigate("/chat");
+        requestNewChatSessionFromShell(location.pathname, (to) => navigate(to));
       },
       label: t("chat.newChat"),
-    },
-    {
-      key: "chat",
-      icon: <MessageSquare {...navIconProps} />,
-      action: () => navigate("/chat"),
-      label: t("nav.chat"),
     },
   ];
 
@@ -167,29 +158,24 @@ export default function Sidebar({
           )}
           {collapsed ? (
             <nav className={styles.collapsedNav}>
-              {collapsedNavItems.map((item) => {
-                const isActive = selectedKey === item.key;
-                return (
-                  <Tooltip
-                    key={item.key}
-                    title={item.label}
-                    placement="right"
-                    overlayInnerStyle={{
-                      background: "rgba(0,0,0,0.75)",
-                      color: "#fff",
-                    }}
+              {collapsedNavItems.map((item) => (
+                <Tooltip
+                  key={item.key}
+                  title={item.label}
+                  placement="right"
+                  overlayInnerStyle={{
+                    background: "rgba(0,0,0,0.75)",
+                    color: "#fff",
+                  }}
+                >
+                  <button
+                    className={styles.collapsedNavItem}
+                    onClick={item.action}
                   >
-                    <button
-                      className={`${styles.collapsedNavItem} ${
-                        isActive ? styles.collapsedNavItemActive : ""
-                      }`}
-                      onClick={item.action}
-                    >
-                      {item.icon}
-                    </button>
-                  </Tooltip>
-                );
-              })}
+                    {item.icon}
+                  </button>
+                </Tooltip>
+              ))}
             </nav>
           ) : (
             <div className={styles.sideMenu}>
@@ -197,25 +183,17 @@ export default function Sidebar({
                 type="text"
                 className={styles.sidebarActionBtn}
                 icon={<SquarePlus {...navIconProps} />}
-                onClick={() => {
-                  sessionApi.createSession({});
-                  navigate("/chat");
-                }}
+                onClick={() =>
+                  requestNewChatSessionFromShell(location.pathname, (to) =>
+                    navigate(to),
+                  )
+                }
               >
                 {t("chat.newChat")}
               </Button>
-              <Button
-                type="text"
-                className={`${styles.sidebarActionBtn} ${
-                  selectedKey === "chat" ? styles.sidebarActionBtnActive : ""
-                }`}
-                icon={<MessageSquare {...navIconProps} />}
-                onClick={() => navigate("/chat")}
-              >
-                {t("nav.chat")}
-              </Button>
             </div>
           )}
+          <SidebarSessionList collapsed={collapsed} />
         </div>
 
         {authEnabled && !collapsed && (

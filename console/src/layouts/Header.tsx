@@ -1,9 +1,11 @@
 import { Layout, Space } from "antd";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, Book, HelpCircle, Lock, LogOut } from "lucide-react";
 import { Button, Tooltip } from "@agentscope-ai/design";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
+import { XCLAW_CHAT_HEADER_TITLE_EVENT } from "../pages/Chat/components/ChatHeaderTitle";
 
 const { Header: AntHeader } = Layout;
 
@@ -22,6 +24,23 @@ interface HeaderProps {
 export default function Header({ onLock }: HeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [chatHeaderTitle, setChatHeaderTitle] = useState("");
+  const isChatRoute =
+    location.pathname === "/chat" || location.pathname.startsWith("/chat/");
+
+  useEffect(() => {
+    const onTitle = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      setChatHeaderTitle(detail || "");
+    };
+    window.addEventListener(XCLAW_CHAT_HEADER_TITLE_EVENT, onTitle);
+    return () => window.removeEventListener(XCLAW_CHAT_HEADER_TITLE_EVENT, onTitle);
+  }, []);
+
+  useEffect(() => {
+    if (!isChatRoute) setChatHeaderTitle("");
+  }, [isChatRoute]);
 
   const handleNavClick = (url: string) => {
     if (url) {
@@ -43,7 +62,11 @@ export default function Header({ onLock }: HeaderProps) {
 
   return (
     <AntHeader className={styles.header}>
-      <div className={styles.headerCenter} />
+      <div className={styles.headerCenter}>
+        {isChatRoute && chatHeaderTitle ? (
+          <span className={styles.headerTitle}>{chatHeaderTitle}</span>
+        ) : null}
+      </div>
       <Space size="middle">
         <Tooltip title={t("header.changelog")}>
           <Button

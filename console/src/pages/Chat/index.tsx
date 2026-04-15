@@ -23,10 +23,10 @@ import { useAgentStore } from "../../stores/agentStore";
 import { useChatAnywhereInput } from "@agentscope-ai/chat";
 import styles from "./index.module.less";
 import { IconButton } from "@agentscope-ai/design";
-import ChatActionGroup from "./components/ChatActionGroup";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
+import ChatNewSessionBridge from "./components/ChatNewSessionBridge";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
-import ChatSessionDrawer from "./components/ChatSessionDrawer";
+import ChatSessionsRefreshListener from "./components/ChatSessionsRefreshListener";
 import {
   toDisplayUrl,
   copyText,
@@ -273,7 +273,6 @@ export default function ChatPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
   const { message } = useAppMessage();
-  const [historyOpen, setHistoryOpen] = useState(false);
   const isChatActiveRef = useRef(false);
   isChatActiveRef.current =
     location.pathname === "/" || location.pathname.startsWith("/chat");
@@ -569,18 +568,6 @@ export default function ChatPage() {
         leftHeader: {
           ...defaultConfig.theme.leftHeader,
         },
-        rightHeader: (
-          <>
-            <ChatSessionInitializer />
-            <RuntimeLoadingBridge bridgeRef={runtimeLoadingBridgeRef} />
-            <ChatHeaderTitle />
-            <span style={{ flex: 1 }} />
-            <ChatSessionDrawer
-              open={historyOpen}
-              onClose={() => setHistoryOpen(false)}
-            />
-          </>
-        ),
       },
       welcome: {
         ...i18nConfig.welcome,
@@ -593,18 +580,24 @@ export default function ChatPage() {
         beforeSubmit: handleBeforeSubmit,
         allowSpeech: true,
         prefix: (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: "100%",
-              gap: 8,
-            }}
-          >
-            <ModelSelector />
-            <div style={{ flex: 1 }} />
-            <ChatActionGroup onOpenHistory={() => setHistoryOpen(true)} />
-          </div>
+          <>
+            <ChatSessionInitializer />
+            <ChatNewSessionBridge />
+            <ChatSessionsRefreshListener />
+            <RuntimeLoadingBridge bridgeRef={runtimeLoadingBridgeRef} />
+            <ChatHeaderTitle />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                gap: 8,
+              }}
+            >
+              <ModelSelector />
+              <div style={{ flex: 1 }} />
+            </div>
+          </>
         ),
         attachments: {
           trigger: function (props: any) {
@@ -694,7 +687,6 @@ export default function ChatPage() {
     t,
     isDark,
     multimodalCaps,
-    historyOpen,
   ]);
 
   return (

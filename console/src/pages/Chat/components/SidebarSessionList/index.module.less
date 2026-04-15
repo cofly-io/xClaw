@@ -1,0 +1,54 @@
+.host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.listWrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  padding: 0 8px 8px;
+}
+
+.list {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+  }
+}
+
+.groupHeader {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 28px;
+  color: rgba(0, 0, 0, 0.45);
+  padding: 0 8px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+:global(.dark-mode) {
+  .groupHeader {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .list {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+    }
+  }
+}

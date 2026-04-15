@@ -1037,9 +1037,16 @@
   },
   "chat": {
     "modelSelectTooltip": "Выбор модели",
+    "newChat": "Новая сессия",
     "newChatTooltip": "Новый чат",
     "chatHistoryTooltip": "История чатов",
     "allChats": "Все чаты",
+    "renameSession": "Переименовать",
+    "group": {
+      "today": "Сегодня",
+      "yesterday": "Вчера",
+      "prev3Days": "Предыдущие 3 дня"
+    },
     "createNewChat": "Создать новый чат",
     "statusIdle": "Ожидание",
     "statusInProgress": "Выполняется",

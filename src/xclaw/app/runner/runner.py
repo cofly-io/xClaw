@@ -477,7 +477,7 @@ class AgentRunner(Runner):
             if len(msgs) > 0:
                 content = msgs[0].get_text_content()
                 if content:
-                    name = msgs[0].get_text_content()[:10]
+                    name = msgs[0].get_text_content()[:16]
                 else:
                     name = "Media Message"
 

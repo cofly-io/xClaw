@@ -11,18 +11,19 @@ import api, {
 } from "../../../api";
 import i18n from "../../../i18n";
 import { toDisplayUrl } from "../utils";
+import {
+  fixedBucketToI18nKey,
+  getSessionBucket,
+} from "../sessionCalendarGroup";
 
 // ---------------------------------------------------------------------------
 // Session date grouping
 // ---------------------------------------------------------------------------
 
-function getSessionGroup(updateAt: number): string {
-  const now = Date.now();
-  const diffDays = (now - updateAt) / (1000 * 60 * 60 * 24);
-  if (diffDays < 1) return i18n.t("chat.group.today");
-  if (diffDays < 3) return i18n.t("chat.group.last3Days");
-  if (diffDays < 7) return i18n.t("chat.group.last7Days");
-  return i18n.t("chat.group.monthAgo");
+function getSessionGroup(tsMs: number): string {
+  const b = getSessionBucket(tsMs);
+  if (b.kind === "month") return b.ym;
+  return i18n.t(fixedBucketToI18nKey(b.id));
 }
 
 // ---------------------------------------------------------------------------
@@ -269,11 +270,14 @@ const chatSpecToSession = (chat: ChatSpec): ExtendedSession => {
   const updateAt = chat.updated_at
     ? new Date(chat.updated_at).getTime()
     : Date.now();
+  const groupTs = chat.created_at
+    ? new Date(chat.created_at).getTime()
+    : updateAt;
   return {
     id: chat.id,
     name: (chat as ChatSpec & { name?: string }).name || DEFAULT_SESSION_NAME,
     updateAt,
-    group: getSessionGroup(updateAt),
+    group: getSessionGroup(groupTs),
     sessionId: chat.session_id,
     userId: chat.user_id,
     channel: chat.channel,

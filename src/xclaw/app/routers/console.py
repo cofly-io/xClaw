@@ -98,7 +98,7 @@ async def post_console_chat(
     if len(native_payload["content_parts"]) > 0:
         content = native_payload["content_parts"][0]
         if content:
-            name = content.text[:10]
+            name = content.text[:16]
         else:
             name = "Media Message"
     chat = await workspace.chat_manager.get_or_create_chat(

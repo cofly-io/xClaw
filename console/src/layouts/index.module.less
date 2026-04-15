@@ -13,26 +13,14 @@
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-:global {
-  .xclaw-chat-anywhere-layout-right-header {
-    height: 40px !important;
-    // 你的样式backdrop-filter
-  }
-  .xclaw-chat-anywhere-default-header-right :first-child{
-    font-size: 14px !important;
-    color: #636363 !important;  
-    font-weight: 600 !important;
-    margin-left: 12px !important;
-  }
-}
-
 .header {
   height: 50px;
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(120deg, #fbffeb 0%, #faeef0 35%, #ffeded 65%, #f0efff 100%);
+  // background: #FDFAF3 !important;
+  background: linear-gradient(120deg, #FDFAF3 0%, #faeef0 35%, #ffeded 65%, #f0efff 100%);
   border: none !important;
   box-shadow: 0 1px 4px rgba(24, 100, 255, 0.06);
 
@@ -94,7 +82,7 @@
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 .sider {
-  background: linear-gradient(180deg, #F1F1F1 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%) !important;
+  background: linear-gradient(180deg, #FDFAF3 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%) !important;
   border-right: 1px solid #e6eeff;
   padding-top: 0px !important;
   overflow: hidden !important;
@@ -317,15 +305,17 @@
 
 .settingsMoreModalBody {
   display: flex;
-  min-height: 70vh;
-  max-height: 76vh;
+  height: 72vh;
+  gap: 10px;
 }
 
 .settingsMoreSidebar {
-  width: 220px;
-  border-right: 1px solid #eceff6;
-  padding: 8px;
+  width: 176px;
+  border: 1px solid #e6eeff;
+  padding: 10px 8px;
   overflow-y: auto;
+  background: #f7f7f7;
+  // border-radius: 8px;
 }
 
 .settingsMoreItem {
@@ -333,26 +323,61 @@
   border: 0;
   background: transparent;
   text-align: left;
-  border-radius: 8px;
-  padding: 8px 10px;
-  color: rgba(0, 0, 0, 0.72);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: rgba(0, 0, 0, 0.74);
   cursor: pointer;
+  font-size: 13px;
+  font-family: "PingFang SC", "Microsoft YaHei", SimSun, sans-serif;
+  line-height: 18px;
+  font-weight: 500;
+  transition: background-color 0.16s, color 0.16s;
 
   &:hover {
-    background: rgba(24, 100, 255, 0.08);
+    background: rgba(0, 0, 0, 0.06);
   }
 }
 
 .settingsMoreItemActive {
-  background: rgba(24, 100, 255, 0.14);
-  color: #1864ff;
+  background: #111 !important;
+  color: #fff !important;
 }
 
 .settingsMoreContent {
   flex: 1;
   min-width: 0;
+  border: 1px solid #e6eeff;
   overflow: auto;
-  padding: 0 12px;
+  padding: 0px 8px;
+}
+
+.settingsMoreModal {
+  :global {
+    .xclaw-modal-content,
+    .ant-modal-content {
+      border-radius: 10px;
+      padding: 12px 12px 10px;
+    }
+
+    .xclaw-modal-header,
+    .ant-modal-header {
+      margin-bottom: 8px;
+    }
+
+    .xclaw-modal-body,
+    .ant-modal-body {
+      height: 72vh;
+      overflow: hidden;
+    }
+
+    .xclaw-modal-title,
+    .ant-modal-title {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 20px;
+      color: rgba(0, 0, 0, 0.88);
+    }
+  }
 }
 
 
@@ -371,6 +396,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  flex: 1;
+  min-height: 0;
   height: auto;
   background: inherit;
 }

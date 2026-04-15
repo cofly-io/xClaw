@@ -1031,10 +1031,17 @@
     }
   },
   "chat": {
+    "newChat": "新しいセッション",
     "modelSelectTooltip": "モデルを選択",
     "newChatTooltip": "新しいチャット",
     "chatHistoryTooltip": "チャット履歴",
     "allChats": "すべてのチャット",
+    "renameSession": "名前を変更",
+    "group": {
+      "today": "今日",
+      "yesterday": "昨日",
+      "prev3Days": "過去3日間"
+    },
     "createNewChat": "新しいチャットを作成",
     "statusIdle": "待機",
     "statusInProgress": "処理中",

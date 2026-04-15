@@ -9,7 +9,6 @@ import LockScreen from "../../components/LockScreen";
 import styles from "../index.module.less";
 import Chat from "../../pages/Chat";
 import ChannelsPage from "../../pages/Control/Channels";
-import SessionsPage from "../../pages/Control/Sessions";
 import CronJobsPage from "../../pages/Control/CronJobs";
 import HeartbeatPage from "../../pages/Control/Heartbeat";
 import AgentConfigPage from "../../pages/Agent/Config";
@@ -29,31 +28,10 @@ import { KEY_TO_LABEL } from "../constants";
 
 const { Content } = Layout;
 
-const pathToKey: Record<string, string> = {
-  "/chat": "chat",
-  "/channels": "channels",
-  "/sessions": "sessions",
-  "/cron-jobs": "cron-jobs",
-  "/heartbeat": "heartbeat",
-  "/skills": "skills",
-  "/skill-pool": "skill-pool",
-  "/tools": "tools",
-  "/mcp": "mcp",
-  "/workspace": "workspace",
-  "/agents": "agents",
-  "/models": "models",
-  "/environments": "environments",
-  "/agent-config": "agent-config",
-  "/security": "security",
-  "/token-usage": "token-usage",
-  "/voice-transcription": "voice-transcription",
-};
-
 export default function MainLayout() {
   const { t } = useTranslation();
   const location = useLocation();
   const currentPath = location.pathname;
-  const selectedKey = pathToKey[currentPath] || "chat";
 
   const token = localStorage.getItem("supos_token");
   const user = localStorage.getItem("supos_user");
@@ -64,7 +42,6 @@ export default function MainLayout() {
 
   const moreMenuKeys = [
     "channels",
-    "sessions",
     "cron-jobs",
     "heartbeat",
     "workspace",
@@ -83,7 +60,6 @@ export default function MainLayout() {
 
   const moreContentMap: Record<string, React.ReactNode> = {
     channels: <ChannelsPage />,
-    sessions: <SessionsPage />,
     "cron-jobs": <CronJobsPage />,
     heartbeat: <HeartbeatPage />,
     skills: <SkillsPage />,
@@ -120,10 +96,7 @@ export default function MainLayout() {
     <>
       {locked && <LockScreen onUnlock={() => setLocked(false)} />}
       <Layout className={styles.mainLayout} style={{ background: "#f0f5ff" }}>
-        <Sidebar
-          selectedKey={selectedKey}
-          onOpenSettingsMore={() => setMoreModalOpen(true)}
-        />
+        <Sidebar onOpenSettingsMore={() => setMoreModalOpen(true)} />
         <Layout className={styles.pageContainer} style={{ background: "#f0f5ff" }}>
           <Header onLock={() => setLocked(true)} />
           <Content className="page-container">
@@ -133,7 +106,6 @@ export default function MainLayout() {
                 <Route path="/" element={<Navigate to="/chat" replace />} />
                 <Route path="/chat/*" element={<Chat />} />
                 <Route path="/channels" element={<ChannelsPage />} />
-                <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/cron-jobs" element={<CronJobsPage />} />
                 <Route path="/heartbeat" element={<HeartbeatPage />} />
                 <Route path="/skills" element={<SkillsPage />} />
@@ -160,10 +132,11 @@ export default function MainLayout() {
         open={moreModalOpen}
         onCancel={() => setMoreModalOpen(false)}
         footer={null}
-        width="88vw"
-        style={{ top: 24 }}
+        width="82vw"
+        centered
         destroyOnClose
         title={t("nav.settings")}
+        className={styles.settingsMoreModal}
       >
         <div className={styles.settingsMoreModalBody}>
           <div className={styles.settingsMoreSidebar}>
