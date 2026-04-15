@@ -1,7 +1,11 @@
 import { Select, Tag, Tooltip } from "antd";
 import { useEffect, useState } from "react";
-import { Bot, CheckCircle, EyeOff, ChevronRight } from "lucide-react";
-import { SparkDownLine, SparkUpLine } from "@agentscope-ai/icons";
+import {
+  Bot,
+  CheckCircle,
+  EyeOff,
+  ChevronRight,
+} from "lucide-react";
 import { useAgentStore } from "../../stores/agentStore";
 import { agentsApi } from "../../api/modules/agents";
 import { useTranslation } from "react-i18next";
@@ -25,7 +29,12 @@ export default function AgentSelector({
     useAgentStore();
   const { message } = useAppMessage();
   const [loading, setLoading] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const selectorIconProps = {
+    size: 19,
+    strokeWidth: 1.8,
+    absoluteStrokeWidth: true as const,
+    className: styles.unifiedSelectorIcon,
+  };
 
   useEffect(() => {
     loadAgents();
@@ -129,10 +138,7 @@ export default function AgentSelector({
         optionLabelProp="label"
         popupClassName={styles.agentSelectorDropdown}
         getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-        onDropdownVisibleChange={setDropdownOpen}
-        suffixIcon={
-          dropdownOpen ? <SparkUpLine size={20} /> : <SparkDownLine size={20} />
-        }
+        showArrow={false}
         dropdownRender={(menu) => (
           <>
             {!hideLabel && (
@@ -160,7 +166,7 @@ export default function AgentSelector({
             disabled={!agent.enabled}
             label={
               <div className={styles.selectedAgentLabel}>
-                <Bot size={14} strokeWidth={2} />
+                <Bot {...selectorIconProps} />
                 <span>{getAgentDisplayName(agent, t)}</span>
                 {!agent.enabled && <EyeOff size={12} strokeWidth={2} />}
               </div>

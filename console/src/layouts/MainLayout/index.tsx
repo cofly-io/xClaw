@@ -1,6 +1,7 @@
-import { Layout } from "antd";
+import { Layout, Modal } from "antd";
 import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
 import ConsoleCronBubble from "../../components/ConsoleCronBubble";
@@ -24,6 +25,7 @@ import SecurityPage from "../../pages/Settings/Security";
 import TokenUsagePage from "../../pages/Settings/TokenUsage";
 import AgentsPage from "../../pages/Settings/Agents";
 import VoiceTranscriptionPage from "../../pages/Settings/VoiceTranscription";
+import { KEY_TO_LABEL } from "../constants";
 
 const { Content } = Layout;
 
@@ -48,6 +50,7 @@ const pathToKey: Record<string, string> = {
 };
 
 export default function MainLayout() {
+  const { t } = useTranslation();
   const location = useLocation();
   const currentPath = location.pathname;
   const selectedKey = pathToKey[currentPath] || "chat";
@@ -56,6 +59,46 @@ export default function MainLayout() {
   const user = localStorage.getItem("supos_user");
   const [isAuthenticated, setIsAuthenticated] = useState(!!(token && user));
   const [locked, setLocked] = useState(false);
+  const [moreModalOpen, setMoreModalOpen] = useState(false);
+  const [moreActiveKey, setMoreActiveKey] = useState("channels");
+
+  const moreMenuKeys = [
+    "channels",
+    "sessions",
+    "cron-jobs",
+    "heartbeat",
+    "workspace",
+    "skills",
+    "tools",
+    "mcp",
+    "agent-config",
+    "agents",
+    "models",
+    "skill-pool",
+    "environments",
+    "security",
+    "token-usage",
+    "voice-transcription",
+  ] as const;
+
+  const moreContentMap: Record<string, React.ReactNode> = {
+    channels: <ChannelsPage />,
+    sessions: <SessionsPage />,
+    "cron-jobs": <CronJobsPage />,
+    heartbeat: <HeartbeatPage />,
+    skills: <SkillsPage />,
+    "skill-pool": <SkillPoolPage />,
+    tools: <ToolsPage />,
+    mcp: <MCPPage />,
+    workspace: <WorkspacePage />,
+    agents: <AgentsPage />,
+    models: <ModelsPage />,
+    environments: <EnvironmentsPage />,
+    "agent-config": <AgentConfigPage />,
+    security: <SecurityPage />,
+    "token-usage": <TokenUsagePage />,
+    "voice-transcription": <VoiceTranscriptionPage />,
+  };
 
   useEffect(() => {
     const t = localStorage.getItem("supos_token");
@@ -77,9 +120,12 @@ export default function MainLayout() {
     <>
       {locked && <LockScreen onUnlock={() => setLocked(false)} />}
       <Layout className={styles.mainLayout} style={{ background: "#f0f5ff" }}>
-        <Header onLock={() => setLocked(true)} />
-        <Layout style={{ background: "#f0f5ff" }}>
-          <Sidebar selectedKey={selectedKey} />
+        <Sidebar
+          selectedKey={selectedKey}
+          onOpenSettingsMore={() => setMoreModalOpen(true)}
+        />
+        <Layout className={styles.pageContainer} style={{ background: "#f0f5ff" }}>
+          <Header onLock={() => setLocked(true)} />
           <Content className="page-container">
             <ConsoleCronBubble />
             <div className="page-content">
@@ -110,6 +156,34 @@ export default function MainLayout() {
           </Content>
         </Layout>
       </Layout>
+      <Modal
+        open={moreModalOpen}
+        onCancel={() => setMoreModalOpen(false)}
+        footer={null}
+        width="88vw"
+        style={{ top: 24 }}
+        destroyOnClose
+        title={t("nav.settings")}
+      >
+        <div className={styles.settingsMoreModalBody}>
+          <div className={styles.settingsMoreSidebar}>
+            {moreMenuKeys.map((key) => (
+              <button
+                key={key}
+                className={`${styles.settingsMoreItem} ${
+                  moreActiveKey === key ? styles.settingsMoreItemActive : ""
+                }`}
+                onClick={() => setMoreActiveKey(key)}
+              >
+                {t(KEY_TO_LABEL[key] ?? key)}
+              </button>
+            ))}
+          </div>
+          <div className={styles.settingsMoreContent}>
+            {moreContentMap[moreActiveKey]}
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

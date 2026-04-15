@@ -5,7 +5,11 @@
 }
 
 .pageContainer {
-  // inherits from .page-container global class; add local overrides here if needed
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
@@ -28,8 +32,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(120deg, #F1F1F1 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%);
-  border-bottom: 1px solid #e6eeff;
+  background: linear-gradient(120deg, #fbffeb 0%, #faeef0 35%, #ffeded 65%, #f0efff 100%);
+  border: none !important;
   box-shadow: 0 1px 4px rgba(24, 100, 255, 0.06);
 
   :global {
@@ -92,23 +96,22 @@
 .sider {
   background: linear-gradient(180deg, #F1F1F1 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%) !important;
   border-right: 1px solid #e6eeff;
-  padding-top: 22px !important;
+  padding-top: 0px !important;
   overflow: hidden !important;
   height: 100vh;
   box-shadow: 2px 0 8px rgba(24, 100, 255, 0.04);
 
   .agentSelectorContainer {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    position: static;
     background: transparent;
-    padding: 12px 12px 6px;
+    padding: 0;
   }
 
   .sideMenu {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
   }
 
   :global {
@@ -172,8 +175,6 @@
         margin: 0 !important;
         height: 32px !important;
         line-height: 32px !important;
-        margin-top: 6px !important;
-        padding-left: 16px !important;
         // padding-right: 8px !important;
         color: rgba(0, 0, 0, 0.65) !important;
 
@@ -255,7 +256,7 @@
 
   // AgentSelector container - fixed at top (dark mode)
   .agentSelectorContainer {
-    background: #1a1a1a;
+    background: transparent;
   }
 
   :global {
@@ -285,27 +286,169 @@
   }
 }
 
-
-.siderTop {
-  height: 42px;
+.settingsMoreEntry {
+  margin: 8px 12px 12px;
+  border: none !important;
+  border-radius: 8px;
+  color: rgba(0, 0, 0, 0.68) !important;
+  text-align: left;
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  gap: 12px;
+  justify-content: flex-start;
+
+  &:hover {
+    background: rgba(24, 100, 255, 0.08) !important;
+    color: #1864ff !important;
+  }
+}
+
+.settingsMoreDock {
+  margin-top: auto;
+  padding: 12px;
+}
+
+.settingsMoreEntryBottom {
+  width: 100%;
+  margin: 0 !important;
+  border: none !important;
+  font-size: 14px !important;
+  color: rgba(0, 0, 0, 0.68) !important;
+}
+
+.settingsMoreModalBody {
+  display: flex;
+  min-height: 70vh;
+  max-height: 76vh;
+}
+
+.settingsMoreSidebar {
+  width: 220px;
+  border-right: 1px solid #eceff6;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.settingsMoreItem {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: rgba(0, 0, 0, 0.72);
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(24, 100, 255, 0.08);
+  }
+}
+
+.settingsMoreItemActive {
+  background: rgba(24, 100, 255, 0.14);
+  color: #1864ff;
+}
+
+.settingsMoreContent {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 0 12px;
+}
+
+
+.siderTop {
+  min-height: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px;
+  gap: 10px;
   border-bottom: 1px solid #e6eeff;
-  background: #F1F1F1;
-  // background: linear-gradient(180deg, #F1F1F1 0%, #FFF5F7 50%, #F0F5FF 100%);
+  background: transparent;
+}
+
+.sidebarMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: auto;
+  background: inherit;
 }
 
 .logoWrapper {
-  width: 200px;
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  padding-top: 16px;
+  padding-left: 16px;
 }
 
 .logoImg {
-  height: 23px;
+  height: 18px;
   width: auto;
+}
+
+.agentSelectorContainer {
+  width: 100%;     
+  padding-top: 25px !important;
+
+  :global {
+    .xclaw-select-selector {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+
+    }
+
+    .xclaw-select-selection-item {
+      background: transparent !important;     
+      padding-left: 19px !important;
+      padding-top: 8px !important;
+    }
+
+    /* 跨 CSS Module 稳定命中“默认智能体”文本 */
+    .xclaw-select-selection-item > div > span {
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      line-height: 22px !important;
+    }
+
+    .xclaw-select-selection-item > div > svg {
+      width: 18px !important;
+      height: 18px !important;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.sidebarActionBtn {
+  height: 36px !important;
+  border-radius: 8px !important;
+  justify-content: flex-start !important;
+  color: rgba(0, 0, 0, 0.68) !important;
+
+  :global(.xclaw-btn-icon) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: rgba(0, 0, 0, 0.88) !important;
+  }
+}
+
+.unifiedNavIcon {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0;
+}
+
+.sidebarActionBtnActive {
+  background: rgba(0, 0, 0, 0.08) !important;
 }
 
 .logoDivider {
@@ -565,7 +708,7 @@
 // ─── Dot Grip (sidebar toggle) ────────────────────────────────────────────────
 .dotGrip {
   position: fixed;
-  left: 211px; // 侧边栏宽 220px，grip 宽约 8px，贴在右边框
+  left: 246px; // 侧边栏宽 255px，grip 宽约 8px，贴在右边框
   top: 45%;
   transform: translateY(-50%);
   display: flex;
@@ -607,7 +750,7 @@
 :global(.dark-mode) {
   .header {
     background: #1a1a1a !important;
-    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    border: none !important;
     color: rgba(255, 255, 255, 0.85);
 
     :global(.xclaw-btn-text),

@@ -1,56 +1,38 @@
 import {
   Layout,
-  Menu,
   Button,
   Modal,
   Input,
   Form,
   message,
   Tooltip,
-  type MenuProps,
 } from "antd";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Ellipsis, MessageSquare, SquarePlus } from "lucide-react";
 import {
-  SparkAgentLine,
-  SparkBrowseLine,
-  SparkChatTabFill,
-  SparkDataLine,
-  SparkDateLine,
   SparkExitFullscreenLine,
-  SparkInternetLine,
-  SparkLocalFileLine,
-  SparkMagicWandLine,
-  SparkMcpMcpLine,
-  SparkMenuExpandLine,
-  SparkMenuFoldLine,
-  SparkModePlazaLine,
-  SparkModifyLine,
-  SparkOtherLine,
   SparkSearchUserLine,
-  SparkToolLine,
-  SparkUserGroupLine,
-  SparkVoiceChat01Line,
-  SparkWifiLine,
-  SparkMicLine,
 } from "@agentscope-ai/icons";
 import { clearAuthToken } from "../api/config";
 import { authApi } from "../api/modules/auth";
 import styles from "./index.module.less";
 import { useTheme } from "../contexts/ThemeContext";
-import {
-  DEFAULT_OPEN_KEYS,
-  KEY_TO_PATH,
-} from "./constants";
+import AgentSelector from "../components/AgentSelector";
+import sessionApi from "../pages/Chat/sessionApi";
 
 const { Sider } = Layout;
 
 interface SidebarProps {
   selectedKey: string;
+  onOpenSettingsMore: () => void;
 }
 
-export default function Sidebar({ selectedKey }: SidebarProps) {
+export default function Sidebar({
+  selectedKey,
+  onOpenSettingsMore,
+}: SidebarProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isDark } = useTheme();
@@ -59,7 +41,13 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
   const [collapsed, setCollapsed] = useState(false);
-  const [openKeys, setOpenKeys] = useState<string[]>(DEFAULT_OPEN_KEYS);
+  const navIconProps = {
+    size: 16,
+    strokeWidth: 1.8,
+    absoluteStrokeWidth: true as const,
+    color: "#707070",
+    className: styles.unifiedNavIcon,
+  };
 
   useEffect(() => {
     authApi
@@ -67,10 +55,6 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       .then((res) => setAuthEnabled(res.enabled))
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!collapsed) setOpenKeys(DEFAULT_OPEN_KEYS);
-  }, [collapsed]);
 
   const handleUpdateProfile = async (values: {
     currentPassword: string;
@@ -127,214 +111,19 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
 
   const collapsedNavItems = [
     {
+      key: "new-chat",
+      icon: <SquarePlus {...navIconProps} />,
+      action: () => {
+        sessionApi.createSession({});
+        navigate("/chat");
+      },
+      label: t("chat.newChat"),
+    },
+    {
       key: "chat",
-      icon: <SparkChatTabFill size={18} />,
-      path: "/chat",
+      icon: <MessageSquare {...navIconProps} />,
+      action: () => navigate("/chat"),
       label: t("nav.chat"),
-    },
-    {
-      key: "channels",
-      icon: <SparkWifiLine size={18} />,
-      path: "/channels",
-      label: t("nav.channels"),
-    },
-    {
-      key: "sessions",
-      icon: <SparkUserGroupLine size={18} />,
-      path: "/sessions",
-      label: t("nav.sessions"),
-    },
-    {
-      key: "cron-jobs",
-      icon: <SparkDateLine size={18} />,
-      path: "/cron-jobs",
-      label: t("nav.cronJobs"),
-    },
-    {
-      key: "heartbeat",
-      icon: <SparkVoiceChat01Line size={18} />,
-      path: "/heartbeat",
-      label: t("nav.heartbeat"),
-    },
-    {
-      key: "workspace",
-      icon: <SparkLocalFileLine size={18} />,
-      path: "/workspace",
-      label: t("nav.workspace"),
-    },
-    {
-      key: "skills",
-      icon: <SparkMagicWandLine size={18} />,
-      path: "/skills",
-      label: t("nav.skills"),
-    },
-    {
-      key: "skill-pool",
-      icon: <SparkOtherLine size={18} />,
-      path: "/skill-pool",
-      label: t("nav.skillPool", "Skill Pool"),
-    },
-    {
-      key: "tools",
-      icon: <SparkToolLine size={18} />,
-      path: "/tools",
-      label: t("nav.tools"),
-    },
-    {
-      key: "mcp",
-      icon: <SparkMcpMcpLine size={18} />,
-      path: "/mcp",
-      label: t("nav.mcp"),
-    },
-    {
-      key: "agent-config",
-      icon: <SparkModifyLine size={18} />,
-      path: "/agent-config",
-      label: t("nav.agentConfig"),
-    },
-    {
-      key: "agents",
-      icon: <SparkAgentLine size={18} />,
-      path: "/agents",
-      label: t("nav.agents"),
-    },
-    {
-      key: "models",
-      icon: <SparkModePlazaLine size={18} />,
-      path: "/models",
-      label: t("nav.models"),
-    },
-    {
-      key: "environments",
-      icon: <SparkInternetLine size={18} />,
-      path: "/environments",
-      label: t("nav.environments"),
-    },
-    {
-      key: "security",
-      icon: <SparkBrowseLine size={18} />,
-      path: "/security",
-      label: t("nav.security"),
-    },
-    {
-      key: "token-usage",
-      icon: <SparkDataLine size={18} />,
-      path: "/token-usage",
-      label: t("nav.tokenUsage"),
-    },
-    {
-      key: "voice-transcription",
-      icon: <SparkMicLine size={18} />,
-      path: "/voice-transcription",
-      label: t("nav.voiceTranscription"),
-    },
-  ];
-
-  // ── Menu items ────────────────────────────────────────────────────────────
-
-  const menuItems: MenuProps["items"] = [
-    {
-      key: "chat",
-      label: collapsed ? null : t("nav.chat"),
-      icon: <SparkChatTabFill size={16} />,
-    },
-    {
-      key: "control-group",
-      label: collapsed ? null : t("nav.control"),
-      children: [
-        {
-          key: "channels",
-          label: collapsed ? null : t("nav.channels"),
-          icon: <SparkWifiLine size={16} />,
-        },
-        {
-          key: "sessions",
-          label: collapsed ? null : t("nav.sessions"),
-          icon: <SparkUserGroupLine size={16} />,
-        },
-        {
-          key: "cron-jobs",
-          label: collapsed ? null : t("nav.cronJobs"),
-          icon: <SparkDateLine size={16} />,
-        },
-        {
-          key: "heartbeat",
-          label: collapsed ? null : t("nav.heartbeat"),
-          icon: <SparkVoiceChat01Line size={16} />,
-        },
-      ],
-    },
-    {
-      key: "agent-group",
-      label: collapsed ? null : t("nav.agent"),
-      children: [
-        {
-          key: "workspace",
-          label: collapsed ? null : t("nav.workspace"),
-          icon: <SparkLocalFileLine size={16} />,
-        },
-        {
-          key: "skills",
-          label: collapsed ? null : t("nav.skills"),
-          icon: <SparkMagicWandLine size={16} />,
-        },
-        {
-          key: "tools",
-          label: collapsed ? null : t("nav.tools"),
-          icon: <SparkToolLine size={16} />,
-        },
-        {
-          key: "mcp",
-          label: collapsed ? null : t("nav.mcp"),
-          icon: <SparkMcpMcpLine size={16} />,
-        },
-        {
-          key: "agent-config",
-          label: collapsed ? null : t("nav.agentConfig"),
-          icon: <SparkModifyLine size={16} />,
-        },
-      ],
-    },
-    {
-      key: "settings-group",
-      label: collapsed ? null : t("nav.settings"),
-      children: [
-        {
-          key: "agents",
-          label: collapsed ? null : t("nav.agents"),
-          icon: <SparkAgentLine size={16} />,
-        },
-        {
-          key: "models",
-          label: collapsed ? null : t("nav.models"),
-          icon: <SparkModePlazaLine size={16} />,
-        },
-        {
-          key: "skill-pool",
-          label: collapsed ? null : t("nav.skillPool", "Skill Pool"),
-          icon: <SparkOtherLine size={16} />,
-        },
-        {
-          key: "environments",
-          label: collapsed ? null : t("nav.environments"),
-          icon: <SparkInternetLine size={16} />,
-        },
-        {
-          key: "security",
-          label: collapsed ? null : t("nav.security"),
-          icon: <SparkBrowseLine size={16} />,
-        },
-        {
-          key: "token-usage",
-          label: collapsed ? null : t("nav.tokenUsage"),
-          icon: <SparkDataLine size={16} />,
-        },
-        {
-          key: "voice-transcription",
-          label: collapsed ? null : t("nav.voiceTranscription"),
-          icon: <SparkMicLine size={16} />,
-        },
-      ],
     },
   ];
 
@@ -356,50 +145,78 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
       <Sider
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        width={220}
+        width={255}
         className={`${styles.sider}${isDark ? ` ${styles.siderDark}` : ""}`}
       >
-        {collapsed ? (
-          <nav className={styles.collapsedNav}>
-            {collapsedNavItems.map((item) => {
-              const isActive = selectedKey === item.key;
-              return (
-                <Tooltip
-                  key={item.key}
-                  title={item.label}
-                  placement="right"
-                  overlayInnerStyle={{
-                    background: "rgba(0,0,0,0.75)",
-                    color: "#fff",
-                  }}
-                >
-                  <button
-                    className={`${styles.collapsedNavItem} ${
-                      isActive ? styles.collapsedNavItemActive : ""
-                    }`}
-                    onClick={() => navigate(item.path)}
+        <div className={styles.sidebarMain}>
+          <div className={styles.logoWrapper} onClick={() => navigate("/chat")}>
+            <img
+              src={
+                isDark
+                  ? `${import.meta.env.BASE_URL}dark-logo.png`
+                  : `${import.meta.env.BASE_URL}logo.png`
+              }
+              alt="xClaw"
+              className={styles.logoImg}
+            />
+          </div>
+          {!collapsed && (
+            <div className={styles.agentSelectorContainer}>
+              <AgentSelector hideLabel />
+            </div>
+          )}
+          {collapsed ? (
+            <nav className={styles.collapsedNav}>
+              {collapsedNavItems.map((item) => {
+                const isActive = selectedKey === item.key;
+                return (
+                  <Tooltip
+                    key={item.key}
+                    title={item.label}
+                    placement="right"
+                    overlayInnerStyle={{
+                      background: "rgba(0,0,0,0.75)",
+                      color: "#fff",
+                    }}
                   >
-                    {item.icon}
-                  </button>
-                </Tooltip>
-              );
-            })}
-          </nav>
-        ) : (
-          <Menu
-            mode="inline"
-            selectedKeys={[selectedKey]}
-            openKeys={openKeys}
-            onOpenChange={(keys) => setOpenKeys(keys as string[])}
-            onClick={({ key }) => {
-              const path = KEY_TO_PATH[String(key)];
-              if (path) navigate(path);
-            }}
-            items={menuItems}
-            theme={isDark ? "dark" : "light"}
-            className={styles.sideMenu}
-          />
-        )}
+                    <button
+                      className={`${styles.collapsedNavItem} ${
+                        isActive ? styles.collapsedNavItemActive : ""
+                      }`}
+                      onClick={item.action}
+                    >
+                      {item.icon}
+                    </button>
+                  </Tooltip>
+                );
+              })}
+            </nav>
+          ) : (
+            <div className={styles.sideMenu}>
+              <Button
+                type="text"
+                className={styles.sidebarActionBtn}
+                icon={<SquarePlus {...navIconProps} />}
+                onClick={() => {
+                  sessionApi.createSession({});
+                  navigate("/chat");
+                }}
+              >
+                {t("chat.newChat")}
+              </Button>
+              <Button
+                type="text"
+                className={`${styles.sidebarActionBtn} ${
+                  selectedKey === "chat" ? styles.sidebarActionBtnActive : ""
+                }`}
+                icon={<MessageSquare {...navIconProps} />}
+                onClick={() => navigate("/chat")}
+              >
+                {t("nav.chat")}
+              </Button>
+            </div>
+          )}
+        </div>
 
         {authEnabled && !collapsed && (
           <div className={styles.authActions}>
@@ -434,19 +251,26 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
           </div>
         )}
 
-        <div className={styles.collapseToggleContainer}>
-          <Button
-            type="text"
-            icon={
-              collapsed ? (
-                <SparkMenuExpandLine size={20} />
-              ) : (
-                <SparkMenuFoldLine size={20} />
-              )
-            }
-            onClick={() => setCollapsed(!collapsed)}
-            className={styles.collapseToggle}
-          />
+        <div className={styles.settingsMoreDock}>
+          {collapsed ? (
+            <Tooltip title={t("nav.settings")} placement="right">
+              <button
+                className={styles.collapsedNavItem}
+                onClick={onOpenSettingsMore}
+              >
+                <Ellipsis {...navIconProps} />
+              </button>
+            </Tooltip>
+          ) : (
+            <Button
+              type="text"
+              className={`${styles.sidebarActionBtn} ${styles.settingsMoreEntryBottom}`}
+              icon={<Ellipsis {...navIconProps} />}
+              onClick={onOpenSettingsMore}
+            >
+              {t("nav.settings")}
+            </Button>
+          )}
         </div>
 
         <Modal

@@ -4,8 +4,6 @@ import { FileText, Book, HelpCircle, Lock, LogOut } from "lucide-react";
 import { Button, Tooltip } from "@agentscope-ai/design";
 import { useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
-import { useTheme } from "../contexts/ThemeContext";
-import AgentSelector from "../components/AgentSelector";
 
 const { Header: AntHeader } = Layout;
 
@@ -24,7 +22,6 @@ interface HeaderProps {
 export default function Header({ onLock }: HeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isDark } = useTheme();
 
   const handleNavClick = (url: string) => {
     if (url) {
@@ -46,22 +43,7 @@ export default function Header({ onLock }: HeaderProps) {
 
   return (
     <AntHeader className={styles.header}>
-      <div className={styles.logoWrapper}>
-        <img
-          src={
-            isDark
-              ? `${import.meta.env.BASE_URL}dark-logo.png`
-              : `${import.meta.env.BASE_URL}logo.png`
-          }
-          alt="xClaw"
-          className={styles.logoImg}
-        />
-      </div>
-      <div className={styles.headerCenter}>
-        <div className={styles.headerAgentSelector}>
-          <AgentSelector hideLabel />
-        </div>
-      </div>
+      <div className={styles.headerCenter} />
       <Space size="middle">
         <Tooltip title={t("header.changelog")}>
           <Button

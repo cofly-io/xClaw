@@ -142,18 +142,25 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: rgba(0, 0, 0, 0.85);
+  color: rgba(0, 0, 0, 0.68);
 
   svg {
     flex-shrink: 0;
-    color: #1864ff;
-    opacity: 0.85;
+    color: currentColor;
+    opacity: 1;
   }
 
   span {
-    font-weight: 600;
-    font-size: 13px;
+    font-weight: 500;
+    font-size: 14px;
   }
+}
+
+
+/* Force Lucide stroke color in Ant Select selected item */
+:global(.xclaw-select-selection-item) .unifiedSelectorIcon{
+  color: #707070 !important;
+  stroke: #707070 !important;
 }
 
 // ─── Agent Badge ──────────────────────────────────────────────────────────────
