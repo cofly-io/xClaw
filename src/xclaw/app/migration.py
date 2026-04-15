@@ -8,28 +8,30 @@ import logging
 import shutil
 from pathlib import Path
 
+from ..agents.templates import (
+    DEFAULT_AGENT_TEMPLATE,
+    QA_AGENT_TEMPLATE,
+    build_agent_template,
+)
 from ..config.config import (
     AgentProfileConfig,
     AgentProfileRef,
     AgentsConfig,
     AgentsLLMRoutingConfig,
     AgentsRunningConfig,
-    ChannelConfig,
-    HeartbeatConfig,
-    MCPConfig,
-    build_qa_agent_tools_config,
     save_agent_config,
 )
 from ..constant import (
     BUILTIN_QA_AGENT_ID,
-    BUILTIN_QA_AGENT_NAME,
-    BUILTIN_QA_AGENT_SKILL_NAMES,
     LEGACY_QA_AGENT_ID,
     WORKING_DIR,
 )
 from ..config.utils import load_config, save_config
 
 logger = logging.getLogger(__name__)
+
+_DEFAULT_AGENT_NAME = "Default Agent"
+_DEFAULT_AGENT_DESCRIPTION = "Default QwenPaw agent"
 
 # Workspace items to migrate: (name, is_directory)
 _WORKSPACE_ITEMS_TO_MIGRATE = [
@@ -661,6 +663,14 @@ def _do_ensure_default_agent() -> None:
     # Only update config if agent didn't exist
     if not agent_existed:
         logger.info("Creating default agent...")
+        template_result = build_agent_template(
+            DEFAULT_AGENT_TEMPLATE,
+            name=_DEFAULT_AGENT_NAME,
+            agent_id="default",
+            workspace_dir=default_workspace,
+            fallback_language=config.agents.language or "zh",
+            description=_DEFAULT_AGENT_DESCRIPTION,
+        )
 
         # Add default agent reference to config
         config.agents.profiles["default"] = AgentProfileRef(
@@ -673,6 +683,7 @@ def _do_ensure_default_agent() -> None:
             config.agents.active_agent = "default"
 
         save_config(config)
+        save_agent_config("default", template_result.agent_config)
         logger.info(
             f"Created default agent with workspace: {default_workspace}",
         )
@@ -855,8 +866,8 @@ def _do_ensure_qa_agent() -> None:
 
     _initialize_agent_workspace(
         qa_workspace,
-        skill_names=qa_skill_list,
-        builtin_qa_md_seed=True,
+        skill_names=list(template_result.initial_skill_names),
+        md_template_id=template_result.md_template_id,
     )
 
     config.agents.profiles[qa_id] = AgentProfileRef(
@@ -865,7 +876,7 @@ def _do_ensure_qa_agent() -> None:
     )
     _apply_legacy_qa_disable_for_migration(config)
     save_config(config)
-    save_agent_config(qa_id, agent_config)
+    save_agent_config(qa_id, template_result.agent_config)
     logger.info(
         "Created builtin QA agent with workspace: %s",
         qa_workspace,
