@@ -4,6 +4,7 @@ import type {
   LocalDownloadProgress,
   LocalDownloadSource,
   LocalModelInfo,
+  LocalModelConfig,
   LocalServerStatus,
   LocalServerUpdateStatus,
   StartLocalServerRequest,
@@ -31,6 +32,15 @@ export const localModelApi = {
 
   listRecommendedLocalModels: () =>
     request<LocalModelInfo[]>("/local-models/models"),
+
+  getLocalModelConfig: () =>
+    request<LocalModelConfig>("/local-models/models/config"),
+
+  configureLocalModelSettings: (body: LocalModelConfig) =>
+    request<LocalModelConfig>("/local-models/models/config", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
 
   startLocalModelDownload: (modelName: string, source: LocalDownloadSource) =>
     request<LocalActionResponse>("/local-models/models/download", {

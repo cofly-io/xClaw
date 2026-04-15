@@ -158,6 +158,34 @@ export interface DiscoverModelsResponse {
   added_count: number;
 }
 
+export interface SeriesResponse {
+  success: boolean;
+  series: string[];
+}
+
+export interface ExtendedModelInfo {
+  id: string;
+  name: string;
+  provider?: string;
+  input_modalities?: string[];
+  output_modalities?: string[];
+  pricing?: {
+    prompt?: string;
+    completion?: string;
+  };
+}
+
+export interface FilterOpenRouterModelsResponse {
+  success: boolean;
+  total_count: number;
+  models: ExtendedModelInfo[];
+}
+
+export interface LocalModelConfig {
+  max_context_length?: number;
+  generate_kwargs?: Record<string, unknown>;
+}
+
 export interface ProbeMultimodalResponse {
   supports_image: boolean;
   supports_video: boolean;

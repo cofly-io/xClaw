@@ -12,6 +12,8 @@ import type {
   TestProviderRequest,
   TestModelRequest,
   DiscoverModelsResponse,
+  SeriesResponse,
+  FilterOpenRouterModelsResponse,
   ProbeMultimodalResponse,
 } from "../types";
 
@@ -114,14 +116,27 @@ export const providerApi = {
       },
     ),
 
-  discoverModels: (providerId: string, body?: TestProviderRequest) =>
+  discoverModels: (
+    providerId: string,
+    body?: TestProviderRequest,
+    autoAdd = true,
+  ) =>
     request<DiscoverModelsResponse>(
       `/models/${encodeURIComponent(providerId)}/discover`,
       {
         method: "POST",
-        body: body ? JSON.stringify(body) : undefined,
+        body: JSON.stringify({ ...(body || {}), auto_add: autoAdd }),
       },
     ),
+
+  getOpenRouterSeries: () =>
+    request<SeriesResponse>("/models/openrouter/series"),
+
+  filterOpenRouterModels: (body: Record<string, unknown>) =>
+    request<FilterOpenRouterModelsResponse>("/models/openrouter/filter", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   probeMultimodal: (providerId: string, modelId: string) =>
     request<ProbeMultimodalResponse>(

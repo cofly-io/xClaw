@@ -13,6 +13,9 @@ interface RemoteProviderCardProps {
   provider: ProviderInfo;
   activeModels: ActiveModelsInfo | null;
   onSaved: () => void;
+  isHover?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export const RemoteProviderCard = React.memo(function RemoteProviderCard({
@@ -53,7 +56,11 @@ export const RemoteProviderCard = React.memo(function RemoteProviderCard({
 
   let isConfigured = false;
 
-  if (provider.id === "qwenpaw-local") {
+  if (
+    provider.id === "xclaw-local" ||
+    provider.id === "qwenpaw-local" ||
+    provider.id === "copaw-local"
+  ) {
     isConfigured = true;
   } else if (provider.is_custom && provider.base_url) {
     isConfigured = true;

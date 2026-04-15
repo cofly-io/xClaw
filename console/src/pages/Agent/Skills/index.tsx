@@ -92,6 +92,11 @@ function SkillsPage() {
     });
   }, [skills, searchQuery]);
 
+  const allTags = useMemo(
+    () => Array.from(new Set(poolSkills.flatMap((skill) => skill.tags ?? []))),
+    [poolSkills],
+  );
+
   const toggleSelect = (name: string) => {
     setSelectedSkills((prev) => {
       const next = new Set(prev);

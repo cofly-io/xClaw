@@ -9,6 +9,9 @@ import { providerIcon } from "../providerIcon";
 interface LocalProviderCardProps {
   provider: ProviderInfo;
   onSaved: () => void;
+  isHover?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export const LocalProviderCard = React.memo(function LocalProviderCard({
