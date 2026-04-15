@@ -38,6 +38,8 @@ export function JobDrawer({
 
   const isEdit = !!editingJob;
 
+  const isEdit = !!editingJob;
+
   return (
     <Drawer
       width={600}
