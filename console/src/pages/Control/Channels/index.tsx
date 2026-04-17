@@ -14,6 +14,15 @@ import { useAppMessage } from "../../../hooks/useAppMessage";
 import styles from "./index.module.less";
 
 type FilterType = "all" | "builtin" | "custom";
+const MAINLAND_CHANNEL_KEYS = new Set([
+  "console",
+  "dingtalk",
+  "feishu",
+  "wecom",
+  "weixin",
+  "qq",
+  "xiaoyi",
+]);
 
 function ChannelsPage() {
   const { t } = useTranslation();
@@ -38,6 +47,7 @@ function ChannelsPage() {
     }[] = [];
 
     orderedKeys.forEach((key) => {
+      if (!MAINLAND_CHANNEL_KEYS.has(key)) return;
       const config = channels[key] || { enabled: false, bot_prefix: "" };
       const builtin = isBuiltin(key);
       if (filter === "builtin" && !builtin) return;

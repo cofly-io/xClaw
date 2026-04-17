@@ -1,0 +1,111 @@
+.importHubModal {
+  :global(.ant-modal-body) {
+    padding: 16px 20px;
+  }
+}
+
+.hint {
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.urlRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.urlInput {
+  flex: 1;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+}
+
+.urlInputError {
+  border-color: #ff4d4f;
+}
+
+.urlTip {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.urlTipError {
+  color: #ff4d4f;
+}
+
+.sourcesTitle {
+  margin: 14px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.sourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sourceCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+}
+
+.sourceCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.sourceName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.sourcePrefix {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.examples {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exampleBtn {
+  text-align: left;
+  padding: 0;
+  height: auto;
+}
+
+.loadingText {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #6b7280;
+}
+

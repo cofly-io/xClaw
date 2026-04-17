@@ -19,8 +19,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  // background: #FDFAF3 !important;
-  background: linear-gradient(120deg, #FDFAF3 0%, #faeef0 35%, #ffeded 65%, #f0efff 100%);
+  background: #FDFAF3 !important;
+  // background: linear-gradient(120deg, #FDFAF3 0%, #faeef0 35%, #ffeded 65%, #f0efff 100%);
   border: none !important;
   box-shadow: 0 1px 4px rgba(24, 100, 255, 0.06);
 
@@ -303,6 +303,45 @@
   color: rgba(0, 0, 0, 0.68) !important;
 }
 
+.settingsBottomContent {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.settingsUserMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settingsUserAvatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #edf5a7 0%, #fdbee9 52%, #96d2f7 100%);
+  flex-shrink: 0;
+}
+
+.settingsUsername {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.555);
+}
+
+.settingsLabelWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(0, 0, 0, 0.555);
+}
+
 .settingsMoreModalBody {
   display: flex;
   height: 72vh;
@@ -325,7 +364,7 @@
   text-align: left;
   border-radius: 6px;
   padding: 7px 10px;
-  color: rgba(0, 0, 0, 0.74);
+  color: #737373;
   cursor: pointer;
   font-size: 13px;
   font-family: "PingFang SC", "Microsoft YaHei", SimSun, sans-serif;
@@ -336,6 +375,16 @@
   &:hover {
     background: rgba(0, 0, 0, 0.06);
   }
+}
+
+.settingsMoreItemInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settingsMoreItemIcon {
+  flex-shrink: 0;
 }
 
 .settingsMoreItemActive {

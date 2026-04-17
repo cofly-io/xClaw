@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Modal } from "@agentscope-ai/design";
+import { SnippetsOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { isSupportedSkillUrl, SUPPORTED_SKILL_URL_PREFIXES } from "./index";
-import styles from "../index.module.less";
+import { isSupportedSkillUrl, skillMarkets, type SkillMarket } from "./index";
+import styles from "./ImportHubModal.module.less";
 
 interface ImportHubModalProps {
   open: boolean;
@@ -23,34 +24,65 @@ export function ImportHubModal({
 }: ImportHubModalProps) {
   const { t } = useTranslation();
   const [importUrl, setImportUrl] = useState("");
-  const [importUrlError, setImportUrlError] = useState("");
+  const [touched, setTouched] = useState(false);
 
   const handleClose = () => {
     if (importing) return;
     setImportUrl("");
-    setImportUrlError("");
+    setTouched(false);
     onCancel();
   };
 
   const handleUrlChange = (value: string) => {
     setImportUrl(value);
-    const trimmed = value.trim();
-    if (trimmed && !isSupportedSkillUrl(trimmed)) {
-      setImportUrlError(t("skills.invalidSkillUrlSource"));
-      return;
-    }
-    setImportUrlError("");
+    if (!touched) setTouched(true);
   };
+
+  const validation = useMemo(() => {
+    const trimmed = importUrl.trim();
+    if (!trimmed) return { ok: false, message: "" };
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      if (!isSupportedSkillUrl(trimmed)) {
+        return { ok: false, message: t("skills.invalidSkillUrlSource") };
+      }
+      return { ok: true, message: t("skills.skillUrlLooksValid") };
+    }
+    return { ok: false, message: t("skills.enterValidUrl") };
+  }, [importUrl, t]);
 
   const handleConfirm = async () => {
     if (importing) return;
     const trimmed = importUrl.trim();
     if (!trimmed) return;
     if (!isSupportedSkillUrl(trimmed)) {
-      setImportUrlError(t("skills.invalidSkillUrlSource"));
+      setTouched(true);
       return;
     }
     await onConfirm(trimmed);
+  };
+
+  const canConfirm = !!importUrl.trim() && validation.ok && !importing;
+  const showTip = touched && !!importUrl.trim();
+
+  const setExample = (url: string) => {
+    if (importing) return;
+    setImportUrl(url);
+    setTouched(true);
+  };
+
+  const onPaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) handleUrlChange(text);
+    } catch {
+      // ignore
+    }
+  };
+
+  const onClear = () => {
+    if (importing) return;
+    setImportUrl("");
+    setTouched(false);
   };
 
   return (
@@ -78,7 +110,7 @@ export function ImportHubModal({
             type="primary"
             onClick={handleConfirm}
             loading={importing}
-            disabled={importing || !importUrl.trim() || !!importUrlError}
+            disabled={!canConfirm}
           >
             {t("skills.importHub")}
           </Button>
@@ -86,43 +118,85 @@ export function ImportHubModal({
       }
       width={760}
     >
-      <div className={styles.importHintBlock}>
-        {hint && <p className={styles.importHintTitle}>{hint}</p>}
-        <p className={styles.importHintTitle}>
-          {t("skills.supportedSkillUrlSources")}
-        </p>
-        <ul className={styles.importHintList}>
-          {SUPPORTED_SKILL_URL_PREFIXES.map((url) => (
-            <li key={url}>{url}</li>
-          ))}
-        </ul>
-        <p className={styles.importHintTitle}>{t("skills.urlExamples")}</p>
-        <ul className={styles.importHintList}>
-          <li>https://skills.sh/vercel-labs/skills/find-skills</li>
-          <li>https://lobehub.com/zh/skills/openclaw-skills-cli-developer</li>
-          <li>
-            https://market.lobehub.com/api/v1/skills/openclaw-skills-cli-developer/download
-          </li>
-          <li>
-            https://github.com/anthropics/skills/tree/main/skills/skill-creator
-          </li>
-          <li>https://modelscope.cn/skills/@anthropics/skill-creator</li>
-        </ul>
+      {hint ? <div className={styles.hint}>{hint}</div> : null}
+
+      <div className={styles.urlRow}>
+        <input
+          className={`${styles.urlInput} ${
+            showTip && !validation.ok ? styles.urlInputError : ""
+          }`}
+          value={importUrl}
+          onChange={(e) => handleUrlChange(e.target.value)}
+          onBlur={() => setTouched(true)}
+          placeholder={t("skills.enterSkillUrl")}
+          disabled={importing}
+        />
+
+        <Button onClick={onPaste} disabled={importing}>
+          {t("common.paste")}
+        </Button>
+        <Button onClick={onClear} disabled={importing || !importUrl}>
+          {t("common.clear")}
+        </Button>
       </div>
 
-      <input
-        className={styles.importUrlInput}
-        value={importUrl}
-        onChange={(e) => handleUrlChange(e.target.value)}
-        placeholder={t("skills.enterSkillUrl")}
-        disabled={importing}
-      />
-      {importUrlError ? (
-        <div className={styles.importUrlError}>{importUrlError}</div>
+      {showTip ? (
+        <div
+          className={`${styles.urlTip} ${
+            validation.ok ? "" : styles.urlTipError
+          }`}
+        >
+          {validation.message}
+        </div>
       ) : null}
+
       {importing ? (
-        <div className={styles.importLoadingText}>{t("common.loading")}</div>
+        <div className={styles.loadingText}>{t("common.loading")}</div>
       ) : null}
+
+      <div className={styles.sourcesTitle}>
+        <SnippetsOutlined />
+        <span>{t("skills.orChooseFromSources")}</span>
+      </div>
+
+      <div className={styles.sourcesGrid}>
+        {skillMarkets.map((m: SkillMarket) => (
+          <div
+            key={m.key}
+            className={styles.sourceCard}
+            onClick={() => setExample(m.homepage)}
+            role="button"
+            tabIndex={0}
+          >
+            <div className={styles.sourceCardHeader}>
+              <div className={styles.sourceName}>{m.name}</div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>
+                {t("skills.clickToFill")}
+              </div>
+            </div>
+
+            <div className={styles.sourcePrefix}>{m.urlPrefix}</div>
+
+            {m.examples.length ? (
+              <div className={styles.examples}>
+                {m.examples.map((ex) => (
+                  <Button
+                    key={ex.url}
+                    type="text"
+                    className={styles.exampleBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExample(ex.url);
+                    }}
+                  >
+                    {ex.label}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </Modal>
   );
 }

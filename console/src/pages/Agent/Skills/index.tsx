@@ -94,6 +94,21 @@ function SkillsPage() {
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const confirmOverwrite = (
+    title: React.ReactNode,
+    content: React.ReactNode,
+  ) =>
+    new Promise<boolean>((resolve) => {
+      Modal.confirm({
+        title,
+        content,
+        okText: t("common.confirm"),
+        cancelText: t("common.cancel"),
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+
   const filteredSkills = useMemo(() => {
     const query = searchQuery.toLowerCase();
     return skills.filter((skill) => {
@@ -839,14 +854,16 @@ function SkillsPage() {
                     </div>
                   </div>
                   <div className={styles.listItemRight}>
-                    <Switch
-                      checked={skill.enabled}
-                      disabled={batchMode}
-                      onChange={async () => {
-                        await toggleEnabled(skill);
-                        await refreshSkills();
-                      }}
-                    />
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <Switch
+                        checked={skill.enabled}
+                        disabled={batchMode}
+                        onChange={async () => {
+                          await toggleEnabled(skill);
+                          await refreshSkills();
+                        }}
+                      />
+                    </span>
                     <Button
                       danger
                       disabled={batchMode}

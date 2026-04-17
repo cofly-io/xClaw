@@ -7,7 +7,7 @@ import {
   Tag,
   Checkbox,
 } from "@agentscope-ai/design";
-import { AutoComplete } from "antd";
+import { AutoComplete, Tooltip } from "antd";
 import {
   DeleteOutlined,
   PlusOutlined,
@@ -16,7 +16,6 @@ import {
   FilterOutlined,
   SettingOutlined,
   DownOutlined,
-  SearchOutlined,
   ExperimentOutlined,
   AppstoreOutlined,
   VideoCameraOutlined,
@@ -270,7 +269,6 @@ export function RemoteModelManageModal({
   const { isDark } = useTheme();
   const darkBtnStyle = isDark ? { color: "rgba(255,255,255,0.65)" } : undefined;
   const { message } = useAppMessage();
-  const supportsAutoDiscover = provider.support_model_discovery;
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testingModelId, setTestingModelId] = useState<string | null>(null);
@@ -526,12 +524,6 @@ export function RemoteModelManageModal({
       .catch(() => setDiscoveredModels([]))
       .finally(() => setLoadingDiscoveredModels(false));
   }, [adding, provider.id]);
-
-  useEffect(() => {
-    if (!isOpenRouter || !adding) return;
-    setAdding(false);
-    form.resetFields();
-  }, [adding, form, isOpenRouter]);
 
   useEffect(() => {
     if (!isOpenRouter || !adding) return;

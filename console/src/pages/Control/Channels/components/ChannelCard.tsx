@@ -1,7 +1,10 @@
 import { Card } from "@agentscope-ai/design";
 import { useTranslation } from "react-i18next";
-import { getChannelIconUrl } from "./channelIcons";
-import { getChannelLabel, type ChannelKey } from "./constants";
+import {
+  getChannelDescription,
+  getChannelLabel,
+  type ChannelKey,
+} from "./constants";
 import styles from "../index.module.less";
 
 interface ChannelCardProps {
@@ -23,11 +26,8 @@ export function ChannelCard({
 }: ChannelCardProps) {
   const { t } = useTranslation();
   const enabled = Boolean(config.enabled);
-  const isBuiltin = Boolean(config.isBuiltin);
   const label = getChannelLabel(channelKey, t);
-  const getConfigString = (key: string) =>
-    typeof config[key] === "string" ? config[key] : "";
-  const botPrefix = getConfigString("bot_prefix");
+  const description = getChannelDescription(channelKey, t);
 
   const cardClass = isHover
     ? `${styles.channelCard} ${styles.cardHover}`
@@ -44,22 +44,7 @@ export function ChannelCard({
     >
       <div className={styles.cardHeader}>
         <div className={styles.cardHeaderMain}>
-          <div className={styles.iconWrapper}>
-            <img
-              src={getChannelIconUrl(channelKey)}
-              alt={channelKey}
-              width={28}
-              height={28}
-            />
-          </div>
-          <div className={styles.titleGroup}>
-            <span className={styles.cardTitle}>{label}</span>
-            {isBuiltin ? (
-              <span className={styles.builtinTag}>{t("channels.builtin")}</span>
-            ) : (
-              <span className={styles.customTag}>{t("channels.custom")}</span>
-            )}
-          </div>
+          <span className={styles.cardTitle}>{label}</span>
         </div>
         <div className={styles.statusIndicator}>
           <div
@@ -75,12 +60,7 @@ export function ChannelCard({
 
       <div className={styles.cardDivider} />
 
-      <div className={styles.cardFooterRow}>
-        <span className={styles.infoLabel}>{t("channels.botPrefix")}</span>
-        <span className={styles.infoValue}>
-          {botPrefix || t("channels.notSet")}
-        </span>
-      </div>
+      <p className={styles.channelDescription}>{description}</p>
     </Card>
   );
 }

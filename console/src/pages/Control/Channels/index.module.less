@@ -10,7 +10,7 @@
   flex: 1;
   min-height: 0;
   position: relative;
-  background: linear-gradient(135deg, #F1F1F1  0%, #F1F1F1  50%, #f5fce6 100%);
+  background: #f7f7f7;
 }
 
 .pageHeader {
@@ -102,20 +102,21 @@
 
 .channelsGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   padding: 16px 20px;
+  max-width: 980px;
 }
 
 @media (max-width: 1199px) {
   .channelsGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 799px) {
   .channelsGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -133,20 +134,17 @@
   flex-direction: column;
   box-sizing: border-box;
   cursor: pointer;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(16px);
-  // -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow:
-    0 8px 32px rgba(31, 38, 135, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  // border-radius: xxxpx !important;
+  background: transparent;
+  border: 1px solid #dfdfdf;
+  box-shadow: none;
   transition: all 0.3s ease;
+  min-height: 80px;
 
   :global {
     .xclaw-card-body {
       /* Inner spacing scaled for 4-column layout; outer radii match Qwen ref */
-      padding: 20px 18px !important;
+      padding: 12px 18px !important;
       display: flex;
       flex-direction: column;
       flex: 1;
@@ -168,10 +166,8 @@
   }
 
   &.cardHover {
-    // transform: translateY(-2px);
-    box-shadow:
-      0 12px 40px rgba(31, 38, 135, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    border-color: #cfcfcf;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
 }
 
@@ -179,7 +175,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .cardHeaderMain {
@@ -226,6 +222,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.channelDescription {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #5f6368;
 }
 
 .builtinTag {
@@ -285,7 +288,7 @@
 
 .cardDivider {
   height: 1px;
-  margin: 14px 0;
+  margin: 8px 0;
   background: linear-gradient(
     to right,
     transparent,
@@ -431,21 +434,22 @@
   }
 
   .channelCard {
-    background: rgba(30, 36, 48, 0.55);
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: none;
 
     &.cardHover {
-      box-shadow:
-        0 12px 40px rgba(0, 0, 0, 0.55),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.34);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
     }
   }
 
   .cardTitle {
     color: rgba(255, 255, 255, 0.92);
+  }
+
+  .channelDescription {
+    color: rgba(255, 255, 255, 0.62);
   }
 
   .builtinTag {

@@ -6,7 +6,7 @@ from __future__ import annotations
 import httpx
 from agentscope.tool import Toolkit
 
-from qwenpaw.agents.tools import agent_management
+from xclaw.agents.tools import agent_management
 
 
 class _FakeResponse:

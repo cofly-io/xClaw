@@ -21,7 +21,9 @@
     "copied": "クリップボードにコピーしました",
     "copyFailed": "クリップボードへのコピーに失敗しました",
     "contentPlaceholder": "内容を入力してください...",
-    "close": "閉じる"
+    "close": "閉じる",
+    "clear": "クリア",
+    "paste": "貼り付け"
   },
   "nav": {
     "chat": "チャット",
@@ -76,7 +78,9 @@
     "loadConfigFailed": "エージェント設定の読み込みに失敗しました",
     "saveFailed": "エージェントの保存に失敗しました",
     "idRequired": "エージェント ID を入力してください",
-    "idPattern": "ID は小文字、数字、アンダースコア、ハイフンのみ使用できます",
+    "idLabel": "エージェント ID（任意）",
+    "idHelp": "空欄のままにすると自動生成されます。英数字、ハイフン、アンダースコアのみ使用可能。",
+    "idPattern": "ID は英数字、アンダースコア、ハイフンのみ使用できます",
     "idPlaceholder": "例：my-agent",
     "nameRequired": "エージェント名を入力してください",
     "namePlaceholder": "例：マイエージェント",
@@ -133,6 +137,10 @@
     "supportedSkillUrlSources": "現在サポートされているスキルURLのソース:",
     "urlExamples": "URLの例:",
     "invalidSkillUrlSource": "スキルURLは https://skills.sh/、https://clawhub.ai/、https://skillsmp.com/、https://lobehub.com/、https://market.lobehub.com/、https://github.com/、または https://modelscope.cn/skills/ で始まる必要があります",
+    "enterValidUrl": "有効な URL を入力してください（http:// または https:// で始まる必要があります）",
+    "skillUrlLooksValid": "URL は有効に見えます",
+    "orChooseFromSources": "または、下のサポート済みソースから選択してください",
+    "clickToFill": "クリックして入力",
     "type": "タイプ",
     "skillDescription": "説明",
     "builtin": "組み込み",
@@ -1087,6 +1095,9 @@
       },
       "mission": {
         "description": "ミッションモードを起動 — 複雑なタスクを自動的に分解し、実装し、検証します ⚠️ このモードではツールのガードレールを回避します"
+      },
+      "skills": {
+        "description": "チャットで利用可能なスキルを一覧し、明示的なスキルコマンドを表示します"
       }
     },
     "attachments": {

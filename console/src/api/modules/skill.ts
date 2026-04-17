@@ -70,6 +70,7 @@ async function _uploadZip(
   file: File,
   options?: {
     enable?: boolean;
+    overwrite?: boolean;
     target_name?: string;
     rename_map?: Record<string, string>;
   },
@@ -80,6 +81,9 @@ async function _uploadZip(
   const params = new URLSearchParams();
   if (options?.enable !== undefined) {
     params.set("enable", String(options.enable));
+  }
+  if (options?.overwrite !== undefined) {
+    params.set("overwrite", String(options.overwrite));
   }
   if (options?.target_name) {
     params.set("target_name", options.target_name);
@@ -269,6 +273,7 @@ export const skillApi = {
   importPoolSkillFromHub: (payload: {
     bundle_url: string;
     version?: string;
+    overwrite?: boolean;
     target_name?: string;
   }) =>
     request<{
@@ -511,6 +516,7 @@ export const skillApi = {
   uploadSkillPoolZip: (
     file: File,
     options?: {
+      overwrite?: boolean;
       target_name?: string;
       rename_map?: Record<string, string>;
     },

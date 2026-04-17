@@ -553,6 +553,42 @@ def _promote_tool_result_videos(
     return new_messages
 
 
+def _reorder_tool_and_promoted_messages(
+    messages: list[dict],
+) -> list[dict]:
+    """Move promoted user messages after all tool results in each sequence.
+
+    When ``promote_tool_result_images`` is enabled, formatter output may
+    interleave ``role=user`` promoted-media messages between ``role=tool``
+    messages. OpenAI/Anthropic require tool-result messages to stay contiguous
+    after the assistant tool-call message.
+    """
+    result: list[dict] = []
+    i = 0
+    while i < len(messages):
+        msg = messages[i]
+        if msg.get("role") == "assistant" and msg.get("tool_calls"):
+            result.append(msg)
+            i += 1
+            tool_msgs: list[dict] = []
+            promoted_msgs: list[dict] = []
+            while i < len(messages) and messages[i].get("role") in (
+                "tool",
+                "user",
+            ):
+                if messages[i].get("role") == "tool":
+                    tool_msgs.append(messages[i])
+                else:
+                    promoted_msgs.append(messages[i])
+                i += 1
+            result.extend(tool_msgs)
+            result.extend(promoted_msgs)
+        else:
+            result.append(msg)
+            i += 1
+    return result
+
+
 # Mapping of non-standard MIME subtypes to their correct forms.
 _MIME_FIXES: dict[str, str] = {
     "image/jpg": "image/jpeg",
@@ -687,6 +723,10 @@ def _create_file_block_support_formatter(
                         normalized_msgs,
                         messages,
                     )
+
+            # Image/video promotion inserts user messages between tool results.
+            # Reorder to keep tool-result messages contiguous per API contract.
+            messages = _reorder_tool_and_promoted_messages(messages)
 
             # Normalize non-standard MIME types (e.g. image/jpg → image/jpeg)
             _fix_image_mime_types(messages)

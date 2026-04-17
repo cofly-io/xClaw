@@ -39,6 +39,7 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
   const [collapsed, setCollapsed] = useState(false);
+  const [suposUsername, setSuposUsername] = useState("");
   const navIconProps = {
     size: 16,
     strokeWidth: 1.8,
@@ -53,6 +54,26 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
       .then((res) => setAuthEnabled(res.enabled))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const readSuposUser = () => {
+      try {
+        const raw = localStorage.getItem("supos_user");
+        if (!raw) {
+          setSuposUsername("");
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        setSuposUsername(String(parsed?.username || ""));
+      } catch {
+        setSuposUsername("");
+      }
+    };
+
+    readSuposUser();
+    window.addEventListener("storage", readSuposUser);
+    return () => window.removeEventListener("storage", readSuposUser);
+  }, [location.pathname]);
 
   const handleUpdateProfile = async (values: {
     currentPassword: string;
@@ -243,10 +264,20 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
             <Button
               type="text"
               className={`${styles.sidebarActionBtn} ${styles.settingsMoreEntryBottom}`}
-              icon={<Ellipsis {...navIconProps} />}
               onClick={onOpenSettingsMore}
             >
-              {t("nav.settings")}
+              <span className={styles.settingsBottomContent}>
+                {suposUsername && (
+                  <span className={styles.settingsUserMeta}>
+                    <div className={styles.settingsUserAvatar} />
+                    <span className={styles.settingsUsername}>{suposUsername}</span>
+                  </span>
+                )}
+                <span className={styles.settingsLabelWithIcon}>
+                  <Ellipsis {...navIconProps} />
+                  <span>{t("nav.settings")}</span>
+                </span>
+              </span>
             </Button>
           )}
         </div>

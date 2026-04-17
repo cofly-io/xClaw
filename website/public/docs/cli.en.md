@@ -606,6 +606,7 @@ Extend xClaw's capabilities with skills (PDF reading, web search, etc.).
 | ----------------------- | ------------------------------------------------- |
 | `xclaw skills list`   | Show all skills and their enabled/disabled status |
 | `xclaw skills config` | Interactively enable/disable skills (checkbox UI) |
+| `xclaw skills info`   | Show local details for one workspace skill        |
 
 **Multi-Agent Support:** All commands support the `--agent-id` parameter (defaults to `default`).
 
@@ -614,6 +615,8 @@ xclaw skills list                   # See default agent's skills
 xclaw skills list --agent-id abc123 # See specific agent's skills
 xclaw skills config                 # Configure default agent
 xclaw skills config --agent-id abc123 # Configure specific agent
+xclaw skills info [skill_name]               # See default agent's skill details
+xclaw skills info [skill_name] --agent-id abc123 # See specific agent's skill details
 ```
 
 In the interactive UI: ↑/↓ to navigate, Space to toggle, Enter to confirm.

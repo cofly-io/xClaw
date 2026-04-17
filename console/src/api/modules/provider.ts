@@ -13,9 +13,7 @@ import type {
   TestModelRequest,
   DiscoverModelsResponse,
   SeriesResponse,
-  FilterOpenRouterModelsResponse,
   ProbeMultimodalResponse,
-  SeriesResponse,
   DiscoverExtendedResponse,
   FilterModelsRequest,
   FilterModelsResponse,
@@ -132,15 +130,6 @@ export const providerApi = {
         body: JSON.stringify({ ...(body || {}), auto_add: autoAdd }),
       },
     ),
-
-  getOpenRouterSeries: () =>
-    request<SeriesResponse>("/models/openrouter/series"),
-
-  filterOpenRouterModels: (body: Record<string, unknown>) =>
-    request<FilterOpenRouterModelsResponse>("/models/openrouter/filter", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
 
   probeMultimodal: (providerId: string, modelId: string) =>
     request<ProbeMultimodalResponse>(

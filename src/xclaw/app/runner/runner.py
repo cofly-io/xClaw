@@ -27,8 +27,8 @@ from .command_dispatch import (
 )
 from .query_error_dump import write_query_error_dump
 from .mission_dispatch import (
-    maybe_handle_mission_command,
     detect_active_mission_phase,
+    maybe_handle_mission_command,
 )
 from .session import SafeJSONSession
 from .utils import build_env_context
@@ -405,6 +405,7 @@ class AgentRunner(Runner):
         agent = None
         chat = None
         session_state_loaded = False
+        mission_info = None
         try:
             session_id = request.session_id
             user_id = request.user_id
@@ -444,6 +445,58 @@ class AgentRunner(Runner):
             # Load agent-specific configuration
             agent_config = load_agent_config(self.agent_id)
 
+            _ws = self.workspace_dir or WORKING_DIR
+
+            mission_result = await maybe_handle_mission_command(
+                query=query,
+                msgs=msgs,
+                workspace_dir=_ws,
+                agent_id=self.agent_id,
+                rewrite_fn=self._rewrite_last_message_text,
+                session_id=session_id,
+            )
+            if isinstance(mission_result, Msg):
+                yield mission_result, True
+                return
+            mission_info = (
+                mission_result if isinstance(mission_result, dict) else None
+            )
+
+            base_request_context: dict[str, str] = {
+                "session_id": str(session_id or ""),
+                "user_id": str(user_id or ""),
+                "channel": str(channel or DEFAULT_CHANNEL),
+                "agent_id": str(self.agent_id),
+            }
+            if approved_tool_call:
+                base_request_context["forced_tool_call_json"] = json.dumps(
+                    approved_tool_call,
+                    ensure_ascii=False,
+                )
+
+            custom_context = getattr(request, "request_context", None)
+            if custom_context and isinstance(custom_context, dict):
+                for ck, cv in custom_context.items():
+                    if cv is None:
+                        continue
+                    key = str(ck)
+                    if isinstance(cv, str):
+                        base_request_context[key] = cv
+                    elif isinstance(cv, (dict, list)):
+                        base_request_context[key] = json.dumps(
+                            cv,
+                            ensure_ascii=False,
+                        )
+                    else:
+                        base_request_context[key] = str(cv)
+
+            if mission_info is not None:
+                base_request_context["_headless_tool_guard"] = "false"
+                logger.info(
+                    "Mission mode: bypassing tool guard for session %s",
+                    session_id,
+                )
+
             logger.debug(f"Enabled MCP: {mcp_clients}")
 
             agent = xClawAgent(
@@ -462,45 +515,12 @@ class AgentRunner(Runner):
                 f"Agent Query msgs {msgs}",
             )
 
-            name = "New Chat"
-            if len(msgs) > 0:
-                content = msgs[0].get_text_content()
-                if content:
-                    name = msgs[0].get_text_content()[:16]
-                else:
-                    name = "Media Message"
-
-            logger.debug(
-                f"DEBUG chat_manager status: "
-                f"_chat_manager={self._chat_manager}, "
-                f"is_none={self._chat_manager is None}, "
-                f"agent_id={self.agent_id}",
-            )
-
-            if self._chat_manager is not None:
-                logger.debug(
-                    f"Runner: Calling get_or_create_chat for "
-                    f"session_id={session_id}, user_id={user_id}, "
-                    f"channel={channel}, name={name}",
-                )
-                chat = await self._chat_manager.get_or_create_chat(
-                    session_id,
-                    user_id,
-                    channel,
-                    name=name,
-                )
-                logger.debug(f"Runner: Got chat: {chat.id}")
-            else:
-                logger.warning(
-                    f"ChatManager is None! Cannot auto-register chat for "
-                    f"session_id={session_id}",
-                )
-
-            # Active mission: auto-route follow-up messages
+            # Session-bound mission (distinct from /mission command): inject after
+            # agent exists; does not set _headless_tool_guard (matches QwenPaw).
             if mission_info is None:
                 mission_info = detect_active_mission_phase(
-                    _ws,
-                    session_id=session_id,
+                    self._workspace,
+                    session_id=str(session_id or ""),
                 )
                 if mission_info is not None:
                     loop_dir = mission_info["loop_dir"]
@@ -536,6 +556,40 @@ class AgentRunner(Runner):
                         msgs,
                         refresher + original,
                     )
+
+            name = "New Chat"
+            if len(msgs) > 0:
+                content = msgs[0].get_text_content()
+                if content:
+                    name = msgs[0].get_text_content()[:16]
+                else:
+                    name = "Media Message"
+
+            logger.debug(
+                f"DEBUG chat_manager status: "
+                f"_chat_manager={self._chat_manager}, "
+                f"is_none={self._chat_manager is None}, "
+                f"agent_id={self.agent_id}",
+            )
+
+            if self._chat_manager is not None:
+                logger.debug(
+                    f"Runner: Calling get_or_create_chat for "
+                    f"session_id={session_id}, user_id={user_id}, "
+                    f"channel={channel}, name={name}",
+                )
+                chat = await self._chat_manager.get_or_create_chat(
+                    session_id,
+                    user_id,
+                    channel,
+                    name=name,
+                )
+                logger.debug(f"Runner: Got chat: {chat.id}")
+            else:
+                logger.warning(
+                    f"ChatManager is None! Cannot auto-register chat for "
+                    f"session_id={session_id}",
+                )
 
             # Skill info (/<name> without input) is display-only
             if mission_info is None:

@@ -24,7 +24,9 @@
     "help": "Help",
     "close": "Close",
     "actions": "Actions",
-    "total": "Total {{count}}"
+    "total": "Total {{count}}",
+    "clear": "Clear",
+    "paste": "Paste"
   },
   "nav": {
     "chat": "Chat",
@@ -137,7 +139,9 @@
     "loadConfigFailed": "Failed to load agent config",
     "saveFailed": "Failed to save agent",
     "idRequired": "Please enter agent ID",
-    "idPattern": "ID can only contain lowercase letters, numbers, underscores and hyphens",
+    "idLabel": "Agent ID (optional)",
+    "idHelp": "Leave empty to auto-generate. Only letters, digits, hyphens and underscores allowed.",
+    "idPattern": "ID can only contain letters, numbers, underscores and hyphens",
     "idPlaceholder": "e.g.: my-agent",
     "nameRequired": "Please enter agent name",
     "namePlaceholder": "e.g.: My Agent",
@@ -180,6 +184,10 @@
     "supportedSkillUrlSources": "Currently supported skill URL sources:",
     "urlExamples": "URL examples:",
     "invalidSkillUrlSource": "Skill URL currently needs to start with https://skills.sh/, https://clawhub.ai/, https://skillsmp.com/, https://lobehub.com/, https://market.lobehub.com/, https://github.com/, or https://modelscope.cn/skills/",
+    "enterValidUrl": "Please enter a valid URL (must start with http:// or https://)",
+    "skillUrlLooksValid": "URL looks valid",
+    "orChooseFromSources": "Or choose from supported sources below",
+    "clickToFill": "Click to fill",
     "type": "Type",
     "skillDescription": "Description",
     "builtin": "Built-in",
@@ -1173,6 +1181,9 @@
       },
       "mission": {
         "description": "Launch mission mode — Automatically decompose, implement, and verify complex tasks ⚠️ This mode will bypass tool guardrails"
+      },
+      "skills": {
+        "description": "List chat-available skills and expose explicit skill commands"
       }
     },
     "attachments": {

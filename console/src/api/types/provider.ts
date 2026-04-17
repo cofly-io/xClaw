@@ -197,24 +197,11 @@ export interface ProbeMultimodalResponse {
 
 /* ---- OpenRouter extended model types ---- */
 
-export interface ExtendedModelInfo {
-  id: string;
-  name: string;
-  provider: string;
-  input_modalities: string[];
-  output_modalities: string[];
-  pricing: Record<string, string>;
-}
-
 export interface FilterModelsRequest {
   providers?: string[];
   input_modalities?: string[];
   output_modalities?: string[];
   max_prompt_price?: number;
-}
-
-export interface SeriesResponse {
-  series: string[];
 }
 
 export interface DiscoverExtendedResponse {

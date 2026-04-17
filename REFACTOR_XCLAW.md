@@ -11,6 +11,23 @@
 
 Python 包名由 `qwenpaw` 改为 **`xclaw`**，所有 `from qwenpaw...` / `import qwenpaw` 已替换为 `xclaw`。
 
+**迁移完成状态（已完成）：**
+
+`src/qwenpaw/` 目录在以下所有子资源全部迁移后已删除：
+
+| qwenpaw 原路径 | xclaw 新路径 |
+|---|---|
+| `agents/mission/{handler,mission_runner,prompts,state,__init__}.py` | `src/xclaw/agents/mission/` |
+| `agents/skills/chat_with_agent/SKILL.md` | `src/xclaw/agents/skills/chat_with_agent/SKILL.md` |
+| `agents/skills/make_plan/SKILL.md` | `src/xclaw/agents/skills/make_plan/SKILL.md` |
+| `agents/md_files/local/en/SOUL.md` | `src/xclaw/agents/md_files/local/en/SOUL.md` |
+| `agents/md_files/local/zh/SOUL.md` | `src/xclaw/agents/md_files/local/zh/SOUL.md` |
+| `agents/templates.py`（含 `LOCAL_AGENT_TEMPLATE`） | 合并入 `src/xclaw/agents/templates/__init__.py` |
+
+`mission/prompts.py` 中 `xclaw agents chat --background` 等命令行引用已从 `qwenpaw` 更新为 `xclaw`。
+SKILL.md 元数据中 `qwenpaw:` namespace key 已更新为 `xclaw:`。
+`tests/unit/` 下所有残留 `from qwenpaw.*` 已替换为 `from xclaw.*`。
+
 同步路径：`deploy/Dockerfile`、`.dockerignore`、`.gitignore` 中内置控制台目录已改为 **`src/xclaw/console/`**；镜像内初始化与进程命令使用 **`xclaw`** CLI。
 
 ## 2. `pyproject.toml`

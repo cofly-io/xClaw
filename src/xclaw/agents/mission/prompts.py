@@ -354,7 +354,7 @@ worker prompt that includes:
 
 ### 3. Dispatch batch — all at once
 
-**⚠️ You MUST use `qwenpaw agents chat` to dispatch.  You are the
+**⚠️ You MUST use `xclaw agents chat` to dispatch.  You are the
 controller — NEVER run implementation commands (npm, pip, python,
 make, cargo, etc.) yourself.  NEVER create/edit source files yourself.
 ALL implementation work is done by workers.**
@@ -366,8 +366,8 @@ cat > {loop_dir}/worker_prompt_US-001.txt << 'WORKER_EOF'
 <paste the composed worker prompt here, including Worker Instructions>
 WORKER_EOF
 
-# Step B: dispatch via qwenpaw agents chat
-qwenpaw agents chat --background \\
+# Step B: dispatch via xclaw agents chat
+xclaw agents chat --background \\
   --from-agent {agent_id} --to-agent {agent_id} \\
   --text "$(cat {loop_dir}/worker_prompt_US-001.txt)"
 ```
@@ -381,8 +381,8 @@ Repeat for each story in the batch.  Save **all** returned TASK_IDs.
 Poll **all** running tasks in a loop:
 ```bash
 sleep 30
-qwenpaw agents chat --background --task-id <TASK_ID_1>
-qwenpaw agents chat --background --task-id <TASK_ID_2>
+xclaw agents chat --background --task-id <TASK_ID_1>
+xclaw agents chat --background --task-id <TASK_ID_2>
 # ... one per running task
 ```
 - As each task finishes (status "completed" or "failed"), record it
@@ -404,7 +404,7 @@ cat > {loop_dir}/verifier_prompt_US-001.txt << 'VERIFIER_EOF'
 VERIFIER_EOF
 
 # Step B: dispatch verifier (separate session from worker)
-qwenpaw agents chat --background \
+xclaw agents chat --background \
   --from-agent {agent_id} --to-agent {agent_id} \
   --text "$(cat {loop_dir}/verifier_prompt_US-001.txt)"
 ```
@@ -452,7 +452,7 @@ pass or you hit the iteration limit.
 
 **⚠️ RULE #1: You are the CONTROLLER.**  In Phase 2, implementation
 tools are disabled by the system.  ALL coding, building, and testing
-is done by workers via `qwenpaw agents chat --background`.
+is done by workers via `xclaw agents chat --background`.
 
 **Phase 2 continuity:** The system automatically loops back to you after
 each turn if stories remain.  Focus on dispatching the current batch,
@@ -460,7 +460,7 @@ polling results, and reporting progress.  Do not worry about "ending
 your turn" — the system handles iteration control.
 
 **Implementation tools are disabled in Phase 2.**  You can only read
-files, use `sleep`, and dispatch workers via `qwenpaw agents chat`.
+files, use `sleep`, and dispatch workers via `xclaw agents chat`.
 If you try to use `execute_shell_command`, `write_file`, or `edit_file`,
 the system will reject the call.  Delegate ALL implementation to workers.
 

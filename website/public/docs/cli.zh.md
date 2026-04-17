@@ -591,6 +591,7 @@ xclaw chats delete <chat_id>
 | ----------------------- | --------------------------------- |
 | `xclaw skills list`   | 列出所有技能及启用/禁用状态       |
 | `xclaw skills config` | 交互式启用/禁用技能（复选框界面） |
+| `xclaw skills info`   | 查看某个 workspace 技能的本地详情 |
 
 **多智能体支持：** 所有命令都支持 `--agent-id` 参数（默认为 `default`）。
 
@@ -599,6 +600,8 @@ xclaw skills list                   # 看默认智能体的技能
 xclaw skills list --agent-id abc123 # 看特定智能体的技能
 xclaw skills config                 # 交互式配置默认智能体
 xclaw skills config --agent-id abc123 # 交互式配置特定智能体
+xclaw skills info [skill_name]               # 看默认智能体的技能详情
+xclaw skills info [skill_name] --agent-id abc123 # 看特定智能体的技能详情
 ```
 
 交互界面中：↑/↓ 选择、空格 切换、回车 确认。确认前会预览变更。

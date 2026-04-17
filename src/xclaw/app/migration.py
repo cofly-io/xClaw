@@ -23,6 +23,7 @@ from ..config.config import (
 )
 from ..constant import (
     BUILTIN_QA_AGENT_ID,
+    BUILTIN_QA_AGENT_NAME,
     LEGACY_QA_AGENT_ID,
     WORKING_DIR,
 )
@@ -844,11 +845,13 @@ def _do_ensure_qa_agent() -> None:
         return
 
     logger.info("Creating builtin QA agent...")
-    qa_skill_list = list(BUILTIN_QA_AGENT_SKILL_NAMES)
 
     language = config.agents.language or "zh"
-    agent_config = AgentProfileConfig(
-        id=qa_id,
+    template_result = build_agent_template(
+        QA_AGENT_TEMPLATE,
+        agent_id=qa_id,
+        workspace_dir=qa_workspace,
+        fallback_language=language,
         name=BUILTIN_QA_AGENT_NAME,
         description=(
             "Builtin Q&A helper for xClaw setup, local config under "
@@ -856,12 +859,7 @@ def _do_ensure_qa_agent() -> None:
             "before answering; use absolute paths for code outside this "
             "workspace."
         ),
-        workspace_dir=str(qa_workspace),
         language=language,
-        channels=ChannelConfig(),
-        mcp=MCPConfig(),
-        heartbeat=HeartbeatConfig(),
-        tools=build_qa_agent_tools_config(),
     )
 
     _initialize_agent_workspace(

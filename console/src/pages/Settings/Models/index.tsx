@@ -35,6 +35,31 @@ function ModelsPage() {
       if (p.is_local) local.push(p);
       else regular.push(p);
     }
+    const sortPriority = (provider: ProviderInfo): number => {
+      let isConfigured = false;
+      if (provider.id === "qwenpaw-local") {
+        isConfigured = true;
+      } else if (provider.is_custom && provider.base_url) {
+        isConfigured = true;
+      } else if (provider.require_api_key === false) {
+        isConfigured = true;
+      } else if (provider.require_api_key && provider.api_key) {
+        isConfigured = true;
+      }
+
+      const hasModels =
+        provider.models.length + provider.extra_models.length > 0;
+      const isAvailable = isConfigured && hasModels;
+
+      if (isAvailable && provider.is_custom) return 0;
+      if (isAvailable) return 1;
+      if (provider.is_custom) return 2;
+      if (isConfigured) return 3;
+      return 4;
+    };
+
+    regular.sort((a, b) => sortPriority(a) - sortPriority(b));
+
     // Fuzzy search filter: match provider name (case-insensitive)
     const query = searchQuery.trim().toLowerCase();
     if (!query) {
