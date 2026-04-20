@@ -235,19 +235,20 @@ qwenpaw uninstall --purge  # удаляет всё
 
 ### Вариант 3: Использование Docker
 
-Образы доступны на **Docker Hub** (`agentscope/qwenpaw`). Теги образов: `latest` (стабильная версия); `pre` (предварительный релиз PyPI).
+Образы доступны на **Docker Hub** (`agentscope/xclaw`). Теги образов: `latest` (стабильная версия); `pre` (предварительный релиз PyPI).
 
 ```bash
-docker pull agentscope/qwenpaw:latest
+docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
-  -v qwenpaw-data:/app/working \
+  -v xclaw-data:/app/working \
   -v qwenpaw-secrets:/app/working.secret \
-  agentscope/qwenpaw:latest
+  -v xclaw-backups:/app/working.backups \
+  agentscope/xclaw:latest
 ```
 
-Для пользователей в Китае также доступен Alibaba Cloud Container Registry (ACR): `agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/qwenpaw` (те же теги).
+Для пользователей в Китае также доступен Alibaba Cloud Container Registry (ACR): `agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/xclaw` (те же теги).
 
-Затем откройте консоль в браузере: **http://127.0.0.1:8088/**. Конфигурация, память и навыки сохраняются в томе `qwenpaw-data`; настройки моделей и API-ключи сохраняются в томе `qwenpaw-secrets`. Для передачи API-ключей (например, `DASHSCOPE_API_KEY`) добавьте `-e VAR=value` или `--env-file .env` в команду `docker run`.
+Затем откройте консоль в браузере: **http://127.0.0.1:8088/**. Конфигурация, память и навыки сохраняются в томе `xclaw-data`; настройки моделей и API-ключи сохраняются в томе `qwenpaw-secrets`; архивы резервных копий сохраняются в томе `xclaw-backups`. Для передачи API-ключей (например, `DASHSCOPE_API_KEY`) добавьте `-e VAR=value` или `--env-file .env` в команду `docker run`.
 
 > **Подключение к Ollama или другим сервисам на хост-машине из контейнера**
 >
@@ -257,18 +258,20 @@ docker run -p 127.0.0.1:8088:8088 \
 > ```bash
 > docker run -p 127.0.0.1:8088:8088 \
 >   --add-host=host.docker.internal:host-gateway \
->   -v qwenpaw-data:/app/working \
+>   -v xclaw-data:/app/working \
 >   -v qwenpaw-secrets:/app/working.secret \
->   agentscope/qwenpaw:latest
+>   -v xclaw-backups:/app/working.backups \
+>   agentscope/xclaw:latest
 > ```
 > Затем в QwenPaw **Настройки → Модели** измените Base URL на `http://host.docker.internal:<порт>` — например, для Ollama используйте `http://host.docker.internal:11434`, для LM Studio — `http://host.docker.internal:1234/v1`.
 >
 > **Вариант B** — Сеть хоста (только Linux):
 > ```bash
 > docker run --network=host \
->   -v qwenpaw-data:/app/working \
+>   -v xclaw-data:/app/working \
 >   -v qwenpaw-secrets:/app/working.secret \
->   agentscope/qwenpaw:latest
+>   -v xclaw-backups:/app/working.backups \
+>   agentscope/xclaw:latest
 > ```
 > Не требуется сопоставление портов (`-p`), контейнер напрямую использует сеть хоста. Обратите внимание, что все порты контейнера будут доступны на хосте, что может вызвать конфликты с уже используемыми портами.
 >

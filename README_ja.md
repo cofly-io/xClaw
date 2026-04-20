@@ -242,12 +242,13 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
 中国のユーザーは阿里雲コンテナレジストリ（ACR）も利用できます: `agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/xclaw`（タグは同じ）。
 
-ブラウザで **http://127.0.0.1:8088/** を開くとコンソールが利用できます。設定、メモリ、スキルは `xclaw-data` ボリュームに保存されます。モデル設定とAPIキーは `xclaw-secrets` ボリュームに保存されます。APIキー（例: `DASHSCOPE_API_KEY`）を渡すには、`docker run` に `-e VAR=value` または `--env-file .env` を追加してください。
+ブラウザで **http://127.0.0.1:8088/** を開くとコンソールが利用できます。設定、メモリ、スキルは `xclaw-data` ボリュームに保存されます。モデル設定とAPIキーは `xclaw-secrets` ボリュームに保存されます。バックアップアーカイブは `xclaw-backups` ボリュームに保存されます。APIキー（例: `DASHSCOPE_API_KEY`）を渡すには、`docker run` に `-e VAR=value` または `--env-file .env` を追加してください。
 
 > **ホストマシン上のOllamaや他のモデルサービスに接続する**
 >
@@ -259,6 +260,7 @@ docker run -p 127.0.0.1:8088:8088 \
 >   --add-host=host.docker.internal:host-gateway \
 >   -v xclaw-data:/app/working \
 >   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
 >   agentscope/xclaw:latest
 > ```
 > その後、xClawの **設定 → モデル** で、Base URLを `http://host.docker.internal:<ポート>` に変更してください — 例えば、Ollamaの場合は `http://host.docker.internal:11434`、LM Studioの場合は `http://host.docker.internal:1234/v1` とします。
@@ -268,6 +270,7 @@ docker run -p 127.0.0.1:8088:8088 \
 > docker run --network=host \
 >   -v xclaw-data:/app/working \
 >   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
 >   agentscope/xclaw:latest
 > ```
 > ポートマッピング（`-p`）は不要で、コンテナはホストネットワークを直接共有します。ただし、コンテナの全ポートがホスト上に公開されるため、使用中のポートと競合する可能性があります。

@@ -231,19 +231,20 @@ qwenpaw uninstall --purge  # 删除所有内容
 
 ### 方式三：使用 Docker
 
-镜像在 **Docker Hub**（`agentscope/qwenpaw`）。镜像 tag：`latest`（稳定版）；`pre`（PyPI 预发布版）。
+镜像在 **Docker Hub**（`agentscope/xclaw`）。镜像 tag：`latest`（稳定版）；`pre`（PyPI 预发布版）。
 
 ```bash
-docker pull agentscope/qwenpaw:latest
+docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
-  -v qwenpaw-data:/app/working \
-  -v qwenpaw-secrets:/app/working.secret \
-  agentscope/qwenpaw:latest
+  -v xclaw-data:/app/working \
+  -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
+  agentscope/xclaw:latest
 ```
 
-国内用户也可选用阿里云容器镜像服务 (ACR)：`agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/qwenpaw`（tag 相同）。
+国内用户也可选用阿里云容器镜像服务 (ACR)：`agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/xclaw`（tag 相同）。
 
-然后在浏览器中打开控制台：**http://127.0.0.1:8088/**。配置、记忆与 Skills 保存在 `qwenpaw-data` 卷中；模型配置与 API Key 保存在 `qwenpaw-secrets` 卷中。如需传入 API Key（如 `DASHSCOPE_API_KEY`），在 `docker run` 时添加 `-e VAR=value` 或 `--env-file .env`。
+然后在浏览器中打开控制台：**http://127.0.0.1:8088/**。配置、记忆与 Skills 保存在 `xclaw-data` 卷中；模型配置与 API Key 保存在 `xclaw-secrets` 卷中；备份归档保存在 `xclaw-backups` 卷中。如需传入 API Key（如 `DASHSCOPE_API_KEY`），在 `docker run` 时添加 `-e VAR=value` 或 `--env-file .env`。
 
 > **从容器内连接宿主机上的 Ollama 或其他模型服务**
 >
@@ -253,18 +254,20 @@ docker run -p 127.0.0.1:8088:8088 \
 > ```bash
 > docker run -p 127.0.0.1:8088:8088 \
 >   --add-host=host.docker.internal:host-gateway \
->   -v qwenpaw-data:/app/working \
->   -v qwenpaw-secrets:/app/working.secret \
->   agentscope/qwenpaw:latest
+>   -v xclaw-data:/app/working \
+>   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
+>   agentscope/xclaw:latest
 > ```
 > 然后在 QwenPaw **设置 → 模型** 中，将 Base URL 改为 `http://host.docker.internal:<端口>` — 例如 Ollama 填 `http://host.docker.internal:11434`，LM Studio 填 `http://host.docker.internal:1234/v1`。
 >
 > **方式 B** — 使用宿主机网络（仅限 Linux）：
 > ```bash
 > docker run --network=host \
->   -v qwenpaw-data:/app/working \
->   -v qwenpaw-secrets:/app/working.secret \
->   agentscope/qwenpaw:latest
+>   -v xclaw-data:/app/working \
+>   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
+>   agentscope/xclaw:latest
 > ```
 > 无需端口映射（`-p`），容器直接共享宿主机网络。注意这会将容器的所有端口暴露在宿主机上，可能与已占用的端口产生冲突。
 >
@@ -339,19 +342,20 @@ docker run -p 127.0.0.1:8088:8088 \
 
 ### 使用 Docker
 
-镜像在 **Docker Hub**（`agentscope/qwenpaw`）。镜像 tag：`latest`（稳定版）；`pre`（PyPI 预发布版）。
+镜像在 **Docker Hub**（`agentscope/xclaw`）。镜像 tag：`latest`（稳定版）；`pre`（PyPI 预发布版）。
 
 ```bash
-docker pull agentscope/qwenpaw:latest
+docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
-  -v qwenpaw-data:/app/working \
-  -v qwenpaw-secrets:/app/working.secret \
-  agentscope/qwenpaw:latest
+  -v xclaw-data:/app/working \
+  -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
+  agentscope/xclaw:latest
 ```
 
-国内用户也可选用阿里云容器镜像服务 (ACR)：`agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/qwenpaw`（tag 相同）。
+国内用户也可选用阿里云容器镜像服务 (ACR)：`agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/xclaw`（tag 相同）。
 
-然后在浏览器中打开控制台：**http://127.0.0.1:8088/**。配置、记忆与 Skills 保存在 `qwenpaw-data` 卷中；模型配置与 API Key 保存在 `qwenpaw-secrets` 卷中。如需传入 API Key（如 `DASHSCOPE_API_KEY`），在 `docker run` 时添加 `-e VAR=value` 或 `--env-file .env`。
+然后在浏览器中打开控制台：**http://127.0.0.1:8088/**。配置、记忆与 Skills 保存在 `xclaw-data` 卷中；模型配置与 API Key 保存在 `xclaw-secrets` 卷中；备份归档保存在 `xclaw-backups` 卷中。如需传入 API Key（如 `DASHSCOPE_API_KEY`），在 `docker run` 时添加 `-e VAR=value` 或 `--env-file .env`。
 
 > **从容器内连接宿主机上的 Ollama 或其他模型服务**
 >
@@ -361,18 +365,20 @@ docker run -p 127.0.0.1:8088:8088 \
 > ```bash
 > docker run -p 127.0.0.1:8088:8088 \
 >   --add-host=host.docker.internal:host-gateway \
->   -v qwenpaw-data:/app/working \
->   -v qwenpaw-secrets:/app/working.secret \
->   agentscope/qwenpaw:latest
+>   -v xclaw-data:/app/working \
+>   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
+>   agentscope/xclaw:latest
 > ```
 > 然后在 QwenPaw **设置 → 模型** 中，将 Base URL 改为 `http://host.docker.internal:<端口>` — 例如 Ollama 填 `http://host.docker.internal:11434`，LM Studio 填 `http://host.docker.internal:1234/v1`。
 >
 > **方式 B** — 使用宿主机网络（仅限 Linux）：
 > ```bash
 > docker run --network=host \
->   -v qwenpaw-data:/app/working \
->   -v qwenpaw-secrets:/app/working.secret \
->   agentscope/qwenpaw:latest
+>   -v xclaw-data:/app/working \
+>   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
+>   agentscope/xclaw:latest
 > ```
 > 无需端口映射（`-p`），容器直接共享宿主机网络。注意这会将容器的所有端口暴露在宿主机上，可能与已占用的端口产生冲突。
 >

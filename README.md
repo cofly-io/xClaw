@@ -236,12 +236,13 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
 Also available on Alibaba Cloud Container Registry (ACR) for users in China: `agentscope-registry.ap-southeast-1.cr.aliyuncs.com/agentscope/xclaw` (same tags).
 
-Then open **http://127.0.0.1:8088/** for the Console. Config, memory, and skills are stored in the `xclaw-data` volume; model provider settings and API keys are in the `xclaw-secrets` volume. To pass API keys (e.g. `DASHSCOPE_API_KEY`), add `-e VAR=value` or `--env-file .env` to `docker run`.
+Then open **http://127.0.0.1:8088/** for the Console. Config, memory, and skills are stored in the `xclaw-data` volume; model provider settings and API keys are in the `xclaw-secrets` volume; backup archives are stored in the `xclaw-backups` volume. To pass API keys (e.g. `DASHSCOPE_API_KEY`), add `-e VAR=value` or `--env-file .env` to `docker run`.
 
 > **Connecting to Ollama or other services on the host machine**
 >
@@ -253,6 +254,7 @@ Then open **http://127.0.0.1:8088/** for the Console. Config, memory, and skills
 >   --add-host=host.docker.internal:host-gateway \
 >   -v xclaw-data:/app/working \
 >   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
 >   agentscope/xclaw:latest
 > ```
 > Then in xClaw **Settings → Models**, change the Base URL to `http://host.docker.internal:<port>` — for example, `http://host.docker.internal:11434` for Ollama, or `http://host.docker.internal:1234/v1` for LM Studio.
@@ -262,6 +264,7 @@ Then open **http://127.0.0.1:8088/** for the Console. Config, memory, and skills
 > docker run --network=host \
 >   -v xclaw-data:/app/working \
 >   -v xclaw-secrets:/app/working.secret \
+>   -v xclaw-backups:/app/working.backups \
 >   agentscope/xclaw:latest
 > ```
 > No port mapping (`-p`) is needed; the container shares the host network directly. Note that all container ports are exposed on the host, which may cause conflicts if the port is already in use.

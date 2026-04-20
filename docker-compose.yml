@@ -5,6 +5,8 @@ volumes:
     name: xclaw-data
   xclaw-secrets:
     name: xclaw-secrets
+  xclaw-backups:
+    name: xclaw-backups
 
 services:
   xclaw:
@@ -20,3 +22,4 @@ services:
     volumes:
       - xclaw-data:/app/working
       - xclaw-secrets:/app/working.secret
+      - xclaw-backups:/app/working.backups

@@ -13,6 +13,7 @@ import {
   ListTodo,
   Play,
   Radio,
+  Save,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +39,7 @@ import SecurityPage from "../../pages/Settings/Security";
 import TokenUsagePage from "../../pages/Settings/TokenUsage";
 import AgentsPage from "../../pages/Settings/Agents";
 import VoiceTranscriptionPage from "../../pages/Settings/VoiceTranscription";
+import BackupsPage from "../../pages/Settings/Backups";
 import { KEY_TO_LABEL } from "../constants";
 
 const { Content } = Layout;
@@ -56,6 +58,7 @@ const ALL_MORE_MENU_KEYS = [
   "environments",
   "security",
   "token-usage",
+  "backups",
   "voice-transcription",
 ] as const;
 
@@ -71,6 +74,7 @@ const MORE_MENU_KEYS = [
   "models",
   "skill-pool",
   "environments",
+  "backups",
 ] as const satisfies readonly MoreMenuKey[];
 
 type MoreMenuKey = (typeof ALL_MORE_MENU_KEYS)[number];
@@ -93,6 +97,7 @@ const MORE_MENU_ICON_MAP: Record<VisibleMoreMenuKey, LucideIcon> = {
   models: Cpu,
   "skill-pool": Boxes,
   environments: Braces,
+  backups: Save,
 };
 
 export default function MainLayout() {
@@ -136,6 +141,8 @@ export default function MainLayout() {
         return <SkillPoolPage />;
       case "environments":
         return <EnvironmentsPage />;
+      case "backups":
+        return <BackupsPage />;
       case "security":
         return <SecurityPage />;
       case "token-usage":
@@ -202,6 +209,7 @@ export default function MainLayout() {
                 <Route path="/models" element={<ModelsPage />} />
                 <Route path="/environments" element={<EnvironmentsPage />} />
                 <Route path="/agent-config" element={<AgentConfigPage />} />
+                <Route path="/backups" element={<BackupsPage />} />
                 <Route path="/security" element={<SecurityPage />} />
                 <Route path="/token-usage" element={<TokenUsagePage />} />
                 <Route
