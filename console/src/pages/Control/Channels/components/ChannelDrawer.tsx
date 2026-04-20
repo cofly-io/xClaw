@@ -17,6 +17,7 @@ import { getChannelLabel, type ChannelKey } from "./constants";
 import { useChannelQrcode } from "./useChannelQrcode";
 import styles from "../index.module.less";
 import { useTheme } from "../../../../contexts/ThemeContext";
+import { useAgentStore } from "../../../../stores/agentStore";
 
 const CHANNELS_WITH_ACCESS_CONTROL: ChannelKey[] = [
   "telegram",
@@ -102,6 +103,11 @@ export function ChannelDrawer({
 }: ChannelDrawerProps) {
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
+  const { selectedAgent, agents } = useAgentStore();
+  const currentAgent = agents.find((a) => a.id === selectedAgent);
+  const defaultMediaDir = currentAgent?.workspace_dir
+    ? `${currentAgent.workspace_dir}/media`
+    : "~/.xclaw/media";
   const currentLang = i18n.language?.startsWith("zh") ? "zh" : "en";
   const label = activeKey ? getChannelLabel(activeKey, t) : activeLabel;
   const { message } = useAppMessage();
@@ -474,7 +480,7 @@ export function ChannelDrawer({
               <Input placeholder="Optional" />
             </Form.Item>
             <Form.Item name="media_dir" label={t("channels.weixinMediaDir")}>
-              <Input placeholder="~/.xclaw/media" />
+              <Input placeholder={defaultMediaDir} />
             </Form.Item>
           </>
         );
@@ -644,7 +650,7 @@ export function ChannelDrawer({
               <Input.Password placeholder="Mattermost bot token" />
             </Form.Item>
             <Form.Item name="media_dir" label={t("channels.weixinMediaDir")}>
-              <Input placeholder="~/.xclaw/media/mattermost" />
+              <Input placeholder={defaultMediaDir} />
             </Form.Item>
             <Form.Item
               name="show_typing"
@@ -780,7 +786,7 @@ export function ChannelDrawer({
               <Input.Password placeholder="Secret from WeCom backend" />
             </Form.Item>
             <Form.Item name="media_dir" label={t("channels.weixinMediaDir")}>
-              <Input placeholder="~/.xclaw/media" />
+              <Input placeholder={defaultMediaDir} />
             </Form.Item>
             <Form.Item
               name="welcome_text"
@@ -899,7 +905,51 @@ export function ChannelDrawer({
               <Input placeholder="~/.xclaw/weixin_bot_token" />
             </Form.Item>
             <Form.Item name="media_dir" label={t("channels.weixinMediaDir")}>
-              <Input placeholder="~/.xclaw/media" />
+              <Input placeholder={defaultMediaDir} />
+            </Form.Item>
+          </>
+        );
+
+      case "onebot":
+        return (
+          <>
+            <Form.Item
+              name="ws_host"
+              label="WebSocket Host"
+              rules={[{ required: true }]}
+            >
+              <Input placeholder="0.0.0.0" />
+            </Form.Item>
+            <Form.Item
+              name="ws_port"
+              label="WebSocket Port"
+              rules={[
+                { required: true },
+                {
+                  type: "number",
+                  min: 1,
+                  max: 65535,
+                  message: "Port must be between 1 and 65535",
+                },
+              ]}
+            >
+              <InputNumber
+                min={1}
+                max={65535}
+                style={{ width: "100%" }}
+                placeholder="6199"
+              />
+            </Form.Item>
+            <Form.Item name="access_token" label="Access Token">
+              <Input.Password placeholder="Access token for authentication" />
+            </Form.Item>
+            <Form.Item
+              name="share_session_in_group"
+              label={t("channels.onebotShareSessionInGroup")}
+              valuePropName="checked"
+              tooltip={t("channels.onebotShareSessionInGroupTooltip")}
+            >
+              <Switch />
             </Form.Item>
           </>
         );

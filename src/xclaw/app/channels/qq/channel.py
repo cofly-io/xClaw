@@ -643,6 +643,7 @@ class QQChannel(BaseChannel):
         filter_tool_messages: bool = False,
         filter_thinking: bool = False,
         media_dir: str = "",
+        workspace_dir: Path | None = None,
         max_reconnect_attempts: int = 100,
     ):
         super().__init__(
@@ -657,9 +658,16 @@ class QQChannel(BaseChannel):
         self.client_secret = client_secret
         self.bot_prefix = bot_prefix
         self._markdown_enabled = markdown_enabled
-        self._media_dir = (
-            Path(media_dir).expanduser() if media_dir else _DEFAULT_MEDIA_DIR
+        self._workspace_dir = (
+            Path(workspace_dir).expanduser() if workspace_dir else None
         )
+        # Use workspace-specific media dir if workspace_dir is provided
+        if not media_dir and self._workspace_dir:
+            self._media_dir = self._workspace_dir / "media"
+        elif media_dir:
+            self._media_dir = Path(media_dir).expanduser()
+        else:
+            self._media_dir = _DEFAULT_MEDIA_DIR
         self._max_reconnect_attempts = max_reconnect_attempts
 
         self._loop: Optional[asyncio.AbstractEventLoop] = None
@@ -779,6 +787,7 @@ class QQChannel(BaseChannel):
         show_tool_details: bool = True,
         filter_tool_messages: bool = False,
         filter_thinking: bool = False,
+        workspace_dir: Path | None = None,
     ) -> "QQChannel":
         return cls(
             process=process,
@@ -792,6 +801,7 @@ class QQChannel(BaseChannel):
             filter_tool_messages=filter_tool_messages,
             filter_thinking=filter_thinking,
             media_dir=getattr(config, "media_dir", ""),
+            workspace_dir=workspace_dir,
             max_reconnect_attempts=getattr(
                 config,
                 "max_reconnect_attempts",

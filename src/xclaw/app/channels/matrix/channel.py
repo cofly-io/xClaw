@@ -227,6 +227,7 @@ class MatrixChannel(BaseChannel):
         show_tool_details: bool = True,
         filter_tool_messages: bool = False,
         filter_thinking: bool = False,
+        workspace_dir: Path | None = None,
     ) -> None:
         super().__init__(
             process=process,
@@ -236,6 +237,9 @@ class MatrixChannel(BaseChannel):
             filter_thinking=filter_thinking,
         )
         self._cfg = config
+        self._workspace_dir = (
+            Path(workspace_dir).expanduser() if workspace_dir else None
+        )
         self._client: Optional[AsyncClient] = None
         self._user_id: Optional[str] = None
         self._sync_task: Optional[asyncio.Task] = None
@@ -279,6 +283,7 @@ class MatrixChannel(BaseChannel):
         show_tool_details: bool = True,
         filter_tool_messages: bool = False,
         filter_thinking: bool = False,
+        workspace_dir: Path | None = None,
     ) -> "MatrixChannel":
         if isinstance(config, dict):
             cfg = MatrixChannelConfig(config)
@@ -295,6 +300,7 @@ class MatrixChannel(BaseChannel):
             filter_tool_messages=filter_tool_messages
             or cfg.filter_tool_messages,
             filter_thinking=filter_thinking or cfg.filter_thinking,
+            workspace_dir=workspace_dir,
         )
 
     @classmethod
@@ -1028,17 +1034,20 @@ class MatrixChannel(BaseChannel):
 
     def _media_dir(self) -> Path:
         """Return (and create) the local media storage directory."""
-        try:
-            from xclaw.constant import WORKING_DIR
+        if self._workspace_dir:
+            d = self._workspace_dir / "media"
+        else:
+            try:
+                from xclaw.constant import WORKING_DIR
 
-            d = WORKING_DIR / "media"
-        except Exception as exc:
-            logger.debug(
-                "MatrixChannel: xclaw.constant.WORKING_DIR "
-                "unavailable (%s), using ~/.xclaw/media",
-                exc,
-            )
-            d = Path.home() / ".xclaw" / "media"
+                d = WORKING_DIR / "media"
+            except Exception as exc:
+                logger.debug(
+                    "MatrixChannel: xclaw.constant.WORKING_DIR "
+                    "unavailable (%s), using ~/.xclaw/media",
+                    exc,
+                )
+                d = Path.home() / ".xclaw" / "media"
         d.mkdir(parents=True, exist_ok=True)
         return d
 
