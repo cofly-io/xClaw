@@ -10,8 +10,8 @@ from unittest.mock import Mock
 from click.testing import CliRunner
 
 from xclaw.cli.main import cli
+from xclaw.config.config import ModelSlotConfig
 from xclaw.constant import BUILTIN_QA_AGENT_SKILL_NAMES
-from xclaw.providers.models import ModelSlotConfig
 
 
 def test_agents_list_uses_shared_tool_helper(monkeypatch) -> None:

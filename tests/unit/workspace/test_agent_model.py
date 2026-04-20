@@ -10,6 +10,7 @@ from agentscope_runtime.engine.schemas.exception import (
 from xclaw.config.config import (
     AgentProfileConfig,
     AgentsRunningConfig,
+    ModelSlotConfig,
     load_agent_config,
     save_agent_config,
 )
@@ -18,9 +19,6 @@ from xclaw.constant import (
     LLM_BACKOFF_CAP,
     LLM_MAX_RETRIES,
 )
-from xclaw.providers.models import ModelSlotConfig
-
-
 @pytest.fixture
 def mock_agent_workspace(tmp_path, monkeypatch):
     """Create a temporary agent workspace for testing."""

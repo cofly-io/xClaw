@@ -11,13 +11,13 @@ from agentscope_runtime.engine.schemas.exception import (
 )
 
 import xclaw.providers.provider_manager as provider_manager_module
+from xclaw.config.config import ModelSlotConfig
 from xclaw.exceptions import ProviderError
+from xclaw.local_models.llamacpp import LlamaCppServerSetupResult
 from xclaw.providers.anthropic_provider import AnthropicProvider
-from xclaw.providers.models import ModelSlotConfig
 from xclaw.providers.openai_provider import OpenAIProvider
 from xclaw.providers.provider import ModelInfo
 from xclaw.providers.provider_manager import ProviderManager
-from xclaw.local_models.llamacpp import LlamaCppServerSetupResult
 
 
 LEGACY_PROVIDER = {
