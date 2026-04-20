@@ -135,11 +135,13 @@ class WecomChannel(BaseChannel):
         self._workspace_dir = (
             Path(workspace_dir).expanduser() if workspace_dir else None
         )
-        # Use workspace-specific media dir if workspace_dir is provided
-        if not media_dir and self._workspace_dir:
+        self._media_dir_config = (
+            Path(media_dir).expanduser() if media_dir else None
+        )
+        if self._media_dir_config:
+            self._media_dir = self._media_dir_config
+        elif self._workspace_dir:
             self._media_dir = self._workspace_dir / "media"
-        elif media_dir:
-            self._media_dir = Path(media_dir).expanduser()
         else:
             self._media_dir = DEFAULT_MEDIA_DIR
         self._max_reconnect_attempts = max_reconnect_attempts
@@ -424,6 +426,7 @@ class WecomChannel(BaseChannel):
                             FileContent(
                                 type=ContentType.FILE,
                                 file_url=path,
+                                filename=filename,
                             ),
                         )
                     else:
@@ -481,6 +484,29 @@ class WecomChannel(BaseChannel):
                                 )
                             else:
                                 text_parts.append("[image: download failed]")
+                    elif itype == "file":
+                        file_info = item.get("file") or {}
+                        url = file_info.get("url") or ""
+                        aes_key = file_info.get("aeskey") or ""
+                        filename = file_info.get("filename") or "file.bin"
+                        if url:
+                            path = await self._download_media(
+                                url,
+                                aes_key=aes_key,
+                                filename_hint=filename,
+                            )
+                            if path:
+                                content_parts.append(
+                                    FileContent(
+                                        type=ContentType.FILE,
+                                        file_url=path,
+                                        filename=filename,
+                                    ),
+                                )
+                            else:
+                                text_parts.append("[file: download failed]")
+                        else:
+                            text_parts.append("[file: no url]")
             else:
                 text_parts.append(f"[{msgtype}]")
 
@@ -1235,6 +1261,57 @@ class WecomChannel(BaseChannel):
             "wecom channel started (bot_id=%s)",
             (self.bot_id or "")[:12],
         )
+
+    def set_workspace(self, workspace, command_registry=None) -> None:
+        """Set workspace and resolve media directory.
+
+        This is called by ChannelManager when the channel is registered.
+        Priority order:
+        1. User-provided config (WECOM_MEDIA_DIR / media_dir param)
+        2. {workspace_dir}/media (e.g. ./workspaces/default/media)
+        3. Global default (e.g. ~/.copaw/media)
+        """
+        # Call parent set_workspace to set _workspace and _command_registry
+        super().set_workspace(workspace, command_registry)
+
+        # User-provided config takes highest priority
+        if self._media_dir_config:
+            self._media_dir = self._media_dir_config
+            logger.info(
+                "wecom media_dir: using user config path=%s",
+                self._media_dir,
+            )
+            return
+
+        if workspace:
+            workspace_dir = workspace.workspace_dir
+            media_dir = workspace_dir / "media"
+            if not media_dir.is_dir():
+                try:
+                    media_dir.mkdir(parents=True, exist_ok=True)
+                    logger.info(
+                        "wecom media_dir: created workspace path=%s",
+                        media_dir,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "wecom media_dir: failed to create path=%s, err=%s",
+                        media_dir,
+                        e,
+                    )
+                    media_dir = DEFAULT_MEDIA_DIR
+            self._media_dir = media_dir
+            logger.info(
+                "wecom media_dir: using workspace path=%s",
+                self._media_dir,
+            )
+        else:
+            # No workspace, use global default
+            self._media_dir = DEFAULT_MEDIA_DIR
+            logger.info(
+                "wecom media_dir: using default path=%s",
+                self._media_dir,
+            )
 
     async def stop(self) -> None:
         if not self.enabled:
