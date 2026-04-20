@@ -438,6 +438,14 @@ export function ChannelDrawer({
                 );
               }}
             </Form.Item>
+            <Form.Item
+              name="at_sender_on_reply"
+              label={t("channels.atSenderOnReply")}
+              tooltip={t("channels.atSenderOnReplyTooltip")}
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
           </>
         );
 
