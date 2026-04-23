@@ -29,6 +29,7 @@ export function useAgentConfig() {
       form.setFieldsValue({
         ...config,
         auto_continue_on_text_only: config.auto_continue_on_text_only ?? false,
+        shell_command_timeout: config.shell_command_timeout ?? 60.0,
       });
       setLanguage(langResp.language);
       setTimezone(tzResp.timezone || "UTC");
