@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import os
 import json
 import re
 from pathlib import Path
@@ -1052,11 +1051,10 @@ class MCPConfig(BaseModel):
         default_factory=lambda: {
             "tavily_search": MCPClientConfig(
                 name="tavily_mcp",
-                # Auto-enable if TAVILY_API_KEY exists in environment
-                enabled=bool(os.getenv("TAVILY_API_KEY")),
+                enabled=False,
                 command="npx",
                 args=["-y", "tavily-mcp@latest"],
-                env={"TAVILY_API_KEY": os.getenv("TAVILY_API_KEY", "")},
+                env={"TAVILY_API_KEY": ""},
             ),
         },
     )
