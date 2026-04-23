@@ -89,9 +89,6 @@ COPY src ./src
 COPY --from=console-builder /app/console/dist/ ./src/xclaw/console/
 RUN pip install --no-cache-dir .[ollama]
 
-# Init working dir with default config.json and HEARTBEAT.md (build time).
-RUN xclaw init --defaults --accept-security
-
 # QwenPaw app port (default 8088). Override at runtime with -e QWENPAW_PORT=3000.
 ENV QWENPAW_PORT=8088
 
