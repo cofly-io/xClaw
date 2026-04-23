@@ -39,6 +39,7 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
@@ -96,6 +97,7 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
@@ -160,6 +162,7 @@ xclaw app --port 8090
 docker run -p 127.0.0.1:8090:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 

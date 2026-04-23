@@ -626,6 +626,7 @@ docker run -e QWENPAW_AUTH_ENABLED=true \
   -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
@@ -646,6 +647,7 @@ services:
     volumes:
       - xclaw-data:/app/working
       - xclaw-secrets:/app/working.secret
+      - xclaw-backups:/app/working.backups
 ```
 
 #### 环境文件 (.env)
@@ -670,7 +672,7 @@ unset QWENPAW_AUTH_ENABLED
 xclaw app
 
 # Docker — 移除 -e 参数即可。以下示例包含用于持久化的卷。
-docker run -p 127.0.0.1:8088:8088 -v xclaw-data:/app/working -v xclaw-secrets:/app/working.secret agentscope/xclaw:latest
+docker run -p 127.0.0.1:8088:8088 -v xclaw-data:/app/working -v xclaw-secrets:/app/working.secret -v xclaw-backups:/app/working.backups agentscope/xclaw:latest
 ```
 
 ### 重置密码

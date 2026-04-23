@@ -42,6 +42,7 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
@@ -99,6 +100,7 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
@@ -167,6 +169,7 @@ Then open `http://127.0.0.1:8090/` in your browser.
 docker run -p 127.0.0.1:8090:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 

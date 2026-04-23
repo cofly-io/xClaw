@@ -179,10 +179,11 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
-然后在浏览器打开 **http://127.0.0.1:8088/** 进入控制台。配置、记忆与 Skills 保存在 `xclaw-data` 卷中；模型配置与 API Key 保存在 `xclaw-secrets` 卷中。传入 API Key 可在 `docker run` 时加 `-e DASHSCOPE_API_KEY=xxx` 或 `--env-file .env`。
+然后在浏览器打开 **http://127.0.0.1:8088/** 进入控制台。配置、记忆与 Skills 保存在 `xclaw-data` 卷中；模型配置与 API Key 保存在 `xclaw-secrets` 卷中；备份归档保存在 `xclaw-backups` 卷中。传入 API Key 可在 `docker run` 时加 `-e DASHSCOPE_API_KEY=xxx` 或 `--env-file .env`。
 
 ---
 

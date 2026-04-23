@@ -888,6 +888,7 @@ Remove the `-e QWENPAW_AUTH_ENABLED=true` parameter:
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 

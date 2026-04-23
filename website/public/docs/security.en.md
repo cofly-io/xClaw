@@ -631,6 +631,7 @@ docker run -e QWENPAW_AUTH_ENABLED=true \
   -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
@@ -651,6 +652,7 @@ services:
     volumes:
       - xclaw-data:/app/working
       - xclaw-secrets:/app/working.secret
+      - xclaw-backups:/app/working.backups
 ```
 
 #### Environment file (.env)
@@ -675,7 +677,7 @@ unset QWENPAW_AUTH_ENABLED
 xclaw app
 
 # Docker — simply remove the -e flag. The example below includes volumes for persistence.
-docker run -p 127.0.0.1:8088:8088 -v xclaw-data:/app/working -v xclaw-secrets:/app/working.secret agentscope/xclaw:latest
+docker run -p 127.0.0.1:8088:8088 -v xclaw-data:/app/working -v xclaw-secrets:/app/working.secret -v xclaw-backups:/app/working.backups agentscope/xclaw:latest
 ```
 
 ### Password reset

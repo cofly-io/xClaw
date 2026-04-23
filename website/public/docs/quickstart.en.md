@@ -206,12 +206,13 @@ docker pull agentscope/xclaw:latest
 docker run -p 127.0.0.1:8088:8088 \
   -v xclaw-data:/app/working \
   -v xclaw-secrets:/app/working.secret \
+  -v xclaw-backups:/app/working.backups \
   agentscope/xclaw:latest
 ```
 
 Then open **http://127.0.0.1:8088/** in your browser for the Console. Config,
 memory, and skills are stored in the `xclaw-data` volume; model configurations
-and API keys are stored in the `xclaw-secrets` volume. To pass API keys, add
+and API keys are stored in the `xclaw-secrets` volume; backup archives are stored in the `xclaw-backups` volume. To pass API keys, add
 `-e DASHSCOPE_API_KEY=xxx` or `--env-file .env` to `docker run`.
 
 ---
