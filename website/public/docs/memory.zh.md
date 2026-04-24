@@ -81,7 +81,7 @@ graph LR
 - **命名格式**：`memory_backup_YYYYMMDD_HHMMSS.md`
 
 > 关于 Auto-Memory、Auto-Dream、Auto-Memory-Search 和 Proactive
-> 的完整工作流介绍，请参阅 [智能体自进化与主动交互](./self-evolving-and-proactive.zh.md)。以下仅补充技术实现细节与配置说明。
+> 的完整工作流介绍，请参阅 [智能体记忆进化与主动交互](./memory-evolving-and-proactive.zh.md)。以下仅补充技术实现细节与配置说明。
 
 ---
 
@@ -335,7 +335,7 @@ Sort --> Results[返回 top-N 结果]
 
 ## 相关页面
 
-- [智能体自进化](./self-evolution.en.md) — Auto-Memory、Auto-Dream、Auto-Memory-Search、Proactive 完整工作流
+- [智能体记忆进化](./memory-evolving-and-proactive.en.md) — Auto-Memory、Auto-Dream、Auto-Memory-Search、Proactive 完整工作流
 - [项目介绍](./intro.zh.md) — 这个项目可以做什么
 - [控制台](./console.zh.md) — 在控制台管理记忆与配置
 - [Skills](./skills.zh.md) — 内置与自定义能力

@@ -386,7 +386,7 @@ xclaw app    # サービスを起動
 | [スキル](https://xclaw.agentscope.io/docs/skills)                          | 機能の拡張とカスタマイズ                             |
 | [MCP](https://xclaw.agentscope.io/docs/mcp)                                | MCPクライアントの管理                               |
 | [メモリ](https://xclaw.agentscope.io/docs/memory)                          | 長期記憶                              |
-| [自己進化＆プロアクティブ](https://xclaw.agentscope.io/docs/self-evolving-and-proactive) | エージェントの自己進化とプロアクティブインタラクション |
+| [記憶進化＆プロアクティブ](https://xclaw.agentscope.io/docs/memory-evolving-and-proactive) | エージェントの記憶進化とプロアクティブインタラクション |
 | [コンテキスト](https://xclaw.agentscope.io/docs/context)                  | コンテキスト管理メカニズム                          |
 | [魔法コマンド](https://xclaw.agentscope.io/docs/commands)                 | AIの応答を待たずに会話状態を制御                     |
 | [ハートビート](https://xclaw.agentscope.io/docs/heartbeat)                 | スケジュールされたチェックインとダイジェスト        |
