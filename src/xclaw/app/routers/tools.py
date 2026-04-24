@@ -18,7 +18,6 @@ from ..utils import schedule_agent_reload
 from ...config import load_config
 
 router = APIRouter(prefix="/tools", tags=["tools"])
-DEFAULT_TOOL_ICON = "🔧"
 
 
 class ToolInfo(BaseModel):
@@ -68,7 +67,7 @@ async def list_tools(
                 enabled=tool_config.enabled,
                 description=tool_config.description,
                 async_execution=tool_config.async_execution,
-                icon=tool_config.icon or DEFAULT_TOOL_ICON,
+                icon=tool_config.icon or "",
             ),
         )
 
@@ -123,7 +122,7 @@ async def toggle_tool(
         enabled=tool_config.enabled,
         description=tool_config.description,
         async_execution=tool_config.async_execution,
-        icon=tool_config.icon or DEFAULT_TOOL_ICON,
+        icon=tool_config.icon or "",
     )
 
 
@@ -177,5 +176,5 @@ async def update_tool_async_execution(
         enabled=tool_config.enabled,
         description=tool_config.description,
         async_execution=tool_config.async_execution,
-        icon=tool_config.icon or DEFAULT_TOOL_ICON,
+        icon=tool_config.icon or "",
     )
