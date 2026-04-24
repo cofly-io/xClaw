@@ -485,15 +485,38 @@ def _finding(
 
 # All checks, executed in order, collecting all matched findings.
 _ShellCheckFn = Callable[..., GuardFinding | None]
-_CHECKS: tuple[_ShellCheckFn, ...] = (
-    _check_command_substitution,
-    _check_obfuscated_flags,
-    _check_backslash_escaped_whitespace,
-    _check_backslash_escaped_operators,
-    _check_newlines,
-    _check_comment_quote_desync,
-    _check_quoted_newline,
+_CHECKS: tuple[tuple[str, _ShellCheckFn], ...] = (
+    ("command_substitution", _check_command_substitution),
+    ("obfuscated_flags", _check_obfuscated_flags),
+    ("backslash_escaped_whitespace", _check_backslash_escaped_whitespace),
+    ("backslash_escaped_operators", _check_backslash_escaped_operators),
+    ("newlines", _check_newlines),
+    ("comment_quote_desync", _check_comment_quote_desync),
+    ("quoted_newline", _check_quoted_newline),
 )
+_CHECK_NAMES: frozenset[str] = frozenset(name for name, _ in _CHECKS)
+
+
+def _load_check_enabled_map() -> dict[str, bool]:
+    """Load per-check enabled config from ``security.tool_guard``.
+
+    Unknown keys are ignored. Missing keys default to disabled.
+    """
+    try:
+        from xclaw.config import load_config
+
+        raw = load_config().security.tool_guard.shell_evasion_checks
+    except Exception:
+        return {}
+
+    if not isinstance(raw, dict):
+        return {}
+
+    enabled: dict[str, bool] = {}
+    for key, value in raw.items():
+        if key in _CHECK_NAMES and isinstance(value, bool):
+            enabled[key] = value
+    return enabled
 
 
 class ShellEvasionGuardian(BaseToolGuardian):
@@ -506,6 +529,7 @@ class ShellEvasionGuardian(BaseToolGuardian):
 
     def __init__(self) -> None:
         super().__init__(name="shell_evasion_guardian")
+        self._check_enabled = _load_check_enabled_map()
 
     def guard(
         self,
@@ -523,7 +547,9 @@ class ShellEvasionGuardian(BaseToolGuardian):
         outside_single_quotes = _extract_outside_single_quotes(command)
 
         findings: list[GuardFinding] = []
-        for check in _CHECKS:
+        for check_name, check in _CHECKS:
+            if not self._check_enabled.get(check_name, False):
+                continue
             # Checks that need unquoted content have 2-arg signature;
             # others take only the raw command.
             try:
