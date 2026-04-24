@@ -12,6 +12,11 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../../contexts/ThemeContext";
+import {
+  ContextMenu,
+  useContextMenu,
+  type ContextMenuItem,
+} from "../../../../components/ContextMenu";
 import styles from "./index.module.less";
 
 interface ChatSessionItemProps {
@@ -27,12 +32,16 @@ interface ChatSessionItemProps {
   editing?: boolean;
   /** Current value of the edit input */
   editValue?: string;
+  /** Whether the chat is pinned (optional; enables pin in context menu when onPin is set) */
+  pinned?: boolean;
   /** Click callback (select session) */
   onClick?: () => void;
   /** Edit / rename callback */
   onEdit?: () => void;
   /** Delete callback */
   onDelete?: () => void;
+  /** Pin / unpin callback (optional) */
+  onPin?: () => void;
   /** Edit input value change callback */
   onEditChange?: (value: string) => void;
   /** Confirm edit callback (Enter key or blur) */
@@ -62,6 +71,40 @@ const ICON_STROKE = "#707070";
 const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
   const { t } = useTranslation();
   const { isDark } = useTheme();
+  const contextMenu = useContextMenu();
+
+  const contextMenuItems: ContextMenuItem[] = useMemo(() => {
+    const items: ContextMenuItem[] = [
+      {
+        key: "open",
+        label: t("chat.contextMenu.open", "Open"),
+        onClick: props.onClick,
+      },
+      {
+        key: "rename",
+        label: t("chat.contextMenu.rename", "Rename"),
+        onClick: props.onEdit,
+      },
+    ];
+    if (props.onPin) {
+      items.push({
+        key: "pin",
+        label: props.pinned
+          ? t("chat.contextMenu.unpin", "Unpin")
+          : t("chat.contextMenu.pin", "Pin"),
+        onClick: props.onPin,
+      });
+    }
+    items.push({ key: "divider-1", label: "", divider: true });
+    items.push({
+      key: "delete",
+      label: t("chat.contextMenu.delete", "Delete"),
+      danger: true,
+      onClick: props.onDelete,
+    });
+    return items;
+  }, [t, props.onClick, props.onEdit, props.onPin, props.onDelete, props.pinned]);
+
   const className = [
     styles.chatSessionItem,
     props.active ? styles.active : "",
@@ -71,7 +114,7 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
     .filter(Boolean)
     .join(" ");
 
-  const ChannelIcon =
+  const ChannelIconComp =
     props.channelKey && CHANNEL_LUCIDE_ICONS[props.channelKey]
       ? CHANNEL_LUCIDE_ICONS[props.channelKey]
       : Bot;
@@ -114,6 +157,7 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
     <div
       className={className}
       onClick={props.editing ? undefined : props.onClick}
+      onContextMenu={props.editing ? undefined : contextMenu.show}
     >
       <Tooltip
         title={
@@ -129,7 +173,7 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <ChannelIcon
+          <ChannelIconComp
             size={14}
             color={isDark ? "rgba(255, 255, 255, 0.55)" : ICON_STROKE}
             strokeWidth={2}
@@ -173,6 +217,13 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
           </div>
         )}
       </div>
+      <ContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        items={contextMenuItems}
+        onClose={contextMenu.hide}
+      />
     </div>
   );
 };

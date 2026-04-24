@@ -1134,6 +1134,23 @@
       "multimodalWarning": "現在のモデルにマルチモーダル機能が検出されていません。画像や動画が正しく処理されない場合があります",
       "imageOnlyAccept": "現在のモデルは画像ファイルのみ対応しています",
       "imageOnlyWarning": "現在のモデルは画像のみ対応しています。動画などの非画像ファイルは正しく処理されない場合があります"
+    },
+    "search": {
+      "title": "チャットを検索",
+      "tooltip": "現在のチャットを検索",
+      "placeholder": "メッセージを検索...",
+      "noResults": "結果が見つかりません",
+      "resultsCount": "{{count}} 件の結果が見つかりました",
+      "userMessage": "ユーザー",
+      "assistantMessage": "アシスタント",
+      "titleMatch": "タイトル"
+    },
+    "contextMenu": {
+      "open": "開く",
+      "rename": "名前を変更",
+      "pin": "ピン留め",
+      "unpin": "ピン留め解除",
+      "delete": "削除"
     }
   },
   "security": {

@@ -1229,6 +1229,23 @@
       "multimodalWarning": "当前模型未检测到多模态能力，图片或视频可能无法被正确处理",
       "imageOnlyAccept": "当前模型仅支持图片文件",
       "imageOnlyWarning": "当前模型仅检测到图片支持，视频等非图片文件可能无法被正确处理"
+    },
+    "search": {
+      "title": "搜索聊天",
+      "tooltip": "搜索当前聊天",
+      "placeholder": "搜索消息...",
+      "noResults": "未找到结果",
+      "resultsCount": "找到 {{count}} 个结果",
+      "userMessage": "用户",
+      "assistantMessage": "助手",
+      "titleMatch": "标题"
+    },
+    "contextMenu": {
+      "open": "打开",
+      "rename": "重命名",
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "delete": "删除"
     }
   },
   "security": {

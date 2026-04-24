@@ -1251,6 +1251,23 @@
       "multimodalWarning": "No multimodal capability detected for current model, images or videos may not be processed correctly",
       "imageOnlyAccept": "Current model only supports image files",
       "imageOnlyWarning": "Current model only supports images, non-image files like videos may not be processed correctly"
+    },
+    "search": {
+      "title": "Search Chat",
+      "tooltip": "Search current chat",
+      "placeholder": "Search messages...",
+      "noResults": "No results found",
+      "resultsCount": "Found {{count}} result(s)",
+      "userMessage": "User",
+      "assistantMessage": "Assistant",
+      "titleMatch": "Title"
+    },
+    "contextMenu": {
+      "open": "Open",
+      "rename": "Rename",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "delete": "Delete"
     }
   },
   "security": {
