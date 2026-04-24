@@ -163,7 +163,6 @@ graph LR
 ```
 
 > **总结**：单独使用任何一种检索方式都存在盲区。混合检索让两种信号互补，无论是「自然语言提问」还是「精确查找」，都能获得可靠的召回结果。
->>>>>>> f48d78fc (docs(website): add self-evolving and proactive documentation (#3755))
 
 ---
 

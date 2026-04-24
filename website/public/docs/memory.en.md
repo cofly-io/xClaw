@@ -211,7 +211,6 @@ Before restoring, the system prompts to create a snapshot of the current state. 
 
 - Backup files may contain sensitive credentials — store them safely and do not share with others
 - Service restart is required after restore for new configuration to take effect
->>>>>>> f48d78fc (docs(website): add self-evolving and proactive documentation (#3755))
 
 ---
 
