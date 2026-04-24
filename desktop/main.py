@@ -64,6 +64,15 @@ if getattr(sys, "frozen", False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+_DESKTOP_DIR = os.path.dirname(os.path.abspath(__file__))
+if _DESKTOP_DIR not in sys.path:
+    sys.path.insert(0, _DESKTOP_DIR)
+
+if sys.platform == "win32":
+    import instance_ipc  # noqa: E402
+else:
+    instance_ipc = None  # type: ignore[assignment, misc]
+
 # ---------------------------------------------------------------------------
 # 加载页 HTML — 后端就绪前显示，避免黑屏
 # ---------------------------------------------------------------------------
@@ -135,7 +144,98 @@ def start_backend(port: int) -> None:
     )
 
 
+_RUNTIME: dict = {
+    "allow_close": False,
+    "window": None,
+    "tray_icon": None,
+    "control_server": None,
+    "hide_hint_shown": False,
+}
+
+
+def _use_windows_tray_shell() -> bool:
+    if sys.platform != "win32":
+        return False
+    if instance_ipc is None:
+        return False
+    v = os.environ.get("XCLAW_DESKTOP_CLASSIC", "").strip().lower()
+    return v not in ("1", "true", "yes")
+
+
+def _tray_icon_candidates() -> list[str]:
+    paths: list[str] = []
+    if getattr(sys, "frozen", False):
+        paths.append(os.path.join(sys._MEIPASS, "icon.ico"))
+        paths.append(os.path.join(os.path.dirname(sys.executable), "icon.ico"))
+    paths.append(os.path.join(BASE_DIR, "icon.ico"))
+    paths.append(os.path.join(_DESKTOP_DIR, "icon.ico"))
+    return paths
+
+
+def _bring_window_forward() -> None:
+    w = _RUNTIME.get("window")
+    if w is None:
+        return
+    try:
+        w.show()
+    except Exception:
+        pass
+
+
+def _quit_desktop() -> None:
+    _RUNTIME["allow_close"] = True
+    icon = _RUNTIME.get("tray_icon")
+    if icon is not None:
+        try:
+            icon.stop()
+        except Exception:
+            pass
+    w = _RUNTIME.get("window")
+    if w is not None:
+        try:
+            w.destroy()
+        except Exception:
+            pass
+
+
+def _start_tray() -> None:
+    import pystray
+    from PIL import Image
+
+    def load_image():
+        for p in _tray_icon_candidates():
+            if os.path.isfile(p):
+                return Image.open(p)
+        return Image.new("RGBA", (32, 32), (24, 100, 255, 255))
+
+    image = load_image().copy()
+
+    def on_show(_icon, _item) -> None:
+        _bring_window_forward()
+
+    def on_quit(_icon, _item) -> None:
+        _quit_desktop()
+
+    menu = pystray.Menu(
+        pystray.MenuItem("打开主窗口", on_show, default=True),
+        pystray.MenuItem("退出 xClaw", on_quit),
+    )
+    tray = pystray.Icon("xclaw_desktop", image, "supOS X 个人助手", menu)
+    _RUNTIME["tray_icon"] = tray
+    threading.Thread(target=tray.run, daemon=True).start()
+
+
 def main() -> None:
+    use_shell = _use_windows_tray_shell()
+    mutex_handle: int | None = None
+    control = None
+
+    if use_shell:
+        is_primary, mutex_handle = instance_ipc.try_acquire_primary_mutex()
+        if not is_primary:
+            instance_ipc.activate_existing_or_notify()
+            return
+
     port = find_free_port()
 
     # ── 1. 后端线程尽早启动，与 webview 初始化并行 ──
@@ -156,6 +256,37 @@ def main() -> None:
         min_size=(900, 600),
         text_select=True,
     )
+    _RUNTIME["window"] = window
+
+    if use_shell:
+        secret = instance_ipc.new_ipc_secret()
+        control = instance_ipc.ControlServer(secret, _bring_window_forward)
+        ctrl_port = control.start()
+        control.write_ipc_file(ctrl_port)
+        _RUNTIME["control_server"] = control
+
+        def on_closing() -> bool:
+            if _RUNTIME["allow_close"]:
+                return True
+            try:
+                window.hide()
+            except Exception:
+                pass
+            if not _RUNTIME.get("hide_hint_shown"):
+                _RUNTIME["hide_hint_shown"] = True
+                ic = _RUNTIME.get("tray_icon")
+                if ic is not None and hasattr(ic, "notify"):
+                    try:
+                        ic.notify(
+                            "xClaw 在后台运行",
+                            "点击托盘图标可重新打开；选择「退出 xClaw」可彻底结束。",
+                        )
+                    except Exception:
+                        pass
+            return False
+
+        window.events.closing += on_closing
+        _start_tray()
 
     def on_backend_ready():
         """后端就绪后在后台线程跳转到真实 URL"""
@@ -170,7 +301,20 @@ def main() -> None:
     # ── 4. 用独立线程等待后端，不阻塞 GUI ──
     threading.Thread(target=on_backend_ready, daemon=True).start()
 
-    webview.start(debug=False)
+    try:
+        webview.start(debug=False)
+    finally:
+        if use_shell:
+            cs = _RUNTIME.get("control_server")
+            if cs is not None:
+                try:
+                    cs.stop()
+                except Exception:
+                    pass
+                _RUNTIME["control_server"] = None
+            instance_ipc.remove_ipc_file()
+            if mutex_handle is not None:
+                instance_ipc.close_mutex(mutex_handle)
 
 
 if __name__ == "__main__":

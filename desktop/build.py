@@ -12,6 +12,12 @@ xClaw 打包脚本。
 
 Windows 打包默认还会把官方便携 Node 解压到 dist/xClaw/node/（与 exe 同级），
 运行时会优先加入 PATH，技能里可直接使用 node/npm。可用 --skip-node-bundle 跳过。
+
+开发迭代想快一点：
+  python desktop/build.py --fast --allow-missing-supos-ak
+  等价于 --no-clean --skip-console --skip-node-bundle（需已存在 console/dist 且已同步到
+  src/copaw/console；否则不要用 --skip-console / --fast）。
+  发版或怀疑缓存坏了时，用默认（带 --clean）全量打包。
 """
 import json
 import os
@@ -21,7 +27,10 @@ import sys
 import tempfile
 import zipfile
 
-from copaw.security.xclaw_env_crypto import encrypt_to_b64
+try:
+    from copaw.security.xclaw_env_crypto import encrypt_to_b64
+except ModuleNotFoundError:  # 部分环境仅安装 xclaw 包名
+    from xclaw.security.xclaw_env_crypto import encrypt_to_b64
 
 # Windows portable Node (LTS) next to xClaw.exe: dist/xClaw/node/
 WIN_NODE_VERSION = "20.18.1"
@@ -243,6 +252,96 @@ def _bundle_portable_node_windows(dist_dir: str, skip: bool) -> None:
     print(f"==> Bundled portable Node -> {dest}")
 
 
+def _find_makensis() -> str:
+    """Locate makensis.exe. PATH first, then common install dirs."""
+    p = shutil.which("makensis")
+    if p:
+        return p
+    for candidate in (
+        r"C:\Program Files (x86)\NSIS\makensis.exe",
+        r"C:\Program Files\NSIS\makensis.exe",
+    ):
+        if os.path.isfile(candidate):
+            return candidate
+    return ""
+
+
+def _read_xclaw_version() -> str:
+    """Parse __version__ from src/xclaw/__version__.py. Returns '' on failure."""
+    version_file = os.path.join(ROOT, "src", "xclaw", "__version__.py")
+    try:
+        with open(version_file, "r", encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return ""
+    import re
+    m = re.search(r'__version__\s*=\s*"([^"]+)"', text)
+    return m.group(1) if m else ""
+
+
+def _build_nsis_installer(skip: bool) -> None:
+    """Pack dist/xClaw/ into a single NSIS installer (LZMA solid compression)."""
+    if skip:
+        print("==> Skipping NSIS installer (--skip-installer)")
+        return
+    if sys.platform != "win32":
+        print("==> Skipping NSIS installer (Windows only)")
+        return
+    if not os.path.isdir(DIST_DIR):
+        print(f"==> Skipping NSIS installer: {DIST_DIR} not found")
+        return
+
+    makensis = _find_makensis()
+    if not makensis:
+        print(
+            "==> WARN: makensis not found; skipping installer build.\n"
+            "    Install NSIS (https://nsis.sourceforge.io) or: winget install NSIS.NSIS\n"
+            "    Or pass --skip-installer to suppress this warning.",
+        )
+        return
+
+    nsi_path = os.path.join(ROOT, "desktop", "xclaw.nsi")
+    if not os.path.isfile(nsi_path):
+        print(f"==> WARN: {nsi_path} missing; skipping installer")
+        return
+
+    # PyInstaller puts datas marked "." under _internal/; NSIS needs icon at
+    # dist/xClaw/icon.ico (referenced by the .nsi MUI_ICON macro).
+    icon_src = os.path.join(ROOT, "desktop", "icon.ico")
+    icon_dst = os.path.join(DIST_DIR, "icon.ico")
+    if os.path.isfile(icon_src) and not os.path.isfile(icon_dst):
+        shutil.copy2(icon_src, icon_dst)
+        print(f"==> Copied icon.ico -> {DIST_DIR} (for installer/shortcut)")
+
+    version = _read_xclaw_version() or "0.0.0"
+    out_exe = os.path.join(ROOT, "dist", f"xClaw-Setup-{version}.exe")
+    # 老产物先删，避免被 NSIS 误认为在用
+    if os.path.isfile(out_exe):
+        try:
+            os.remove(out_exe)
+        except OSError:
+            pass
+
+    print(f"==> Building NSIS installer (lzma solid)... -> {out_exe}")
+    cmd = [
+        makensis,
+        f"/DXCLAW_VERSION={version}",
+        f"/DUNPACKED={DIST_DIR}",
+        f"/DOUTPUT_EXE={out_exe}",
+        nsi_path,
+    ]
+    # NSIS 自带彩色日志；压缩阶段可能沉默几分钟，这是正常的
+    r = subprocess.run(cmd, cwd=ROOT)
+    if r.returncode != 0:
+        print(f"ERROR: makensis failed with exit code {r.returncode}")
+        sys.exit(1)
+    if not os.path.isfile(out_exe):
+        print(f"ERROR: NSIS did not produce {out_exe}")
+        sys.exit(1)
+    size_mb = os.path.getsize(out_exe) / 1024 / 1024
+    print(f"==> Installer built: {out_exe} ({size_mb:.1f} MB)")
+
+
 def _purge_dist_user_data() -> None:
     """Ensure no developer machine data is shipped in dist/xClaw.
 
@@ -308,7 +407,34 @@ def main():
         action="store_true",
         help="Do not download/extract portable Node into dist/xClaw/node/",
     )
+    parser.add_argument(
+        "--skip-installer",
+        action="store_true",
+        help="Do not build NSIS installer at dist/xClaw-Setup-<version>.exe",
+    )
+    parser.add_argument(
+        "--no-clean",
+        action="store_true",
+        help="Omit PyInstaller --clean for faster incremental rebuilds (default: full clean).",
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help=(
+            "Dev shortcut: enables --no-clean, --skip-console, --skip-node-bundle "
+            "(console must already be built and synced to src/copaw/console)."
+        ),
+    )
     args = parser.parse_args()
+
+    if args.fast:
+        args.no_clean = True
+        args.skip_console = True
+        args.skip_node_bundle = True
+        print(
+            "==> Fast mode: --no-clean --skip-console --skip-node-bundle",
+            flush=True,
+        )
 
     supos_ak = resolve_supos_ak(args.supos_ak, args.supos_ak_file)
     if not supos_ak and not args.allow_missing_supos_ak:
@@ -326,19 +452,20 @@ def main():
     else:
         print("==> Skipping console build (--skip-console)", flush=True)
 
-    # 1. 运行 PyInstaller
+    # 1. 运行 PyInstaller（默认 --clean 全量；--no-clean 便于迭代加速）
     print("==> Running PyInstaller...", flush=True)
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "PyInstaller",
-            "desktop/xclaw.spec",
-            "--clean",
-            "--noconfirm",
-        ],
-        cwd=ROOT,
-    )
+    pyinstaller_cmd = [
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "desktop/xclaw.spec",
+        "--noconfirm",
+    ]
+    if not args.no_clean:
+        pyinstaller_cmd.append("--clean")
+    else:
+        print("==> PyInstaller incremental (no --clean)", flush=True)
+    result = subprocess.run(pyinstaller_cmd, cwd=ROOT)
     if result.returncode != 0:
         print("ERROR: PyInstaller failed")
         sys.exit(1)
@@ -378,8 +505,16 @@ def main():
     # 4. 打包前清理 dist 里的用户数据（避免把开发机记录带进安装包）
     _purge_dist_user_data()
 
+    # 5. 用 NSIS 把整个 dist/xClaw/ 压成单 exe 安装器（LZMA solid 压缩）
+    _build_nsis_installer(args.skip_installer)
+
     print(f"\n==> Build complete: {DIST_DIR}")
     print(f"    EXE: {os.path.join(DIST_DIR, 'xClaw.exe')}")
+    version = _read_xclaw_version() or "0.0.0"
+    installer = os.path.join(ROOT, "dist", f"xClaw-Setup-{version}.exe")
+    if os.path.isfile(installer):
+        size_mb = os.path.getsize(installer) / 1024 / 1024
+        print(f"    Installer: {installer} ({size_mb:.1f} MB)")
 
 
 if __name__ == "__main__":

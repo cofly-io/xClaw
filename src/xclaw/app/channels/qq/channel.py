@@ -21,7 +21,10 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    import concurrent.futures
 
 import aiohttp
 
@@ -645,6 +648,7 @@ class QQChannel(BaseChannel):
         media_dir: str = "",
         workspace_dir: Path | None = None,
         max_reconnect_attempts: int = 100,
+        ack_message: str = "",
     ):
         super().__init__(
             process,
@@ -669,6 +673,7 @@ class QQChannel(BaseChannel):
         else:
             self._media_dir = _DEFAULT_MEDIA_DIR
         self._max_reconnect_attempts = max_reconnect_attempts
+        self._ack_message = ack_message
 
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._ws_thread: Optional[threading.Thread] = None
@@ -807,6 +812,7 @@ class QQChannel(BaseChannel):
                 "max_reconnect_attempts",
                 100,
             ),
+            ack_message=getattr(config, "ack_message", ""),
         )
 
     def _resolve_send_path(
@@ -1272,6 +1278,86 @@ class QQChannel(BaseChannel):
         )
 
     # ------------------------------------------------------------------
+    # Instant acknowledgment
+    # ------------------------------------------------------------------
+
+    async def _send_ack_async(
+        self,
+        message_type: str,
+        sender_id: str,
+        msg_id: str,
+        group_openid: str = "",
+        guild_id: str = "",
+        channel_id: str = "",
+    ) -> None:
+        """Send ACK message entirely on the async event loop."""
+        token = await self._get_access_token_async()
+        path, use_seq, seq_key = self._resolve_send_path(
+            message_type,
+            sender_id,
+            channel_id or None,
+            group_openid or None,
+            guild_id=guild_id or None,
+        )
+        await _send_message_async(
+            self._http,
+            token,
+            path,
+            self._ack_message,
+            msg_id or None,
+            use_markdown=False,
+            use_msg_seq=use_seq,
+            seq_key=seq_key,
+        )
+
+    def _schedule_ack(
+        self,
+        message_type: str,
+        sender_id: str,
+        msg_id: str,
+        group_openid: str = "",
+        guild_id: str = "",
+        channel_id: str = "",
+    ) -> None:
+        """Schedule a fire-and-forget ACK from the sync WS thread.
+
+        Sends ``self._ack_message`` as an instant text reply so the
+        user knows the bot received their message. The entire
+        operation (token + HTTP send) runs on the async event loop,
+        so the WS thread is never blocked. Failure is logged at
+        debug level but never interrupts normal message handling.
+        """
+        if not self._ack_message:
+            return
+        loop = self._loop
+        if not (loop and loop.is_running() and self._http):
+            return
+        coro = self._send_ack_async(
+            message_type,
+            sender_id,
+            msg_id,
+            group_openid=group_openid,
+            guild_id=guild_id,
+            channel_id=channel_id,
+        )
+        try:
+            fut = asyncio.run_coroutine_threadsafe(coro, loop)
+            fut.add_done_callback(self._on_ack_done)
+        except Exception:
+            logger.debug(
+                "qq ack failed to schedule for %s sender=%s",
+                message_type,
+                sender_id[:16] if sender_id else "?",
+            )
+
+    @staticmethod
+    def _on_ack_done(fut: "concurrent.futures.Future[None]") -> None:
+        """Silently log exceptions from fire-and-forget ACK futures."""
+        exc = fut.exception()
+        if exc:
+            logger.debug("qq ack send error: %r", exc)
+
+    # ------------------------------------------------------------------
     # WebSocket: message event handling
     # ------------------------------------------------------------------
 
@@ -1346,6 +1432,14 @@ class QQChannel(BaseChannel):
         }
         for key in spec.extra_meta_keys:
             meta[key] = d.get(key, "")
+        self._schedule_ack(
+            spec.message_type,
+            sender,
+            msg_id,
+            group_openid=d.get("group_openid", ""),
+            guild_id=d.get("guild_id", ""),
+            channel_id=d.get("channel_id", ""),
+        )
 
         # Extract quoted message (text + attachments) from msg_elements.
         text_parts: List[str] = []

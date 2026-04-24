@@ -11,12 +11,22 @@ import sys
 
 block_cipher = None
 ROOT = os.path.dirname(os.path.abspath(SPECPATH))
+DESKTOP_DIR = os.path.join(ROOT, "desktop")
 
 # 用 subprocess 获取包路径，避免 import 触发副作用（pygame/litellm 等）
+# 兼容 namespace package（__file__ 为 None），此时取 __path__[0]
 def _get_pkg_dir(pkg_name):
+    code = (
+        f"import {pkg_name}, os\n"
+        f"f = getattr({pkg_name}, '__file__', None)\n"
+        f"if f:\n"
+        f"    print(os.path.dirname(f))\n"
+        f"else:\n"
+        f"    paths = list(getattr({pkg_name}, '__path__', []))\n"
+        f"    print(paths[0] if paths else '')\n"
+    )
     result = subprocess.run(
-        [sys.executable, "-c",
-         f"import {pkg_name}, os; print(os.path.dirname({pkg_name}.__file__))"],
+        [sys.executable, "-c", code],
         capture_output=True, text=True
     )
     return result.stdout.strip()
@@ -28,6 +38,11 @@ reme_pkg = _get_pkg_dir("reme")
 datas = []
 
 # copaw 数据
+if not copaw_pkg or not os.path.isabs(copaw_pkg):
+    raise SystemExit(
+        f"ERROR: cannot resolve 'copaw' package directory (got {copaw_pkg!r}). "
+        "Make sure 'copaw' is importable in the current Python environment."
+    )
 for subpath, target in [
     ("console", os.path.join("copaw", "console")),
     (os.path.join("agents", "skills"), os.path.join("copaw", "agents", "skills")),
@@ -42,6 +57,11 @@ for subpath, target in [
 reme_config_dir = os.path.join(reme_pkg, "config")
 if os.path.isdir(reme_config_dir):
     datas.append((reme_config_dir, os.path.join("reme", "config")))
+
+# 托盘图标（与 EXE 图标同源，供 pystray 加载）
+_icon = os.path.join(DESKTOP_DIR, "icon.ico")
+if os.path.isfile(_icon):
+    datas.append((_icon, "."))
 
 # 包 metadata（fastmcp 等需要 importlib.metadata 查版本）
 from PyInstaller.utils.hooks import copy_metadata
@@ -66,7 +86,7 @@ for _dll in [
 # ─── Analysis ───
 a = Analysis(
     [os.path.join(ROOT, "desktop", "main.py")],
-    pathex=[],
+    pathex=[DESKTOP_DIR, ROOT],
     binaries=_binaries,
     datas=datas,
     hiddenimports=[
@@ -78,18 +98,26 @@ a = Analysis(
         "uvicorn.protocols.websockets.auto",
         "uvicorn.protocols.websockets.websockets_impl",
         "uvicorn.lifespan.on",
-        # webview
+        # webview + tray
         "webview",
-        # copaw channels（动态 importlib.import_module）
-        "copaw.app.channels.console",
-        "copaw.app.channels.console.channel",
-        "copaw.app.channels.dingtalk",
-        "copaw.app.channels.discord_",
-        "copaw.app.channels.feishu",
-        "copaw.app.channels.imessage",
-        "copaw.app.channels.qq",
-        "copaw.app.channels.telegram",
-        "copaw.app.channels.voice",
+        "pystray",
+        "pystray._win32",
+        "instance_ipc",
+        # xclaw channels（动态 importlib.import_module）
+        # 仅保留中国大陆使用的 channel，其余（discord/telegram/imessage/matrix/
+        # mattermost）不打包，避免引入 discord-py / python-telegram-bot /
+        # matrix-nio 等大依赖。如需启用海外 channel，加回 hiddenimports 并
+        # 从下方 excludes 移除即可。
+        "xclaw.app.channels.console",
+        "xclaw.app.channels.console.channel",
+        "xclaw.app.channels.dingtalk",
+        "xclaw.app.channels.feishu",
+        "xclaw.app.channels.mqtt",
+        "xclaw.app.channels.qq",
+        "xclaw.app.channels.voice",
+        "xclaw.app.channels.wecom",
+        "xclaw.app.channels.weixin",
+        "xclaw.app.channels.xiaoyi",
     ],
     hookspath=[],
     runtime_hooks=[os.path.join(ROOT, "desktop", "hook-block-sandbox.py")],
@@ -97,6 +125,16 @@ a = Analysis(
         "tkinter", "matplotlib", "scipy", "IPython",
         "jupyter", "notebook", "pytest", "sphinx",
         "agentscope_runtime.sandbox",
+        # ─── 非中国大陆 channel：目录与其顶层依赖库一起排除 ───
+        "xclaw.app.channels.discord_",
+        "xclaw.app.channels.imessage",
+        "xclaw.app.channels.telegram",
+        "xclaw.app.channels.matrix",
+        "xclaw.app.channels.mattermost",
+        # 顶层库（防止从别处被间接拉进）
+        "discord",          # discord-py
+        "telegram",         # python-telegram-bot
+        "nio",              # matrix-nio
     ],
     noarchive=False,
     cipher=block_cipher,
