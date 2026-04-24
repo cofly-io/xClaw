@@ -40,6 +40,8 @@ Your personal AI assistant — easy to install, deploy locally or in the cloud, 
 >
 > **Every channel** — DingTalk, Feishu, WeChat, Discord, Telegram, and more. One xClaw, connect as needed.
 >
+> **Self-evolving & proactive** — Agent learns from interactions, reflects on experience, and proactively serves you. Gets smarter the more you use it.
+>
 > <details>
 > <summary><b>What you can do with xClaw</b></summary>
 >
@@ -370,6 +372,7 @@ xClaw can run LLMs entirely on your machine — no API keys or cloud services re
 | [Skills](https://xclaw.agentscope.io/docs/skills)                      | Extend and customize capabilities               |
 | [MCP](https://xclaw.agentscope.io/docs/mcp)                            | Manage MCP clients                               |
 | [Memory](https://xclaw.agentscope.io/docs/memory)                     | Long-term memory                     |
+| [Self-Evolving & Proactive](https://xclaw.agentscope.io/docs/self-evolving-and-proactive) | Agent self-evolution and proactive interaction |
 | [Context](https://xclaw.agentscope.io/docs/context)                   | Context management mechanism                     |
 | [Magic commands](https://xclaw.agentscope.io/docs/commands)           | Control conversation state without waiting for the AI |
 | [Heartbeat](https://xclaw.agentscope.io/docs/heartbeat)                | Scheduled check-in and digest                    |
