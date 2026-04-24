@@ -10,13 +10,22 @@ import {
 import { LinkOutlined } from "@ant-design/icons";
 import type { FormInstance } from "antd";
 import { useTranslation } from "react-i18next";
-import {
-  ACP_DEFAULT_STDIO_BUFFER_LIMIT_BYTES,
-  type ACPAgentConfig,
-  type ACPToolParseMode,
-} from "../../../../api/types";
 import { getWebsiteLang } from "../../../../layouts/constants";
 import styles from "../../../Control/Channels/index.module.less";
+
+type ACPToolParseMode = "call_title" | "update_detail" | "call_detail";
+
+interface ACPAgentConfig {
+  enabled?: boolean;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  trusted?: boolean;
+  tool_parse_mode?: ACPToolParseMode;
+  stdio_buffer_limit_bytes?: number;
+}
+
+const ACP_DEFAULT_STDIO_BUFFER_LIMIT_BYTES = 1024 * 1024;
 
 interface ACPDrawerProps {
   open: boolean;
