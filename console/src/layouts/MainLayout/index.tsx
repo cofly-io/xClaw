@@ -14,6 +14,7 @@ import {
   Radio,
   Save,
   Sparkles,
+  SquareTerminal,
   type LucideIcon,
 } from "lucide-react";
 import Sidebar from "../Sidebar";
@@ -30,6 +31,7 @@ import SkillsHubPage from "../../pages/Agent/SkillsHub";
 import ToolsPage from "../../pages/Agent/Tools";
 import WorkspacePage from "../../pages/Agent/Workspace";
 import MCPPage from "../../pages/Agent/MCP";
+import ACPPage from "../../pages/Agent/ACP";
 import ModelsPage from "../../pages/Settings/Models";
 import EnvironmentsPage from "../../pages/Settings/Environments";
 import LoginPage from "../../pages/Login";
@@ -49,6 +51,7 @@ const ALL_MORE_MENU_KEYS = [
   "skills",
   "tools",
   "mcp",
+  "acp",
   "agent-config",
   "agents",
   "models",
@@ -66,6 +69,7 @@ const MORE_MENU_KEYS = [
   "workspace",
   "skills",
   "tools",
+  "acp",
   "agent-config",
   "agents",
   "models",
@@ -88,6 +92,7 @@ const MORE_MENU_ICON_MAP: Record<VisibleMoreMenuKey, LucideIcon> = {
   workspace: FolderOpen,
   skills: Sparkles,
   tools: Hammer,
+  acp: SquareTerminal,
   "agent-config": Play,
   agents: Bot,
   models: Cpu,
@@ -126,6 +131,8 @@ export default function MainLayout() {
         return <ToolsPage />;
       case "mcp":
         return <MCPPage />;
+      case "acp":
+        return <ACPPage />;
       case "agent-config":
         return <AgentConfigPage />;
       case "agents":
@@ -200,6 +207,8 @@ export default function MainLayout() {
                 />
                 <Route path="/tools" element={<ToolsPage />} />
                 <Route path="/mcp" element={<MCPPage />} />
+                <Route path="/acp" element={<ACPPage />} />
+                <Route path="/ACP" element={<Navigate to="/acp" replace />} />
                 <Route path="/workspace" element={<WorkspacePage />} />
                 <Route path="/agents" element={<AgentsPage />} />
                 <Route path="/models" element={<ModelsPage />} />

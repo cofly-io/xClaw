@@ -38,6 +38,7 @@
     "skillPool": "Пул навыков",
     "tools": "Инструменты",
     "mcp": "MCP",
+    "acp": "ACP",
     "agentConfig": "Конфигурация",
     "settings": "Настройки",
     "models": "Модели",
@@ -1441,6 +1442,7 @@
     "agentKey": "Ключ агента",
     "agentKeyRequired": "Пожалуйста, введите ключ агента",
     "agentKeyInvalid": "Ключ агента может содержать только буквы, цифры, подчёркивания и дефисы",
+    "agentKeyExists": "Этот ключ агента уже существует",
     "enabled": "Включено",
     "command": "Команда",
     "commandRequired": "Пожалуйста, введите команду",
@@ -1460,7 +1462,11 @@
     "docsHelp": "Открыть документацию по ACP и перейти к разделу \"How to configure external runners\"",
     "notSet": "Не задано",
     "configSaved": "Конфигурация ACP сохранена",
-    "configFailed": "Не удалось сохранить конфигурацию ACP"
+    "configFailed": "Не удалось сохранить конфигурацию ACP",
+    "deleteTitle": "Удалить {{name}}",
+    "deleteConfirm": "Удалить этот ACP агент? Это действие нельзя отменить.",
+    "deleteSuccess": "ACP агент удалён",
+    "deleteFailed": "Не удалось удалить ACP агент"
   },
   "backup": {
     "title": "Резервные копии",
