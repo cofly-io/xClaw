@@ -60,6 +60,7 @@ from ..constant import (
     WORKING_DIR,
 )
 from ..agents.memory import BaseMemoryManager
+from ..providers.model_capability_cache import get_capability_cache
 
 if TYPE_CHECKING:
     from ..config.config import AgentProfileConfig
@@ -777,6 +778,18 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
 
         return msg
 
+    def _get_model_key(self) -> str | None:
+        """Return the capability-cache key for the active model."""
+        model = getattr(self, "model", None)
+        return getattr(model, "model_key", None)
+
+    def _model_rejects_media(self) -> bool:
+        """Check the capability cache for a learned ``rejects_media`` flag."""
+        key = self._get_model_key()
+        if key is None:
+            return False
+        return get_capability_cache().get(key, "rejects_media", False)
+
     def _proactive_strip_media_blocks(self) -> int:
         """Proactively strip media blocks from memory before model call.
 
@@ -796,6 +809,7 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
             return
         setattr(formatter, "_qwenpaw_force_strip_media", enabled)
 
+    # pylint: disable=too-many-branches
     async def _reasoning(
         self,
         tool_choice: Literal["auto", "none", "required"] | None = None,
@@ -803,9 +817,11 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
         """Override reasoning with proactive media filtering.
 
         1. Proactive layer: if the model does not support
-           multimodal, strip media blocks *before* calling.
+           multimodal **or** the capability cache records a previous
+           ``rejects_media`` finding, strip media blocks *before* calling.
         2. Passive layer: if the model call still fails with a
-           bad-request / media error, strip remaining blocks and retry.
+           bad-request / media error, strip remaining blocks and retry,
+           then record the finding in the capability cache.
         3. If the model IS marked as multimodal but still errors on
            media, log a warning about possibly inaccurate capability flag.
 
@@ -813,8 +829,13 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
         interception active.
         """
         # --- Proactive filtering layer ---
-        if not get_active_model_supports_multimodal():
+        should_strip = (
+            not get_active_model_supports_multimodal()
+            or self._model_rejects_media()
+        )
+        if should_strip:
             if self._uses_request_time_media_normalization():
+                self._set_formatter_media_strip(True)
                 logger.debug(
                     "Formatter will strip media from copied messages "
                     "before reasoning.",
@@ -835,6 +856,8 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
             if not self._is_bad_request_or_media_error(e):
                 raise
 
+            model_key = self._get_model_key()
+
             if self._uses_request_time_media_normalization():
                 if get_active_model_supports_multimodal():
                     logger.warning(
@@ -849,7 +872,14 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
                         "Retrying with request-time media stripping.",
                         e,
                     )
-                    return await super()._reasoning(tool_choice=tool_choice)
+                    msg = await super()._reasoning(tool_choice=tool_choice)
+                    if model_key:
+                        get_capability_cache().learn(
+                            model_key,
+                            "rejects_media",
+                            True,
+                        )
+                    return msg
                 finally:
                     self._set_formatter_media_strip(False)
 
@@ -857,8 +887,6 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
             if n_stripped == 0:
                 raise
 
-            # If the model is marked as multimodal but still
-            # errored, the capability flag may be wrong.
             if get_active_model_supports_multimodal():
                 logger.warning(
                     "Model marked multimodal but "
@@ -873,6 +901,15 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
                 n_stripped,
             )
             msg = await super()._reasoning(tool_choice=tool_choice)
+            if model_key:
+                get_capability_cache().learn(
+                    model_key,
+                    "rejects_media",
+                    True,
+                )
+        finally:
+            if should_strip and self._uses_request_time_media_normalization():
+                self._set_formatter_media_strip(False)
 
         return await self._auto_continue_if_text_only(msg, tool_choice)
 
@@ -881,10 +918,12 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
         """Override summarizing with proactive media filtering,
         passive fallback, and tool_use block filtering.
 
-        1. Proactive layer: if the model does not support multimodal,
+        1. Proactive layer: if the model does not support multimodal
+           **or** the capability cache records ``rejects_media``,
            strip media blocks *before* calling the model.
         2. Passive layer: if the model call still fails with a
-           bad-request / media error, strip remaining blocks and retry.
+           bad-request / media error, strip remaining blocks and retry,
+           then record the finding in the capability cache.
         3. If the model IS marked as multimodal but still errors on
            media, log a warning about possibly inaccurate capability flag.
 
@@ -893,8 +932,13 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
         ``print`` can strip tool_use blocks from streaming chunks.
         """
         # --- Proactive filtering layer ---
-        if not get_active_model_supports_multimodal():
+        should_strip = (
+            not get_active_model_supports_multimodal()
+            or self._model_rejects_media()
+        )
+        if should_strip:
             if self._uses_request_time_media_normalization():
+                self._set_formatter_media_strip(True)
                 logger.debug(
                     "Formatter will strip media from copied messages "
                     "before summarizing.",
@@ -917,6 +961,8 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
                 if not self._is_bad_request_or_media_error(e):
                     raise
 
+                model_key = self._get_model_key()
+
                 if self._uses_request_time_media_normalization():
                     if get_active_model_supports_multimodal():
                         logger.warning(
@@ -932,6 +978,12 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
                             e,
                         )
                         msg = await super()._summarizing()
+                        if model_key:
+                            get_capability_cache().learn(
+                                model_key,
+                                "rejects_media",
+                                True,
+                            )
                     finally:
                         self._set_formatter_media_strip(False)
                 else:
@@ -953,8 +1005,16 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
                         n_stripped,
                     )
                     msg = await super()._summarizing()
+                    if model_key:
+                        get_capability_cache().learn(
+                            model_key,
+                            "rejects_media",
+                            True,
+                        )
         finally:
             self._in_summarizing = False
+            if should_strip and self._uses_request_time_media_normalization():
+                self._set_formatter_media_strip(False)
 
         return self._strip_tool_use_from_msg(msg)
 
