@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Optional
 from agentscope_runtime.engine.schemas.exception import ConfigurationException
 
+from ...config.timezone import normalize_tz
 from ...config.utils import load_config
 
 from .service_manager import ServiceDescriptor, ServiceManager
@@ -253,7 +254,10 @@ class Workspace:
                     "channel_manager": ws._service_manager.services.get(
                         "channel_manager",
                     ),
-                    "timezone": load_config().user_timezone or "UTC",
+                    "timezone": normalize_tz(
+                        load_config().user_timezone or "UTC",
+                    )
+                    or "UTC",
                     "agent_id": ws.agent_id,
                 },
                 start_method="start",
