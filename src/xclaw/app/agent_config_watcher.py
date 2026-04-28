@@ -33,11 +33,13 @@ def _heartbeat_hash(hb: Optional[HeartbeatConfig]) -> int:
 
 
 def _memory_job_hash(memory_summary: Optional[Any]) -> int:
-    """Hash of memory job config for change detection."""
+    """Hash of memory job config (dream + distill) for change detection."""
     if memory_summary is None:
         return hash("None")
-    cron_expr = getattr(memory_summary, "dream_cron", "")
-    return hash(str(cron_expr))
+    dream_cron = getattr(memory_summary, "dream_cron", "")
+    distill_enabled = getattr(memory_summary, "distill_enabled", True)
+    distill_cron = getattr(memory_summary, "distill_cron", "")
+    return hash(f"{dream_cron}|{distill_enabled}|{distill_cron}")
 
 
 class AgentConfigWatcher:
@@ -131,7 +133,7 @@ class AgentConfigWatcher:
                 agent_config.heartbeat,
             )
             self._last_memory_job_hash = _memory_job_hash(
-                getattr(agent_config, "memory_summary", None),
+                getattr(agent_config.running, "memory_summary", None),
             )
         except Exception:
             logger.exception(
@@ -251,24 +253,39 @@ class AgentConfigWatcher:
             self._last_heartbeat_hash = new_hb_hash
 
     async def _apply_memory_job_change(self, agent_config: Any) -> None:
-        """Update memory job hash and reschedule if changed."""
-        new_memory_summary = getattr(agent_config, "memory_summary", None)
+        """Update memory job hash and reschedule dream/distill if changed."""
+        new_memory_summary = getattr(
+            agent_config.running, "memory_summary", None
+        )
         new_memory_job_hash = _memory_job_hash(new_memory_summary)
         if (
             self._cron_manager is not None
             and new_memory_job_hash != self._last_memory_job_hash
         ):
             self._last_memory_job_hash = new_memory_job_hash
+            # Reschedule dream job
             try:
-                await self._cron_manager.reschedule_memory()
+                await self._cron_manager.reschedule_dream()
                 logger.info(
                     f"AgentConfigWatcher ({self._agent_id}): "
-                    f"memory job rescheduled",
+                    f"dream job rescheduled",
                 )
             except Exception:
                 logger.exception(
                     f"AgentConfigWatcher ({self._agent_id}): "
-                    f"failed to reschedule memory job",
+                    f"failed to reschedule dream job",
+                )
+            # Reschedule distill job
+            try:
+                await self._cron_manager.reschedule_distill()
+                logger.info(
+                    f"AgentConfigWatcher ({self._agent_id}): "
+                    f"distill job rescheduled",
+                )
+            except Exception:
+                logger.exception(
+                    f"AgentConfigWatcher ({self._agent_id}): "
+                    f"failed to reschedule distill job",
                 )
         else:
             self._last_memory_job_hash = new_memory_job_hash

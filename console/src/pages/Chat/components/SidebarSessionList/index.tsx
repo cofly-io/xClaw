@@ -36,16 +36,20 @@ function getBackendId(session: ExtendedSession): string | null {
 }
 
 function sessionSortTs(s: ExtendedSession): number {
+  const updated = s.updatedAt ? new Date(s.updatedAt).getTime() : NaN;
+  if (!Number.isNaN(updated)) return updated;
+  if (typeof s.updateAt === "number") return s.updateAt;
   const created = s.createdAt ? new Date(s.createdAt).getTime() : NaN;
   if (!Number.isNaN(created)) return created;
-  if (typeof s.updateAt === "number") return s.updateAt;
   return Date.now();
 }
 
 function groupSortTs(s: ExtendedSession): number {
+  const updated = s.updatedAt ? new Date(s.updatedAt).getTime() : NaN;
+  if (!Number.isNaN(updated)) return updated;
+  if (typeof s.updateAt === "number") return s.updateAt;
   const created = s.createdAt ? new Date(s.createdAt).getTime() : NaN;
   if (!Number.isNaN(created)) return created;
-  if (typeof s.updateAt === "number") return s.updateAt;
   return Date.now();
 }
 

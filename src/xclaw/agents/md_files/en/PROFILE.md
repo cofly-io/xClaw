@@ -2,6 +2,7 @@
 summary: "Agent identity and user profile"
 read_when:
   - Bootstrapping a workspace manually
+  - At the start of each conversation
 ---
 
 ## Identity
@@ -13,18 +14,30 @@ read_when:
 - **Vibe:**
   *(how do you come across? sharp? warm? chaotic? calm?)*
 - **Other:**
-  * Other content set by the user *
+  *(Other content set by the user)*
 
 
 ## User Profile
 
-*Learn about the person you're helping. Update this as you go.*
+*Learn about the person you're helping. The system periodically distills experiences from conversations and updates this file automatically.*
 
-- **Name:**
-- **What to call them:**
-- **Pronouns:** *(optional)*
-- **Notes:**
+### Background
 
-### Context
+- **Industry:** *TBD*
+- **Role:** *TBD*
+- **Expertise:** *TBD*
 
-*(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)*
+### Core Preferences
+
+- **Code style:** *TBD*
+- **Response style:** *TBD*
+- **Tool preference:** *TBD*
+
+### Successful Experiences
+
+*The following experiences are automatically distilled from conversation history:*
+
+1. *None yet - will accumulate with usage*
+
+---
+*This file is maintained by the experience distillation system, but can also be edited manually*

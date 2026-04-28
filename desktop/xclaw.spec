@@ -31,25 +31,29 @@ def _get_pkg_dir(pkg_name):
     )
     return result.stdout.strip()
 
-copaw_pkg = _get_pkg_dir("copaw")
+xclaw_pkg = _get_pkg_dir("xclaw")
+legacy_copaw_pkg = _get_pkg_dir("copaw")
 reme_pkg = _get_pkg_dir("reme")
 
 # ─── 收集数据文件 ───
 datas = []
 
-# copaw 数据
-if not copaw_pkg or not os.path.isabs(copaw_pkg):
+# xclaw/copaw 数据（优先 xclaw，兼容旧包名 copaw）
+pkg_dir = xclaw_pkg if (xclaw_pkg and os.path.isabs(xclaw_pkg)) else legacy_copaw_pkg
+pkg_name = "xclaw" if pkg_dir == xclaw_pkg else "copaw"
+if not pkg_dir or not os.path.isabs(pkg_dir):
     raise SystemExit(
-        f"ERROR: cannot resolve 'copaw' package directory (got {copaw_pkg!r}). "
-        "Make sure 'copaw' is importable in the current Python environment."
+        f"ERROR: cannot resolve package directory for xclaw/copaw "
+        f"(xclaw={xclaw_pkg!r}, copaw={legacy_copaw_pkg!r}). "
+        "Make sure 'xclaw' (preferred) or 'copaw' is importable in the current Python environment."
     )
 for subpath, target in [
-    ("console", os.path.join("copaw", "console")),
-    (os.path.join("agents", "skills"), os.path.join("copaw", "agents", "skills")),
-    ("tokenizer", os.path.join("copaw", "tokenizer")),
-    (os.path.join("agents", "md_files"), os.path.join("copaw", "agents", "md_files")),
+    ("console", os.path.join(pkg_name, "console")),
+    (os.path.join("agents", "skills"), os.path.join(pkg_name, "agents", "skills")),
+    ("tokenizer", os.path.join(pkg_name, "tokenizer")),
+    (os.path.join("agents", "md_files"), os.path.join(pkg_name, "agents", "md_files")),
 ]:
-    full = os.path.join(copaw_pkg, subpath)
+    full = os.path.join(pkg_dir, subpath)
     if os.path.exists(full):
         datas.append((full, target))
 
@@ -65,9 +69,9 @@ if os.path.isfile(_icon):
 
 # 包 metadata（fastmcp 等需要 importlib.metadata 查版本）
 from PyInstaller.utils.hooks import copy_metadata
-for pkg_name in ["fastmcp", "agentscope", "agentscope_runtime", "copaw"]:
+for meta_pkg in ["fastmcp", "agentscope", "agentscope_runtime", "xclaw", "copaw"]:
     try:
-        datas += copy_metadata(pkg_name)
+        datas += copy_metadata(meta_pkg)
     except Exception:
         pass
 

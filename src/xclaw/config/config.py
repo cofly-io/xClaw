@@ -604,6 +604,47 @@ class MemorySummaryConfig(BaseModel):
         ),
     )
 
+    # Experience distillation settings
+    distill_enabled: bool = Field(
+        default=True,
+        description=(
+            "Whether to enable experience distillation. When enabled, the system "
+            "periodically analyzes user interactions to extract patterns, "
+            "preferences, and successful experiences into PROFILE.md."
+        ),
+    )
+
+    distill_cron: str = Field(
+        default="0 6 * * 0",
+        description=(
+            "Cron expression for experience distillation job. Default runs "
+            "weekly at 6 AM on Sunday. Set to empty string to disable. "
+            "Distillation extracts user patterns and successful experiences "
+            "from recent sessions into PROFILE.md."
+        ),
+    )
+
+    distill_max_experiences: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description=(
+            "Maximum number of top experiences to keep in the hot knowledge "
+            "layer (PROFILE.md). Older or lower-confidence experiences are "
+            "moved to the warm knowledge layer (experiences/ directory)."
+        ),
+    )
+
+    distill_lookback_days: int = Field(
+        default=7,
+        ge=1,
+        le=30,
+        description=(
+            "Number of days to look back when distilling experiences from "
+            "session history."
+        ),
+    )
+
 
 class AgentsRunningConfig(BaseModel):
     """Agent runtime behavior configuration."""

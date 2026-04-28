@@ -19,16 +19,30 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
 
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.12);
+    background: transparent;
     border-radius: 4px;
   }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.listWrap:hover .list {
+  scrollbar-width: thin;
+  scrollbar-color: #bfbfbf80 transparent;
+}
+
+.listWrap:hover .list::-webkit-scrollbar-thumb {
+  background: #bfbfbf80;
 }
 
 .groupHeader {
@@ -46,9 +60,7 @@
     color: rgba(255, 255, 255, 0.55);
   }
 
-  .list {
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.18);
-    }
+  .listWrap:hover .list::-webkit-scrollbar-thumb {
+    background: #bfbfbf80;
   }
 }

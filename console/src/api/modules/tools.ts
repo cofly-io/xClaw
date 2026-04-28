@@ -2,6 +2,7 @@ import { request } from "../request";
 
 export interface ToolInfo {
   name: string;
+  icon: string;
   enabled: boolean;
   description: string;
   async_execution: boolean;

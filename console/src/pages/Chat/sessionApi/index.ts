@@ -270,9 +270,7 @@ const chatSpecToSession = (chat: ChatSpec): ExtendedSession => {
   const updateAt = chat.updated_at
     ? new Date(chat.updated_at).getTime()
     : Date.now();
-  const groupTs = chat.created_at
-    ? new Date(chat.created_at).getTime()
-    : updateAt;
+  const groupTs = updateAt;
   return {
     id: chat.id,
     name: (chat as ChatSpec & { name?: string }).name || DEFAULT_SESSION_NAME,

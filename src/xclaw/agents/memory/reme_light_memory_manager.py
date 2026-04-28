@@ -9,7 +9,7 @@ import os
 import platform
 import shutil
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -532,6 +532,247 @@ See: https://docs.trychroma.com/docs/overview/troubleshooting#sqlite
         except Exception as e:
             logger.error("dream-based memory optimization failed: %s", repr(e))
             raise
+
+    # ------------------------------------------------------------------
+    # Experience distillation
+    # ------------------------------------------------------------------
+
+    async def distill_experience(self, **kwargs) -> None:
+        """
+        Run experience distillation: analyze recent sessions and extract
+        user patterns, preferences, and successful experiences into PROFILE.md.
+
+        This creates a "hot knowledge" layer that is always loaded into the
+        system prompt, enabling personalized responses.
+        """
+        logger.info("Running experience distillation")
+
+        self._prepare_model_formatter()
+
+        agent_config = load_agent_config(self.agent_id)
+        memory_summary = agent_config.running.memory_summary
+
+        if not memory_summary.distill_enabled:
+            logger.info("Experience distillation is disabled, skipping")
+            return
+
+        set_current_workspace_dir(Path(self.working_dir))
+        recent_max_bytes = (
+            agent_config.running.tool_result_compact.recent_max_bytes
+        )
+        set_current_recent_max_bytes(recent_max_bytes)
+
+        language = getattr(agent_config, "language", "zh")
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        lookback_days = memory_summary.distill_lookback_days
+        max_experiences = memory_summary.distill_max_experiences
+
+        # Collect recent memory files for context
+        recent_memory_files = self._get_recent_memory_files(lookback_days)
+
+        # Build the distillation prompt
+        query_text = self._get_distill_prompt(
+            language=language,
+            current_date=current_date,
+            lookback_days=lookback_days,
+            max_experiences=max_experiences,
+            recent_memory_files=recent_memory_files,
+        )
+
+        if not query_text.strip():
+            logger.debug("Distillation skipped: empty query")
+            return
+
+        # Ensure backup directory exists
+        backup_path = Path(self.working_dir).absolute() / "backup"
+        backup_path.mkdir(parents=True, exist_ok=True)
+
+        # Backup existing PROFILE.md if it exists
+        profile_file = Path(self.working_dir) / "PROFILE.md"
+        if profile_file.exists():
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_filename = f"profile_backup_{timestamp}.md"
+            backup_file = backup_path / backup_filename
+            try:
+                shutil.copyfile(profile_file, backup_file)
+                logger.info(f"Created PROFILE.md backup: {backup_file}")
+            except Exception as e:
+                logger.error(f"Failed to create PROFILE.md backup: {e}")
+        else:
+            logger.debug("No existing PROFILE.md file to backup")
+
+        # Create a ReActAgent for distillation
+        distill_agent = ReActAgent(
+            name="ExperienceDistiller",
+            model=self.chat_model,
+            sys_prompt=(
+                "You are an Experience Distiller specialized in extracting "
+                "user patterns, preferences, and successful work experiences "
+                "from conversation history. Your goal is to create a concise "
+                "user profile that helps future interactions be more personalized "
+                "and effective."
+            ),
+            toolkit=self.summary_toolkit,
+            formatter=self.formatter,
+        )
+
+        user_msg = Msg(
+            name="distill",
+            role="user",
+            content=[TextBlock(type="text", text=query_text)],
+        )
+
+        try:
+            response = await distill_agent.reply(user_msg)
+            logger.info(
+                f"Distillation completed: {response.get_text_content()[:200]}...",
+            )
+        except Exception as e:
+            logger.error("Experience distillation failed: %s", repr(e))
+            raise
+
+    def _get_recent_memory_files(self, lookback_days: int) -> list[str]:
+        """Get list of recent memory/*.md files within lookback period."""
+        memory_dir = Path(self.working_dir) / "memory"
+        if not memory_dir.exists():
+            return []
+
+        recent_files = []
+        today = datetime.now()
+
+        for i in range(lookback_days):
+            date = today - timedelta(days=i)
+            date_str = date.strftime("%Y-%m-%d")
+            memory_file = memory_dir / f"{date_str}.md"
+            if memory_file.exists():
+                recent_files.append(f"memory/{date_str}.md")
+
+        return recent_files
+
+    def _get_distill_prompt(
+        self,
+        language: str = "zh",
+        current_date: str = "",
+        lookback_days: int = 7,
+        max_experiences: int = 5,
+        recent_memory_files: list[str] = None,
+    ) -> str:
+        """Get the distillation prompt based on language."""
+        recent_files_str = ", ".join(recent_memory_files or [])
+
+        prompts = {
+            "zh": (
+                f"# 用户经验蒸馏任务\n\n"
+                f"当前日期: {current_date}\n"
+                f"回溯天数: {lookback_days} 天\n"
+                f"最大经验条目: {max_experiences}\n\n"
+                "## 任务目标\n"
+                "从近期的对话记忆中提取用户的：\n"
+                "1. **身份背景**：行业、角色、专长领域\n"
+                "2. **工具偏好**：常用工具、编程语言、框架选择\n"
+                "3. **成功经验**：已验证有效的工作模式和方法\n"
+                "4. **沟通偏好**：回复风格、详细程度等\n\n"
+                "## 执行步骤\n\n"
+                "### 步骤 1 [读取记忆]\n"
+                f"使用 `read` 工具读取以下文件：\n"
+                f"- `MEMORY.md`（长期记忆）\n"
+                f"- `PROFILE.md`（现有画像，如果存在）\n"
+                + (f"- 近期日志: {recent_files_str}\n" if recent_files_str else "")
+                + "\n"
+                "### 步骤 2 [分析提炼]\n"
+                "仔细分析记忆内容，识别：\n"
+                "- 反复出现的工作模式\n"
+                "- 明确表达的偏好（如「我喜欢...」「不要...」）\n"
+                "- 成功的工具使用案例（记录具体方法和原因）\n"
+                "- 用户的专业背景线索\n\n"
+                "### 步骤 3 [生成画像]\n"
+                "生成结构化的用户画像，格式如下：\n\n"
+                "```markdown\n"
+                "# 用户画像\n\n"
+                "## 身份背景\n"
+                "- 行业：[行业]\n"
+                "- 角色：[角色]\n"
+                "- 专长：[专长列表]\n\n"
+                "## 核心偏好\n"
+                "- 代码风格：[偏好]\n"
+                "- 回复风格：[偏好]\n"
+                "- 工具偏好：[偏好]\n\n"
+                f"## Top {max_experiences} 成功经验\n"
+                "1. [经验描述] [置信度: XX%]\n"
+                "2. ...\n\n"
+                "---\n"
+                "*更新时间: {current_date} | 蒸馏自近 {lookback_days} 天记忆*\n"
+                "```\n\n"
+                "### 步骤 4 [写入文件]\n"
+                "使用 `write` 工具将生成的画像写入 `PROFILE.md`。\n\n"
+                "### 步骤 5 [汇报结果]\n"
+                "简要汇报：\n"
+                "1. 识别到的关键用户特征\n"
+                "2. 新增或更新的成功经验\n"
+                "3. 画像的主要变化\n\n"
+                "## 注意事项\n"
+                "- 如果信息不足，保留「待确认」标记\n"
+                "- 经验需要有具体的方法描述，不要泛泛而谈\n"
+                "- 置信度基于该经验被验证的次数估算\n"
+                "- 保持画像精简，控制在 500 tokens 以内\n"
+            ),
+            "en": (
+                f"# User Experience Distillation Task\n\n"
+                f"Current date: {current_date}\n"
+                f"Lookback period: {lookback_days} days\n"
+                f"Max experience entries: {max_experiences}\n\n"
+                "## Objective\n"
+                "Extract from recent conversation memories:\n"
+                "1. **Identity**: Industry, role, expertise areas\n"
+                "2. **Tool preferences**: Commonly used tools, languages, frameworks\n"
+                "3. **Successful experiences**: Verified effective patterns and methods\n"
+                "4. **Communication preferences**: Response style, detail level, etc.\n\n"
+                "## Execution Steps\n\n"
+                "### Step 1 [Read Memory]\n"
+                f"Use `read` tool to read:\n"
+                f"- `MEMORY.md` (long-term memory)\n"
+                f"- `PROFILE.md` (existing profile, if exists)\n"
+                + (f"- Recent logs: {recent_files_str}\n" if recent_files_str else "")
+                + "\n"
+                "### Step 2 [Analyze & Extract]\n"
+                "Carefully analyze memory content to identify:\n"
+                "- Recurring work patterns\n"
+                "- Explicit preferences (e.g., 'I prefer...', 'Don't...')\n"
+                "- Successful tool usage cases (record specific methods and reasons)\n"
+                "- User's professional background clues\n\n"
+                "### Step 3 [Generate Profile]\n"
+                "Generate a structured user profile in this format:\n\n"
+                "```markdown\n"
+                "# User Profile\n\n"
+                "## Identity\n"
+                "- Industry: [industry]\n"
+                "- Role: [role]\n"
+                "- Expertise: [list]\n\n"
+                "## Core Preferences\n"
+                "- Code style: [preference]\n"
+                "- Response style: [preference]\n"
+                "- Tool preference: [preference]\n\n"
+                f"## Top {max_experiences} Successful Experiences\n"
+                "1. [Experience description] [Confidence: XX%]\n"
+                "2. ...\n\n"
+                "---\n"
+                "*Updated: {current_date} | Distilled from {lookback_days} days*\n"
+                "```\n\n"
+                "### Step 4 [Write File]\n"
+                "Use `write` tool to save the profile to `PROFILE.md`.\n\n"
+                "### Step 5 [Report Results]\n"
+                "Briefly report:\n"
+                "1. Key user characteristics identified\n"
+                "2. New or updated successful experiences\n"
+                "3. Major changes to the profile\n\n"
+                "## Notes\n"
+                "- If information is insufficient, keep 'TBD' markers\n"
+                "- Experiences need specific method descriptions, not generalities\n"
+                "- Confidence is estimated based on verification frequency\n"
+                "- Keep profile concise, under 500 tokens\n"
+            ),
+        }
+        return prompts.get(language, prompts["en"])
 
     def _get_dream_prompt(
         self,

@@ -12,7 +12,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from agentscope_runtime.engine.schemas.exception import ConfigurationException
 
-from ...config import get_heartbeat_config, get_dream_cron
+from ...config import get_heartbeat_config, get_dream_cron, get_distill_cron
 
 from ..console_push_store import append as push_store_append
 from .executor import CronExecutor
@@ -27,6 +27,7 @@ from .repo.base import BaseJobRepository
 
 HEARTBEAT_JOB_ID = "_heartbeat"
 DREAM_JOB_ID = "_dream"
+DISTILL_JOB_ID = "_distill"
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,30 @@ class CronManager:
                     logger.error(
                         f"Failed to schedule dream-based memory optimization"
                         f"for  agent {self._agent_id}: error={repr(e)}",
+                    )
+
+            # Experience distillation: cron job from config
+            distill_cron = get_distill_cron(self._agent_id)
+            if distill_cron:
+                try:
+                    trigger = CronTrigger.from_crontab(
+                        distill_cron,
+                        timezone=self._scheduler.timezone,
+                    )
+                    self._scheduler.add_job(
+                        self._distill_callback,
+                        trigger=trigger,
+                        id=DISTILL_JOB_ID,
+                        replace_existing=True,
+                    )
+                    logger.info(
+                        f"Experience distillation job scheduled for "
+                        f"agent {self._agent_id}: cron={distill_cron}",
+                    )
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.error(
+                        f"Failed to schedule experience distillation "
+                        f"for agent {self._agent_id}: error={repr(e)}",
                     )
 
             self._started = True
@@ -265,6 +290,59 @@ class CronManager:
             else:
                 logger.info(
                     "dream-based memory optimization disabled, job removed",
+                )
+
+    async def reschedule_distill(self) -> None:
+        """Reschedule the experience distillation job based on configuration.
+
+        Note: CronManager should always be started during workspace
+        initialization, so this method assumes self._started is True.
+        """
+        async with self._lock:
+            if not self._started:
+                logger.warning(
+                    f"CronManager not started for agent {self._agent_id}, "
+                    "cannot reschedule experience distillation. "
+                    "This should not happen.",
+                )
+                return
+
+            # Check if distillation is enabled in config
+            distill_cron = get_distill_cron(self._agent_id)
+
+            # Remove existing job if any
+            if self._scheduler.get_job(DISTILL_JOB_ID):
+                self._scheduler.remove_job(DISTILL_JOB_ID)
+                logger.info(
+                    f"Experience distillation job removed for "
+                    f"agent {self._agent_id}",
+                )
+
+            # Add new job if cron expression is valid
+            if distill_cron:
+                try:
+                    trigger = CronTrigger.from_crontab(
+                        distill_cron,
+                        timezone=self._scheduler.timezone,
+                    )
+                    self._scheduler.add_job(
+                        self._distill_callback,
+                        trigger=trigger,
+                        id=DISTILL_JOB_ID,
+                        replace_existing=True,
+                    )
+                    logger.info(
+                        f"Experience distillation job rescheduled "
+                        f"for agent {self._agent_id}: cron={distill_cron}",
+                    )
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.error(
+                        f"Failed to reschedule experience distillation "
+                        f"for agent {self._agent_id}: error={repr(e)}",
+                    )
+            else:
+                logger.info(
+                    "experience distillation disabled, job removed",
                 )
 
     async def run_job(self, job_id: str) -> None:
@@ -438,6 +516,21 @@ class CronManager:
             raise
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Failed to execute dream task: {e}", exc_info=True)
+
+    async def _distill_callback(self) -> None:
+        """Run one experience distillation task."""
+        try:
+            # Run distillation task
+            await self._runner.memory_manager.distill_experience()
+            logger.info("Experience distillation task executed successfully")
+        except asyncio.CancelledError:
+            logger.info("Experience distillation task was cancelled")
+            raise
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(
+                f"Failed to execute experience distillation task: {e}",
+                exc_info=True,
+            )
 
     async def _execute_once(self, job: CronJobSpec) -> None:
         assert job.id is not None, "Job must have an id"

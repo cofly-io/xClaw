@@ -37,6 +37,11 @@ from .config import (
 
 logger = logging.getLogger(__name__)
 
+# Config cache: avoid repeated file I/O on hot paths
+_config_cache: Optional["Config"] = None
+_config_cache_mtime: float = 0.0
+_config_cache_path: Optional[Path] = None
+
 
 def _normalize_working_dir_bound_paths(data: object) -> object:
     """Normalize legacy ~/.copaw-bound paths to current WORKING_DIR.
@@ -488,12 +493,39 @@ def _read_config_data(config_path: Path) -> Optional[dict]:
     return data
 
 
+def invalidate_config_cache() -> None:
+    """Clear the config cache, forcing next load_config to read from disk."""
+    global _config_cache, _config_cache_mtime, _config_cache_path
+    _config_cache = None
+    _config_cache_mtime = 0.0
+    _config_cache_path = None
+
+
 def load_config(config_path: Optional[Path] = None) -> Config:
-    """Load config from file. Returns default Config if file is missing."""
+    """Load config from file with caching based on file mtime.
+
+    Returns cached Config if file hasn't changed since last read.
+    Returns default Config if file is missing.
+    """
+    global _config_cache, _config_cache_mtime, _config_cache_path
+
     if config_path is None:
         config_path = get_config_path()
+
     if not config_path.is_file():
         return Config()
+
+    try:
+        current_mtime = config_path.stat().st_mtime
+    except OSError:
+        return Config()
+
+    if (
+        _config_cache is not None
+        and _config_cache_path == config_path
+        and current_mtime <= _config_cache_mtime
+    ):
+        return _config_cache
 
     data = _read_config_data(config_path)
     if data is None:
@@ -509,7 +541,11 @@ def load_config(config_path: Optional[Path] = None) -> Config:
             la["port"] = data.get("last_api_port")
 
     try:
-        return Config.model_validate(data)
+        config = Config.model_validate(data)
+        _config_cache = config
+        _config_cache_mtime = current_mtime
+        _config_cache_path = config_path
+        return config
     except ValidationError as exc:
         fixed_any = False
         for err in exc.errors():
@@ -521,7 +557,11 @@ def load_config(config_path: Optional[Path] = None) -> Config:
             return Config()
 
     try:
-        return Config.model_validate(data)
+        config = Config.model_validate(data)
+        _config_cache = config
+        _config_cache_mtime = current_mtime
+        _config_cache_path = config_path
+        return config
     except ValidationError:
         _backup_config_file(
             config_path,
@@ -571,7 +611,9 @@ def strict_validate_config_file(
 
 
 def save_config(config: Config, config_path: Optional[Path] = None) -> None:
-    """Save the config to the file."""
+    """Save the config to the file and update cache."""
+    global _config_cache, _config_cache_mtime, _config_cache_path
+
     if config_path is None:
         config_path = get_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -582,6 +624,13 @@ def save_config(config: Config, config_path: Optional[Path] = None) -> None:
             indent=2,
             ensure_ascii=False,
         )
+
+    try:
+        _config_cache = config
+        _config_cache_mtime = config_path.stat().st_mtime
+        _config_cache_path = config_path
+    except OSError:
+        invalidate_config_cache()
 
 
 def get_heartbeat_config(agent_id: Optional[str] = None) -> HeartbeatConfig:
@@ -629,6 +678,28 @@ def get_dream_cron(agent_id: Optional[str] = None) -> str:
         except Exception:
             return ""
     # Legacy: return empty string if no agent_id provided
+    return ""
+
+
+def get_distill_cron(agent_id: Optional[str] = None) -> str:
+    """Return experience distillation job cron expression for the agent.
+
+    Args:
+        agent_id: Agent ID to load config from. If None, returns empty string.
+
+    Returns:
+        str: Cron expression for experience distillation job, or empty
+             string if disabled.
+    """
+    if agent_id is not None:
+        try:
+            agent_config = load_agent_config(agent_id)
+            ms = agent_config.running.memory_summary
+            if not ms.distill_enabled:
+                return ""
+            return ms.distill_cron
+        except Exception:
+            return ""
     return ""
 
 

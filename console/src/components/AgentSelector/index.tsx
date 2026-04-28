@@ -1,5 +1,5 @@
 import { Select, Tag, Tooltip } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
   CheckCircle,
@@ -93,6 +93,18 @@ export default function AgentSelector({
   const agentCount = enabledCount;
 
   const currentAgentInfo = agents?.find((a) => a.id === selectedAgent);
+  const duplicateNameSet = useMemo(() => {
+    const nameCount = new Map<string, number>();
+    (agents ?? []).forEach((agent) => {
+      const displayName = getAgentDisplayName(agent, t);
+      nameCount.set(displayName, (nameCount.get(displayName) ?? 0) + 1);
+    });
+    return new Set(
+      Array.from(nameCount.entries())
+        .filter(([, count]) => count > 1)
+        .map(([name]) => name),
+    );
+  }, [agents, t]);
 
   // Collapsed: show just the Bot icon with Tooltip
   if (collapsed) {
@@ -203,7 +215,9 @@ export default function AgentSelector({
                   )}
                 </div>
               </div>
-              <div className={styles.agentOptionId}>ID: {agent.id}</div>
+              {duplicateNameSet.has(getAgentDisplayName(agent, t)) && (
+                <div className={styles.agentOptionId}>ID: {agent.id}</div>
+              )}
             </div>
           </Select.Option>
         ))}

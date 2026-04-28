@@ -10,7 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Ellipsis, SquarePlus } from "lucide-react";
+import { Ellipsis, MessageSquarePlus, SquarePlus } from "lucide-react";
 import {
   SparkExitFullscreenLine,
   SparkSearchUserLine,
@@ -131,7 +131,7 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
   const collapsedNavItems = [
     {
       key: "new-chat",
-      icon: <SquarePlus {...navIconProps} />,
+      icon: <MessageSquarePlus {...navIconProps} />,
       action: () => {
         requestNewChatSessionFromShell(location.pathname, (to) => navigate(to));
       },
@@ -161,17 +161,19 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
         className={`${styles.sider}${isDark ? ` ${styles.siderDark}` : ""}`}
       >
         <div className={styles.sidebarMain}>
-          <div className={styles.logoWrapper} onClick={() => navigate("/chat")}>
-            <img
-              src={
-                isDark
-                  ? `${import.meta.env.BASE_URL}dark-logo.png`
-                  : `${import.meta.env.BASE_URL}logo.png`
-              }
-              alt="xClaw"
-              className={styles.logoImg}
-            />
-          </div>
+          {!collapsed && (
+            <div className={styles.logoWrapper} onClick={() => navigate("/chat")}>
+              <img
+                src={
+                  isDark
+                    ? `${import.meta.env.BASE_URL}dark-logo.png`
+                    : `${import.meta.env.BASE_URL}logo.png`
+                }
+                alt="xClaw"
+                className={styles.logoImg}
+              />
+            </div>
+          )}
           {!collapsed && (
             <div className={styles.agentSelectorContainer}>
               <AgentSelector hideLabel />

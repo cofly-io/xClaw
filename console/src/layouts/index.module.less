@@ -82,7 +82,8 @@
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 .sider {
-  background: linear-gradient(180deg, #FDFAF3 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%) !important;
+  // background: linear-gradient(180deg, #FDFAF3 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%) !important;
+  background: #FDFAF3 !important;
   border-right: 1px solid #e6eeff;
   padding-top: 0px !important;
   overflow: hidden !important;
@@ -101,6 +102,61 @@
     gap: 8px;
     padding: 8px;
   }
+
+.collapsedNav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 8px;
+}
+
+.collapsedNavItem {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(255, 255, 255, 0.22) 100%
+  );
+  box-shadow:
+    0 8px 20px rgba(24, 100, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #3e5879;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg {
+    width: 20px !important;
+    height: 20px !important;
+    stroke-width: 2 !important;
+  }
+
+  &:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(24, 100, 255, 0.32) 0%,
+      rgba(24, 100, 255, 0.18) 100%
+    );
+    border-color: rgba(24, 100, 255, 0.35);
+    color: #1864ff;
+    box-shadow:
+      0 10px 22px rgba(24, 100, 255, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
 
   :global {
     .xclaw-layout-sider-children {
@@ -904,6 +960,29 @@
   .codeInline {
     background: #2a2a2a;
     color: rgba(255, 255, 255, 0.85);
+  }
+
+  .collapsedNavItem {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.86);
+
+    &:hover {
+      background: linear-gradient(
+        135deg,
+        rgba(24, 100, 255, 0.42) 0%,
+        rgba(24, 100, 255, 0.24) 100%
+      );
+      border-color: rgba(120, 176, 255, 0.45);
+      color: #e8f2ff;
+    }
   }
 
   .copyBtnDefault {

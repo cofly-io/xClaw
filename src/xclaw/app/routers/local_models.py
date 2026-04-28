@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, List, Optional
 
 from agentscope_runtime.engine.schemas.exception import (
@@ -376,7 +377,8 @@ async def start_local_model_download(
 ) -> ActionResponse:
     """Start downloading a recommended local model."""
     try:
-        manager.start_model_download(
+        await asyncio.to_thread(
+            manager.start_model_download,
             payload.model_name,
             source=payload.source,
         )

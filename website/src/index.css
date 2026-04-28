@@ -488,7 +488,7 @@ pre code.hljs .hljs-attr {
 }
 
 .docs-table-wrap::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: #bfbfbf;
   border-radius: 0.25rem;
 }
 

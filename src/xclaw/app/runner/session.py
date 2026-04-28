@@ -82,12 +82,14 @@ class SafeJSONSession(SessionBase):
             for name, state_module in state_modules_mapping.items()
         }
         session_save_path = self._get_save_path(session_id, user_id=user_id)
-        with open(
-            session_save_path,
+        tmp_path = session_save_path + ".tmp"
+        async with aiofiles.open(
+            tmp_path,
             "w",
             encoding="utf-8",
         ) as f:
-            f.write(json.dumps(state_dicts, ensure_ascii=False))
+            await f.write(json.dumps(state_dicts, ensure_ascii=False))
+        os.replace(tmp_path, session_save_path)
 
         logger.info(
             "Saved session state to %s successfully.",
@@ -178,12 +180,14 @@ class SafeJSONSession(SessionBase):
 
         cur[path[-1]] = value
 
-        with open(
-            session_save_path,
+        tmp_path = session_save_path + ".tmp"
+        async with aiofiles.open(
+            tmp_path,
             "w",
             encoding="utf-8",
         ) as f:
-            f.write(json.dumps(states, ensure_ascii=False))
+            await f.write(json.dumps(states, ensure_ascii=False))
+        os.replace(tmp_path, session_save_path)
 
         logger.info(
             "Updated session state key '%s' in %s successfully.",

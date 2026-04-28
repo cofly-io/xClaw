@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import {
   Activity,
   Bot,
-  Boxes,
   Braces,
   Cpu,
   FolderOpen,
@@ -27,8 +26,7 @@ import ChannelsPage from "../../pages/Control/Channels";
 import CronJobsPage from "../../pages/Control/CronJobs";
 import HeartbeatPage from "../../pages/Control/Heartbeat";
 import AgentConfigPage from "../../pages/Agent/Config";
-import SkillsPage from "../../pages/Agent/Skills";
-import SkillPoolPage from "../../pages/Agent/SkillPool";
+import SkillsHubPage from "../../pages/Agent/SkillsHub";
 import ToolsPage from "../../pages/Agent/Tools";
 import WorkspacePage from "../../pages/Agent/Workspace";
 import MCPPage from "../../pages/Agent/MCP";
@@ -54,7 +52,6 @@ const ALL_MORE_MENU_KEYS = [
   "agent-config",
   "agents",
   "models",
-  "skill-pool",
   "environments",
   "security",
   "token-usage",
@@ -72,7 +69,6 @@ const MORE_MENU_KEYS = [
   "agent-config",
   "agents",
   "models",
-  "skill-pool",
   "environments",
   "backups",
 ] as const satisfies readonly MoreMenuKey[];
@@ -95,7 +91,6 @@ const MORE_MENU_ICON_MAP: Record<VisibleMoreMenuKey, LucideIcon> = {
   "agent-config": Play,
   agents: Bot,
   models: Cpu,
-  "skill-pool": Boxes,
   environments: Braces,
   backups: Save,
 };
@@ -126,7 +121,7 @@ export default function MainLayout() {
       case "workspace":
         return <WorkspacePage />;
       case "skills":
-        return <SkillsPage />;
+        return <SkillsHubPage />;
       case "tools":
         return <ToolsPage />;
       case "mcp":
@@ -137,8 +132,6 @@ export default function MainLayout() {
         return <AgentsPage />;
       case "models":
         return <ModelsPage />;
-      case "skill-pool":
-        return <SkillPoolPage />;
       case "environments":
         return <EnvironmentsPage />;
       case "backups":
@@ -200,8 +193,11 @@ export default function MainLayout() {
                 <Route path="/channels" element={<ChannelsPage />} />
                 <Route path="/cron-jobs" element={<CronJobsPage />} />
                 <Route path="/heartbeat" element={<HeartbeatPage />} />
-                <Route path="/skills" element={<SkillsPage />} />
-                <Route path="/skill-pool" element={<SkillPoolPage />} />
+                <Route path="/skills" element={<SkillsHubPage />} />
+                <Route
+                  path="/skill-pool"
+                  element={<Navigate to="/skills?tab=pool" replace />}
+                />
                 <Route path="/tools" element={<ToolsPage />} />
                 <Route path="/mcp" element={<MCPPage />} />
                 <Route path="/workspace" element={<WorkspacePage />} />

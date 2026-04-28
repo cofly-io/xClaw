@@ -20,6 +20,8 @@ dist/
 console/.cursor/
 src/xclaw/console/dist/
 src/xclaw/console/
+# Legacy PyInstaller path (synced from console/dist by desktop/build.py)
+src/copaw/console/
 
 # frontend (website)
 website/node_modules/

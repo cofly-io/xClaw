@@ -124,6 +124,23 @@ class BaseMemoryManager(ABC):
             **kwargs: Additional keyword arguments for the dream task.
         """
 
+    @abstractmethod
+    async def distill_experience(self, **kwargs) -> None:
+        """Run experience distillation to extract user patterns and preferences.
+
+        This method analyzes recent conversation history to identify:
+        - User identity and background (industry, role, expertise)
+        - Tool and workflow preferences
+        - Successful work patterns and methods
+        - Communication style preferences
+
+        The distilled knowledge is written to PROFILE.md, which is automatically
+        loaded into the system prompt for personalized interactions.
+
+        Args:
+            **kwargs: Additional keyword arguments for the distillation task.
+        """
+
     def add_async_summary_task(self, messages: list[Msg], **kwargs):
         """Add an asynchronous summary task for the given messages."""
 

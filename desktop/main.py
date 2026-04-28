@@ -10,7 +10,11 @@ import sys
 import threading
 import time
 
-from copaw.security.xclaw_env_crypto import decrypt_from_b64
+try:
+    from xclaw.security.xclaw_env_crypto import decrypt_from_b64
+except ModuleNotFoundError:
+    # Backward compatibility for environments still exposing the old package name.
+    from copaw.security.xclaw_env_crypto import decrypt_from_b64
 
 
 def _load_bundled_env() -> None:
@@ -55,10 +59,17 @@ def _load_bundled_env() -> None:
 if getattr(sys, "frozen", False):
     BASE_DIR = sys._MEIPASS
     _load_bundled_env()
+    # New runtime env key; keep old key for compatibility with legacy builds.
+    os.environ.setdefault(
+        "QWENPAW_CONSOLE_STATIC_DIR", os.path.join(BASE_DIR, "xclaw", "console")
+    )
     os.environ.setdefault(
         "COPAW_STATIC_DIR", os.path.join(BASE_DIR, "copaw", "console")
     )
-    from copaw.runtime_paths import prepend_bundled_node_to_os_path
+    try:
+        from xclaw.runtime_paths import prepend_bundled_node_to_os_path
+    except ModuleNotFoundError:
+        from copaw.runtime_paths import prepend_bundled_node_to_os_path
 
     prepend_bundled_node_to_os_path()
 else:
@@ -133,7 +144,10 @@ def wait_for_backend(port: int, timeout: int = 60) -> bool:
 
 def start_backend(port: int) -> None:
     import uvicorn
-    from copaw.app._app import app
+    try:
+        from xclaw.app._app import app
+    except ModuleNotFoundError:
+        from copaw.app._app import app
 
     uvicorn.run(
         app,
