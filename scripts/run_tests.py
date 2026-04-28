@@ -127,16 +127,16 @@ def run_integrated_tests(
 ) -> int:
     """Run integrated tests."""
     print_info("Running integrated tests...")
-    integrated_dir = project_root / "tests" / "integrated"
+    integrated_dir = project_root / "tests" / "integration"
 
     if not integrated_dir.is_dir():
-        print_warning("Integrated test directory not found: tests/integrated")
+        print_warning("Integrated test directory not found: tests/integration")
         return 0
 
     # Check if there are any Python test files
     test_files = list(integrated_dir.glob("*.py"))
     if not test_files:
-        print_warning("No integrated test files found in tests/integrated")
+        print_warning("No integrated test files found in tests/integration")
         return 0
 
     return_code = run_pytest(integrated_dir, coverage, parallel)
