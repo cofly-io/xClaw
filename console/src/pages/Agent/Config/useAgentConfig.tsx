@@ -16,6 +16,9 @@ export function useAgentConfig() {
   const [savingLang, setSavingLang] = useState(false);
   const [timezone, setTimezone] = useState<string>("UTC");
   const [savingTimezone, setSavingTimezone] = useState(false);
+  const [approvalLevel, setApprovalLevel] =
+    useState<ToolExecutionLevel>("AUTO");
+  const initialApprovalLevelRef = useRef<ToolExecutionLevel>("AUTO");
 
   const fetchConfig = useCallback(async () => {
     setLoading(true);
@@ -26,6 +29,11 @@ export function useAgentConfig() {
         api.getAgentLanguage(),
         api.getUserTimezone(),
       ]);
+      const loadedLevel = (
+        config.approval_level || "AUTO"
+      ).toUpperCase() as ToolExecutionLevel;
+      setApprovalLevel(loadedLevel);
+      initialApprovalLevelRef.current = loadedLevel;
       form.setFieldsValue({
         ...config,
         auto_continue_on_text_only: config.auto_continue_on_text_only ?? false,
@@ -50,7 +58,12 @@ export function useAgentConfig() {
     try {
       const values = await form.validateFields();
       setSaving(true);
-      await api.updateAgentRunningConfig(values as AgentsRunningConfig);
+      const configToSave: AgentsRunningConfig = {
+        ...(values as AgentsRunningConfig),
+        approval_level: approvalLevel,
+      };
+      await api.updateAgentRunningConfig(configToSave);
+      initialApprovalLevelRef.current = approvalLevel;
       message.success(t("agentConfig.saveSuccess"));
     } catch (err) {
       if (err instanceof Error && "errorFields" in err) return;
