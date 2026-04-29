@@ -25,6 +25,7 @@ interface ExtendedSession extends IAgentScopeRuntimeWebUISession {
   updatedAt?: string | null;
   channel?: string;
   updateAt?: number;
+  pinned?: boolean;
 }
 
 function getBackendId(session: ExtendedSession): string | null {
@@ -96,10 +97,17 @@ export default function SidebarSessionList({
     return [...sessions].sort((a, b) => sessionSortTs(b) - sessionSortTs(a));
   }, [sessions]);
 
+  const pinnedSessions = useMemo(
+    () =>
+      sorted.filter((s) => (s as ExtendedSession).pinned),
+    [sorted],
+  );
+
   const grouped = useMemo(() => {
     const map = new Map<string, ExtendedSession[]>();
     const now = Date.now();
     for (const s of sorted) {
+      if ((s as ExtendedSession).pinned) continue;
       const k = sessionBucketKey(getSessionBucket(groupSortTs(s), now));
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(s);
@@ -164,12 +172,73 @@ export default function SidebarSessionList({
     setEditValue("");
   }, []);
 
+  const handlePin = useCallback(
+    async (sessionId: string) => {
+      const session = sessions.find((s) => s.id === sessionId) as
+        | ExtendedSession
+        | undefined;
+      const backendId = session ? getBackendId(session) : null;
+      if (!backendId || !session) return;
+      const nextPinned = !session.pinned;
+      try {
+        await chatApi.updateChat(backendId, { pinned: nextPinned });
+      } catch {
+        return;
+      }
+      load();
+      requestSessionsListRefresh();
+    },
+    [sessions, load],
+  );
+
   if (collapsed) return null;
 
   return (
     <div className={styles.host}>
       <div className={styles.listWrap}>
         <div className={styles.list}>
+          {pinnedSessions.length > 0 && (
+            <>
+              <div className={styles.groupHeader}>
+                {t("chat.pinnedGroup", "Pinned")}
+              </div>
+              {pinnedSessions.map((session) => {
+                const ext = session as ExtendedSession;
+                const channelKey = ext.channel?.trim() || "";
+                const channelLabel = channelKey
+                  ? getChannelLabel(channelKey, t)
+                  : undefined;
+                return (
+                  <ChatSessionItem
+                    key={session.id}
+                    name={session.name || "New Chat"}
+                    channelKey={channelKey || undefined}
+                    channelLabel={channelLabel}
+                    pinned={!!ext.pinned}
+                    active={session.id === chatId}
+                    editing={editingSessionId === session.id}
+                    editValue={
+                      editingSessionId === session.id ? editValue : undefined
+                    }
+                    onClick={() =>
+                      session.id && handleSessionClick(session.id)
+                    }
+                    onEdit={() =>
+                      handleEditStart(
+                        session.id!,
+                        session.name || "New Chat",
+                      )
+                    }
+                    onDelete={() => session.id && handleDelete(session.id)}
+                    onPin={() => session.id && handlePin(session.id)}
+                    onEditChange={setEditValue}
+                    onEditSubmit={handleEditSubmit}
+                    onEditCancel={handleEditCancel}
+                  />
+                );
+              })}
+            </>
+          )}
           {orderedKeys.map((key) => {
             const items = grouped.get(key) ?? [];
             if (!items.length) return null;
@@ -191,6 +260,7 @@ export default function SidebarSessionList({
                       name={session.name || "New Chat"}
                       channelKey={channelKey || undefined}
                       channelLabel={channelLabel}
+                      pinned={!!(ext as ExtendedSession).pinned}
                       active={session.id === chatId}
                       editing={editingSessionId === session.id}
                       editValue={
@@ -206,6 +276,7 @@ export default function SidebarSessionList({
                         )
                       }
                       onDelete={() => session.id && handleDelete(session.id)}
+                      onPin={() => session.id && handlePin(session.id)}
                       onEditChange={setEditValue}
                       onEditSubmit={handleEditSubmit}
                       onEditCancel={handleEditCancel}

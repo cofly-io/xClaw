@@ -93,6 +93,8 @@ interface ExtendedSession extends IAgentScopeRuntimeWebUISession {
   updatedAt?: string | null;
   /** Whether the backend is still generating a response for this session. */
   generating?: boolean;
+  /** Pinned sessions are listed at the top of the sidebar. */
+  pinned?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -284,6 +286,7 @@ const chatSpecToSession = (chat: ChatSpec): ExtendedSession => {
     messages: [],
     meta: chat.meta || {},
     status: chat.status ?? "idle",
+    pinned: chat.pinned ?? false,
   } as ExtendedSession;
 };
 

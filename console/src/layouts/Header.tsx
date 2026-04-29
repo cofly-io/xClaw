@@ -1,8 +1,7 @@
-import { Layout, Space } from "antd";
+import { Layout, Space, Button, Tooltip } from "antd";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, Book, HelpCircle, Lock, LogOut } from "lucide-react";
-import { Button, Tooltip } from "@agentscope-ai/design";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
 import { XCLAW_CHAT_HEADER_TITLE_EVENT } from "../pages/Chat/components/ChatHeaderTitle";

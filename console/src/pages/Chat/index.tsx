@@ -12,7 +12,7 @@ import {
   type MutableRefObject,
   type RefObject,
 } from "react";
-import { Button, Modal, Result, Tooltip } from "antd";
+import { Button, Modal, Result } from "antd";
 import { useAppMessage } from "../../hooks/useAppMessage";
 import { ExclamationCircleOutlined, SettingOutlined } from "@ant-design/icons";
 import { SparkCopyLine, SparkAttachmentLine } from "@agentscope-ai/icons";
@@ -491,168 +491,6 @@ export default function ChatPage() {
 
   const isChatActive = useCallback(() => isChatActiveRef.current, []);
 
-  // Consume approvals from Context and filter by current session
-  useEffect(() => {
-    // Get current session ID from multiple sources
-    // During new session creation, chatId may be empty but window.currentSessionId gets set
-    const currentSessionId = window.currentSessionId || chatId || "";
-
-    // Filter approvals by root_session_id (includes children sessions)
-    console.debug(
-      "[Approval] Filtering approvals:",
-      "currentSessionId=",
-      currentSessionId,
-      "chatId=",
-      chatId,
-      "window.currentSessionId=",
-      window.currentSessionId,
-      "approvals=",
-      approvals.map((a) => ({
-        tool: a.tool_name,
-        session: a.session_id.slice(0, 8),
-        root: a.root_session_id.slice(0, 8),
-      })),
-    );
-
-    // If no session ID yet, check if we have approvals that could tell us the session
-    // (e.g., first message sent, approval arrives before session ID is set in window)
-    let effectiveSessionId = currentSessionId;
-    if (!effectiveSessionId && approvals.length > 0) {
-      // Use the root_session_id from the first approval as a hint
-      // This handles the race condition where approval arrives before session ID is propagated
-      effectiveSessionId = approvals[0].root_session_id;
-      console.log(
-        "[Approval] No session ID yet, using first approval's root_session_id:",
-        effectiveSessionId,
-      );
-    }
-
-    const sessionApprovals = effectiveSessionId
-      ? approvals.filter(
-          (approval) => approval.root_session_id === effectiveSessionId,
-        )
-      : approvals; // Show all if no session ID (fallback)
-
-    console.debug(
-      "[Approval] After filtering:",
-      sessionApprovals.length,
-      "approval(s)",
-    );
-
-    // Convert to map for display
-    const newMap = new Map<string, ApprovalMessageData>();
-    for (const approval of sessionApprovals) {
-      newMap.set(approval.request_id, {
-        requestId: approval.request_id,
-        sessionId: approval.session_id,
-        rootSessionId: approval.root_session_id,
-        agentId: approval.agent_id,
-        toolName: approval.tool_name,
-        severity: approval.severity,
-        findingsCount: approval.findings_count,
-        findingsSummary: approval.findings_summary,
-        toolParams: approval.tool_params,
-        createdAt: approval.created_at,
-        timeoutSeconds: approval.timeout_seconds,
-      });
-    }
-
-    setApprovalRequests(newMap);
-  }, [approvals, chatId]);
-
-  const handleApprove = useCallback(
-    async (requestId: string) => {
-      console.log("[Approval] handleApprove called:", requestId);
-      console.log(
-        "[Approval] Current requests map size:",
-        approvalRequests.size,
-      );
-      const request = approvalRequests.get(requestId);
-      if (!request) {
-        console.error("[Approval] Request not found:", requestId);
-        return;
-      }
-
-      // Use currentSessionId (root session) instead of request.sessionId (sub-agent session)
-      const rootSessionId = window.currentSessionId || chatId || "";
-      console.log("[Approval] Sending approve command:", {
-        requestId,
-        rootSessionId,
-        subAgentSessionId: request.sessionId,
-      });
-
-      try {
-        // Add exit animation class
-        const cardElement = document.querySelector(
-          `[data-approval-id="${requestId}"]`,
-        );
-        if (cardElement) {
-          cardElement.classList.add("approvalCardExit");
-        }
-
-        await commandsApi.sendApprovalCommand(
-          "approve",
-          requestId,
-          rootSessionId,
-        );
-        console.log("[Approval] Approve command sent successfully");
-        message.success(t("approval.approved"));
-
-        // Delay removal to let animation complete
-        // Backend will remove from pending list, next poll will update UI
-        setTimeout(() => {
-          setApprovalRequests((prev) => {
-            const next = new Map(prev);
-            next.delete(requestId);
-            return next;
-          });
-        }, 300); // Match animation duration
-      } catch (error) {
-        message.error(t("approval.approveFailed"));
-        console.error("[Approval] Failed to approve:", error);
-      }
-    },
-    [approvalRequests, chatId, t, message],
-  );
-
-  const handleDeny = useCallback(
-    async (requestId: string) => {
-      const request = approvalRequests.get(requestId);
-      if (!request) return;
-
-      // Use currentSessionId (root session) instead of request.sessionId (sub-agent session)
-      const rootSessionId = window.currentSessionId || chatId || "";
-
-      try {
-        // Add exit animation class
-        const cardElement = document.querySelector(
-          `[data-approval-id="${requestId}"]`,
-        );
-        if (cardElement) {
-          cardElement.classList.add("approvalCardExit");
-        }
-
-        await commandsApi.sendApprovalCommand("deny", requestId, rootSessionId);
-        message.success(t("approval.denied"));
-
-        // Delay removal to let animation complete
-        // Backend will remove from pending list, next poll will update UI
-        setTimeout(() => {
-          setApprovalRequests((prev) => {
-            const next = new Map(prev);
-            next.delete(requestId);
-            return next;
-          });
-        }, 300); // Match animation duration
-      } catch (error) {
-        message.error(t("approval.denyFailed"));
-        console.error("Failed to deny:", error);
-      }
-    },
-    [approvalRequests, chatId, t, message],
-  );
-
-
   // Use custom hooks for better separation of concerns
   const isComposingRef = useIMEComposition(isChatActive);
   const multimodalCaps = useMultimodalCapabilities(
@@ -1003,13 +841,13 @@ export default function ChatPage() {
                 : "chat.attachments.tooltip"
               : "chat.attachments.tooltipNoMultimodal";
             return (
-              <Tooltip title={t(tooltipKey, { limit: CHAT_ATTACHMENT_MAX_MB })}>
+              <span title={t(tooltipKey, { limit: CHAT_ATTACHMENT_MAX_MB })}>
                 <IconButton
                   disabled={props?.disabled}
                   icon={<SparkAttachmentLine />}
                   bordered={false}
                 />
-              </Tooltip>
+              </span>
             );
           },
           accept: "*/*",

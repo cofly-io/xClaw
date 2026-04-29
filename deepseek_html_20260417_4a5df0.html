@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>登录 · xClaw 个人AI企业助手</title>
+  <!-- 字体与图标库 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f0f4fb;
+      background-image: radial-gradient(circle at 10% 20%, rgba(235, 245, 255, 0.7) 0%, #eef2f8 90%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 1.2rem;
+      margin: 0;
+      color: #141b2b;
+    }
+
+    /* 登录卡片 —— 紧凑、通透、现代 */
+    .login-card {
+      max-width: 500px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      background: #ffffff;
+      border-radius: 34px;
+      box-shadow: 
+        0 25px 45px -12px rgba(0, 20, 50, 0.12),
+        0 4px 10px -6px rgba(0,0,0,0.02),
+        inset 0 0 0 1px rgba(255,255,255,0.9);
+      padding: 1.8rem 1.9rem 1.9rem;
+      border: 1px solid #e9eef6;
+      transition: all 0.2s;
+    }
+
+    /* 头部：xClaw品牌 + Aadmin用户 */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      background: linear-gradient(145deg, #1f37a3, #2e4bce);
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      box-shadow: 0 8px 14px -6px rgba(31, 55, 163, 0.25);
+    }
+
+    .brand-text {
+      font-weight: 700;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+      color: #0e1629;
+      line-height: 1.2;
+    }
+
+    .brand-sub {
+      display: block;
+      font-weight: 500;
+      font-size: 0.65rem;
+      color: #52648b;
+      letter-spacing: 0.2px;
+      margin-top: 2px;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fbff;
+      padding: 5px 10px 5px 8px;
+      border-radius: 40px;
+      border: 1px solid #dee8f5;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .user-avatar {
+      background: linear-gradient(145deg, #13203b, #1b2a4a);
+      color: white;
+      width: 34px;
+      height: 34px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #1a2645;
+    }
+
+    .user-chevron {
+      color: #7385b0;
+      font-size: 0.7rem;
+    }
+
+    /* 欢迎区 — 紧凑有温度 */
+    .welcome-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .welcome-eyebrow {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 2.2px;
+      font-weight: 600;
+      color: #4a6085;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+    }
+
+    .reminder-message {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .reminder-text {
+      font-size: 1.5rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      color: #0b1426;
+    }
+
+    .reminder-emoji {
+      font-size: 1.7rem;
+      line-height: 1;
+      margin-left: -4px;
+    }
+
+    .water-icon {
+      color: #2a8cff;
+      background: #e3efff;
+      width: 38px;
+      height: 38px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-left: auto;
+    }
+
+    /* AI 助手气泡 —— 对话形式 */
+    .ai-chat-block {
+      background: #f4faff;
+      border-radius: 22px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid #dce7f5;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      box-shadow: 0 6px 10px -8px rgba(0,35,70,0.08);
+    }
+
+    .ai-avatar {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 12px -6px rgba(46, 74, 255, 0.15);
+      border: 1px solid #cfdff0;
+      color: #2446d4;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .ai-message-content {
+      flex: 1;
+    }
+
+    .ai-greeting {
+      font-weight: 650;
+      font-size: 1rem;
+      color: #111f3e;
+      margin-bottom: 6px;
+      line-height: 1.3;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .online-badge {
+      background: #e5f2ff;
+      border-radius: 30px;
+      padding: 2px 8px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #1b4bcb;
+      margin-left: 8px;
+    }
+
+    .ai-tagline {
+      font-size: 0.8rem;
+      color: #4d648b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 登录表单 —— 紧凑，带图标输入框 */
+    .login-form {
+      margin: 1.25rem 0 1.35rem;
+    }
+
+    .input-group {
+      margin-bottom: 0.9rem;
+      position: relative;
+    }
+
+    .input-group i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6a7ea8;
+      font-size: 1rem;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 0.9rem 1rem 0.9rem 2.8rem;
+      background: #fafcff;
+      border: 1.5px solid #e2ebf6;
+      border-radius: 24px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #121f3f;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.01), 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: #2e4bce;
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(46, 75, 206, 0.08), inset 0 1px 4px #ffffff;
+    }
+
+    .login-input::placeholder {
+      color: #8a9bbd;
+      font-weight: 400;
+      font-size: 0.9rem;
+    }
+
+    /* 辅助功能区：记住我 & 忘记密码 */
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0.6rem 0 1.1rem;
+      font-size: 0.8rem;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #2f4168;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .checkbox-label input {
+      accent-color: #1f37a3;
+      width: 16px;
+      height: 16px;
+      margin: 0;
+    }
+
+    .forgot-link {
+      color: #1f37a3;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.8rem;
+      border-bottom: 1px dashed #b7c6e3;
+    }
+
+    /* 登录按钮 */
+    .login-action {
+      width: 100%;
+      background: linear-gradient(105deg, #17213f 0%, #0f1a33 100%);
+      border: none;
+      border-radius: 60px;
+      padding: 0.95rem 1.5rem;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 14px 22px -8px rgba(15, 26, 51, 0.25), 0 2px 0 0 #2e4370 inset;
+      border: 1px solid #2c4172;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+      margin-bottom: 1.1rem;
+    }
+
+    .login-action i {
+      font-size: 1rem;
+      transition: transform 0.2s;
+    }
+
+    .login-action:hover {
+      background: linear-gradient(105deg, #1f2c51 0%, #152244 100%);
+      box-shadow: 0 16px 26px -10px #0f1e3b, 0 1px 0 0 #3f5690 inset;
+      transform: scale(1.01);
+    }
+
+    .login-action:hover i {
+      transform: translateX(4px);
+    }
+
+    /* CLI 终端提示 — 与图一致 */
+    .cli-prompt {
+      background: #fafdff;
+      border-radius: 20px;
+      padding: 0.65rem 1.2rem;
+      border: 1px solid #dfe9f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'SF Mono', 'Menlo', 'Monaco', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      color: #1e2f4b;
+      box-shadow: inset 0 2px 3px rgba(0,0,0,0.01), 0 2px 6px rgba(0,0,0,0.02);
+      margin-top: 0.2rem;
+    }
+
+    .prompt-sign {
+      color: #1f37a3;
+      font-weight: 700;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .cli-text {
+      font-weight: 550;
+      letter-spacing: 0.2px;
+      color: #121f3f;
+    }
+
+    .cursor-blink {
+      display: inline-block;
+      width: 7px;
+      height: 1.2em;
+      background: #1f37a3;
+      margin-left: 4px;
+      animation: blink 1.2s step-end infinite;
+      vertical-align: middle;
+      border-radius: 2px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    /* 底部微标 */
+    .footnote {
+      margin-top: 0.7rem;
+      display: flex;
+      justify-content: flex-end;
+      font-size: 0.6rem;
+      color: #6a7fa5;
+      letter-spacing: 0.3px;
+      opacity: 0.7;
+    }
+
+    /* 移动端微调 */
+    @media (max-width: 480px) {
+      body {
+        padding: 0.8rem;
+        align-items: flex-start;
+        padding-top: 1.5rem;
+      }
+      .login-card {
+        padding: 1.4rem 1.2rem 1.5rem;
+        border-radius: 28px;
+      }
+      .reminder-text {
+        font-size: 1.3rem;
+      }
+      .brand-text {
+        font-size: 1.2rem;
+      }
+      .login-input {
+        padding: 0.8rem 1rem 0.8rem 2.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <!-- 头部: xClaw + Aadmin -->
+  <div class="card-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fas fa-bolt"></i>
+      </div>
+      <div class="brand-text">
+        xClaw
+        <span class="brand-sub">个人AI企业助手</span>
+      </div>
+    </div>
+    <div class="user-profile">
+      <div class="user-avatar">A</div>
+      <span class="user-name">Aadmin</span>
+      <i class="fas fa-chevron-down user-chevron"></i>
+    </div>
+  </div>
+
+  <!-- WELCOME... 忙碌了一下午，记得喝杯水 -->
+  <div class="welcome-section">
+    <div class="welcome-eyebrow">
+      <i class="far fa-clock" style="margin-right: 6px;"></i>WELCOME...
+    </div>
+    <div class="reminder-message">
+      <span class="reminder-text">忙碌了一下午，<br>记得喝杯水。</span>
+      <span class="reminder-emoji">💧</span>
+      <div class="water-icon">
+        <i class="fas fa-mug-hot"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI助手对话气泡：Hi！您好，我是您的个人AI企业助手 -->
+  <div class="ai-chat-block">
+    <div class="ai-avatar">
+      <i class="fas fa-robot"></i>
+    </div>
+    <div class="ai-message-content">
+      <div class="ai-greeting">
+        Hi！您好，我是您的个人AI企业助手
+        <span class="online-badge"><i class="fas fa-circle" style="font-size: 0.4rem; color: #28a77a; margin-right: 4px;"></i>在线</span>
+      </div>
+      <div class="ai-tagline">
+        <i class="fas fa-bolt" style="font-size: 0.7rem; color: #2b6ef0;"></i>
+        <span>让工作更智能，让协作更高效</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录表单：用户名 + 密码 （紧凑合理）-->
+  <div class="login-form">
+    <div class="input-group">
+      <i class="fas fa-user"></i>
+      <input type="text" class="login-input" placeholder="用户名 / 邮箱" value="" autocomplete="username">
+    </div>
+    <div class="input-group">
+      <i class="fas fa-lock"></i>
+      <input type="password" class="login-input" placeholder="密码" autocomplete="current-password">
+    </div>
+    
+    <!-- 记住我 / 忘记密码 -->
+    <div class="form-options">
+      <label class="checkbox-label">
+        <input type="checkbox" checked> 记住登录
+      </label>
+      <a href="#" class="forgot-link">忘记密码？</a>
+    </div>
+  </div>
+
+  <!-- 登录按钮 -->
+  <button class="login-action">
+    <span>登录 · 进入工作台</span>
+    <i class="fas fa-arrow-right"></i>
+  </button>
+
+  <!-- 命令行风格提示：> xClaw个人AI企业助手 (与图一致) -->
+  <div class="cli-prompt">
+    <span class="prompt-sign">></span>
+    <span class="cli-text">xClaw个人AI企业助手</span>
+    <span class="cursor-blink"></span>
+    <span style="margin-left: auto; font-size: 0.7rem; color: #6e85b0;">
+      <i class="far fa-keyboard"></i>
+    </span>
+  </div>
+
+  <!-- 细微安全标识 -->
+  <div class="footnote">
+    <i class="fas fa-shield-alt" style="margin-right: 4px;"></i> 企业级加密 · 仅限授权访问
+  </div>
+</div>
+
+<!-- 简洁交互说明：点击登录可模拟 (不跳转，仅演示布局) -->
+<script>
+  (function(){
+    // 仅增加轻交互：点击登录按钮控制台提示（无跳转），完全符合演示需求
+    const loginBtn = document.querySelector('.login-action');
+    if(loginBtn) {
+      loginBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const userField = document.querySelector('input[type="text"]');
+        const pwdField = document.querySelector('input[type="password"]');
+        console.log(`[演示] 登录尝试 — 用户: ${userField.value || '(未填写)'} ，密码: ${pwdField.value ? '●●●●' : '(空)'}`);
+        // 可自行扩展真实登录逻辑
+      });
+    }
+    // 忘记密码链接阻止默认跳转（仅演示）
+    document.querySelector('.forgot-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      console.log('[演示] 忘记密码流程');
+    });
+  })();
+</script>
+
+</body>
+</html>

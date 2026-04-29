@@ -2,20 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Form, Modal } from "@agentscope-ai/design";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/PageHeader";
-import api from "../../../api";
 import { useAppMessage } from "../../../hooks/useAppMessage";
-import {
-  ACP_DEFAULT_STDIO_BUFFER_LIMIT_BYTES,
-  type ACPAgentConfig,
-} from "../../../api/types";
+import { request } from "../../../api/request";
 import { useAgentStore } from "../../../stores/agentStore";
 import { ACPCard } from "./components/ACPCard";
 import {
   ACPDrawer,
+  ACP_DEFAULT_STDIO_BUFFER_LIMIT_BYTES,
   parseArgsText,
   parseEnvText,
   stringifyArgs,
   stringifyEnv,
+  type ACPAgentConfig,
 } from "./components/ACPDrawer";
 import styles from "../../Control/Channels/index.module.less";
 
@@ -31,6 +29,23 @@ function isBuiltinACPAgent(key: string): boolean {
 }
 
 type FilterType = "all" | "builtin" | "custom";
+interface ACPConfigPayload {
+  agents: Record<string, ACPAgentConfig>;
+}
+
+const acpApi = {
+  getACPConfig: () => request<ACPConfigPayload>("/agent/acp"),
+  updateACPConfig: (payload: ACPConfigPayload) =>
+    request<ACPConfigPayload>("/agent/acp", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  updateACPAgentConfig: (agentKey: string, config: ACPAgentConfig) =>
+    request<ACPAgentConfig>(`/agent/acp/agents/${encodeURIComponent(agentKey)}`, {
+      method: "PUT",
+      body: JSON.stringify(config),
+    }),
+};
 
 function ACPPage() {
   const { t } = useTranslation();
@@ -48,7 +63,7 @@ function ACPPage() {
   const fetchACP = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getACPConfig();
+      const data = await acpApi.getACPConfig();
       setAgents(data?.agents || {});
     } catch (error) {
       console.error("❌ Failed to load ACP config:", error);
@@ -168,9 +183,9 @@ function ACPPage() {
           delete nextAgents[activeKey];
         }
         nextAgents[targetKey] = updatedConfig;
-        await api.updateACPConfig({ agents: nextAgents });
+        await acpApi.updateACPConfig({ agents: nextAgents });
       } else {
-        await api.updateACPAgentConfig(targetKey, updatedConfig);
+        await acpApi.updateACPAgentConfig(targetKey, updatedConfig);
       }
       await fetchACP();
       setDrawerOpen(false);
@@ -198,7 +213,7 @@ function ACPPage() {
         try {
           const nextAgents = { ...agents };
           delete nextAgents[activeKey];
-          await api.updateACPConfig({ agents: nextAgents });
+          await acpApi.updateACPConfig({ agents: nextAgents });
           await fetchACP();
           handleClose();
           message.success(t("acp.deleteSuccess"));

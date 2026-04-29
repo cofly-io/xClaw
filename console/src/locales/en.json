@@ -1219,6 +1219,7 @@
     "chatHistoryTooltip": "Chat history",
     "allChats": "All Chats",
     "renameSession": "Rename",
+    "pinnedGroup": "Pinned",
     "group": {
       "today": "Today",
       "yesterday": "Yesterday",

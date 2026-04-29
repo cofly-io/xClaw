@@ -1197,6 +1197,7 @@
     "chatHistoryTooltip": "聊天历史",
     "allChats": "全部聊天",
     "renameSession": "重命名",
+    "pinnedGroup": "置顶",
     "group": {
       "today": "今天",
       "yesterday": "昨天",

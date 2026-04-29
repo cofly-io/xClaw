@@ -15,7 +15,7 @@ import styles from "../../../Control/Channels/index.module.less";
 
 type ACPToolParseMode = "call_title" | "update_detail" | "call_detail";
 
-interface ACPAgentConfig {
+export interface ACPAgentConfig {
   enabled?: boolean;
   command?: string;
   args?: string[];
@@ -25,7 +25,7 @@ interface ACPAgentConfig {
   stdio_buffer_limit_bytes?: number;
 }
 
-const ACP_DEFAULT_STDIO_BUFFER_LIMIT_BYTES = 1024 * 1024;
+export const ACP_DEFAULT_STDIO_BUFFER_LIMIT_BYTES = 1024 * 1024;
 
 interface ACPDrawerProps {
   open: boolean;

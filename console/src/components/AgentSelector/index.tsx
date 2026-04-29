@@ -116,7 +116,9 @@ export default function AgentSelector({
             : selectedAgent
         }
         placement="right"
-        overlayInnerStyle={{ background: "rgba(0,0,0,0.75)", color: "#fff" }}
+        styles={{
+          body: { background: "rgba(0,0,0,0.75)", color: "#fff" },
+        }}
       >
         <div className={styles.agentSelectorCollapsed}>
           <Bot size={18} strokeWidth={2} />
@@ -148,10 +150,10 @@ export default function AgentSelector({
         className={styles.agentSelector}
         placeholder={t("agent.selectAgent")}
         optionLabelProp="label"
-        popupClassName={styles.agentSelectorDropdown}
+        classNames={{ popup: { root: styles.agentSelectorDropdown } }}
         getPopupContainer={(trigger) => trigger.parentElement ?? document.body}
-        showArrow={false}
-        dropdownRender={(menu) => (
+        suffixIcon={null}
+        popupRender={(menu) => (
           <>
             {!hideLabel && (
               <div className={styles.dropdownHeader}>

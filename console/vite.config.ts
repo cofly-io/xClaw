@@ -30,6 +30,15 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
+      // CodeMirror throws if multiple @codemirror/state instances are loaded.
+      // Dedupe forces Vite to resolve them from a single location.
+      dedupe: [
+        "@codemirror/state",
+        "@codemirror/view",
+        "@codemirror/language",
+        "@codemirror/autocomplete",
+        "@uiw/react-codemirror",
+      ],
     },
     server: {
       host: "0.0.0.0",
@@ -45,9 +54,6 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
       },
-    },
-    optimizeDeps: {
-      include: ["diff"],
     },
     // build: {
     //   // Output to xClaw's console directory,

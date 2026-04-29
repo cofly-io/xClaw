@@ -31,6 +31,11 @@
   &.editing {
     cursor: default;
   }
+
+  &.pinned {
+    border-left: 2px solid rgba(24, 100, 255, 0.55);
+    padding-left: 6px;
+  }
 }
 
 .leadIcon {
@@ -122,6 +127,10 @@
 
     &:hover {
       background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.pinned {
+      border-left-color: rgba(120, 176, 255, 0.75);
     }
 
     &.active {
