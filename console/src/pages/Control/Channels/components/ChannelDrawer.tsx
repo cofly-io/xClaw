@@ -826,6 +826,14 @@ export function ChannelDrawer({
             >
               <Input placeholder={t("channels.welcomeTextPlaceholder")} />
             </Form.Item>
+            <Form.Item
+              name="share_session_in_group"
+              label={t("channels.onebotShareSessionInGroup")}
+              valuePropName="checked"
+              tooltip={t("channels.onebotShareSessionInGroupTooltip")}
+            >
+              <Switch />
+            </Form.Item>
           </>
         );
 

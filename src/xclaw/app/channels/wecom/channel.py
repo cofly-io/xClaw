@@ -113,6 +113,7 @@ class WecomChannel(BaseChannel):
         bot_prefix: str = "",
         media_dir: str = "",
         welcome_text: str = "",
+        share_session_in_group: bool = True,
         workspace_dir: Path | None = None,
         on_reply_sent: OnReplySent = None,
         show_tool_details: bool = True,
@@ -140,6 +141,7 @@ class WecomChannel(BaseChannel):
         self.secret = secret
         self.bot_prefix = bot_prefix
         self.welcome_text = welcome_text
+        self.share_session_in_group = share_session_in_group
         self._workspace_dir = (
             Path(workspace_dir).expanduser() if workspace_dir else None
         )
@@ -190,6 +192,11 @@ class WecomChannel(BaseChannel):
             secret=os.getenv("WECOM_SECRET", ""),
             bot_prefix=os.getenv("WECOM_BOT_PREFIX", ""),
             media_dir=os.getenv("WECOM_MEDIA_DIR", ""),
+            share_session_in_group=os.getenv(
+                "WECOM_SHARE_SESSION_IN_GROUP",
+                "1",
+            )
+            == "1",
             on_reply_sent=on_reply_sent,
             dm_policy=os.getenv("WECOM_DM_POLICY", "open"),
             group_policy=os.getenv("WECOM_GROUP_POLICY", "open"),
@@ -219,6 +226,9 @@ class WecomChannel(BaseChannel):
             bot_prefix=getattr(config, "bot_prefix", "") or "",
             media_dir=getattr(config, "media_dir", None) or "",
             welcome_text=getattr(config, "welcome_text", "") or "",
+            share_session_in_group=bool(
+                getattr(config, "share_session_in_group", True),
+            ),
             workspace_dir=workspace_dir,
             on_reply_sent=on_reply_sent,
             show_tool_details=show_tool_details,
@@ -667,9 +677,15 @@ class WecomChannel(BaseChannel):
             native = {
                 "channel_id": self.channel,
                 "sender_id": sender_id,
-                # Group chats use a non-empty placeholder to prevent
-                # Runner.stream_query from overwriting it with session_id.
-                "user_id": "group" if is_group else sender_id,
+                # Group chats: all members share one chat by default
+                # (user_id="group"); when share_session_in_group is
+                # False, use sender_id so each member is isolated.
+                # session_id stays group-level for reply routing.
+                "user_id": (
+                    "group"
+                    if (is_group and self.share_session_in_group)
+                    else sender_id
+                ),
                 "session_id": session_id,
                 "content_parts": content_parts,
                 "meta": meta,
