@@ -958,7 +958,21 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   margin-left: 0 !important;
 }
 
-
-
-
 /* ModelSelector — same row as speech/zoom, after zoom button */
+
+[class*="tool-call-block-content"] .cm-content,
+[class*="tool-call-block-content"] .cm-line {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+[class*="tool-call-block-content"] .cm-content {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+[class*="tool-call-block-content"] {
+  max-height: 250px !important;
+  overflow-y: auto !important;
+}
