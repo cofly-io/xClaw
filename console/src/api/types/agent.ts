@@ -46,6 +46,11 @@ export interface EmbeddingConfig {
   max_batch_size: number;
 }
 
+export interface AutoTitleConfig {
+  enabled: boolean;
+  timeout_seconds: number;
+}
+
 export interface AgentsRunningConfig {
   max_iters: number;
   /** When true, inject a hint and one extra reasoning pass if the model returns text-only (no tool calls). */
@@ -68,4 +73,5 @@ export interface AgentsRunningConfig {
   embedding_config: EmbeddingConfig;
   memory_manager_backend: "remelight";
   approval_level?: string;
+  auto_title_config: AutoTitleConfig;
 }
