@@ -368,8 +368,13 @@ class AgentRunner(Runner):
         (
             approval_response,
             approval_consumed,
-            approved_tool_call,
+            _approved_tool_call,
         ) = await self._resolve_pending_approval(session_id, query)
+        forced_tool_call_json: str | None = (
+            json.dumps(_approved_tool_call, ensure_ascii=False)
+            if _approved_tool_call
+            else None
+        )
         if approval_response is not None:
             yield approval_response, True
             user_id = getattr(request, "user_id", "") or ""
@@ -468,10 +473,9 @@ class AgentRunner(Runner):
                 "channel": str(channel or DEFAULT_CHANNEL),
                 "agent_id": str(self.agent_id),
             }
-            if approved_tool_call:
-                base_request_context["forced_tool_call_json"] = json.dumps(
-                    approved_tool_call,
-                    ensure_ascii=False,
+            if forced_tool_call_json is not None:
+                base_request_context["forced_tool_call_json"] = (
+                    forced_tool_call_json
                 )
 
             custom_context = getattr(request, "request_context", None)
