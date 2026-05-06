@@ -589,6 +589,8 @@ xclaw chats delete <chat_id>
 
 | 命令                    | 说明                              |
 | ----------------------- | --------------------------------- |
+| `xclaw skills install`  | 从受支持的 URL 来源安装技能       |
+| `xclaw skills uninstall`| 从技能池或单个智能体工作区移除技能 |
 | `xclaw skills list`   | 列出所有技能及启用/禁用状态       |
 | `xclaw skills config` | 交互式启用/禁用技能（复选框界面） |
 | `xclaw skills info`   | 查看某个 workspace 技能的本地详情 |
@@ -598,6 +600,10 @@ xclaw chats delete <chat_id>
 ```bash
 xclaw skills list                   # 看默认智能体的技能
 xclaw skills list --agent-id abc123 # 看特定智能体的技能
+xclaw skills install https://skills.sh/owner/repo/skill  # 导入到本地技能池
+xclaw skills install https://skills.sh/owner/repo/skill --agent-id abc123  # 直接导入到特定智能体工作区
+xclaw skills uninstall skill-creator  # 从本地技能池移除
+xclaw skills uninstall skill-creator --agent-id abc123  # 从特定智能体工作区移除
 xclaw skills config                 # 交互式配置默认智能体
 xclaw skills config --agent-id abc123 # 交互式配置特定智能体
 xclaw skills info [skill_name]               # 看默认智能体的技能详情
@@ -682,7 +688,7 @@ xclaw --host 0.0.0.0 --port 9090 cron list
 | `xclaw agents`   | `list` · `chat`                                                                      |      **是**       |
 | `xclaw cron`     | `list` · `get` · `state` · `create` · `delete` · `pause` · `resume` · `run`          |      **是**       |
 | `xclaw chats`    | `list` · `get` · `create` · `update` · `delete`                                      |      **是**       |
-| `xclaw skills`   | `list` · `config`                                                                    |        否         |
+| `xclaw skills`   | `install` · `uninstall` · `list` · `config` · `info`                                 |        否         |
 | `xclaw clean`    | —                                                                                    |        否         |
 
 ---

@@ -604,6 +604,8 @@ Extend xClaw's capabilities with skills (PDF reading, web search, etc.).
 
 | Command                 | What it does                                      |
 | ----------------------- | ------------------------------------------------- |
+| `xclaw skills install` | Install a skill from a supported URL source       |
+| `xclaw skills uninstall` | Remove a skill from the skill pool or one workspace |
 | `xclaw skills list`   | Show all skills and their enabled/disabled status |
 | `xclaw skills config` | Interactively enable/disable skills (checkbox UI) |
 | `xclaw skills info`   | Show local details for one workspace skill        |
@@ -613,6 +615,10 @@ Extend xClaw's capabilities with skills (PDF reading, web search, etc.).
 ```bash
 xclaw skills list                   # See default agent's skills
 xclaw skills list --agent-id abc123 # See specific agent's skills
+xclaw skills install https://skills.sh/owner/repo/skill  # Import into the local skill pool
+xclaw skills install https://skills.sh/owner/repo/skill --agent-id abc123  # Import directly into a specific agent workspace
+xclaw skills uninstall skill-creator  # Remove from the local skill pool
+xclaw skills uninstall skill-creator --agent-id abc123  # Remove from a specific agent workspace
 xclaw skills config                 # Configure default agent
 xclaw skills config --agent-id abc123 # Configure specific agent
 xclaw skills info [skill_name]               # See default agent's skill details
@@ -698,7 +704,7 @@ See [Config & Working Directory](./config) and [Multi-Agent](./multi-agent) for 
 | `xclaw agents`   | `list` · `chat`                                                                      |     **Yes**      |
 | `xclaw cron`     | `list` · `get` · `state` · `create` · `delete` · `pause` · `resume` · `run`          |     **Yes**      |
 | `xclaw chats`    | `list` · `get` · `create` · `update` · `delete`                                      |     **Yes**      |
-| `xclaw skills`   | `list` · `config`                                                                    |        No        |
+| `xclaw skills`   | `install` · `uninstall` · `list` · `config` · `info`                                 |        No        |
 | `xclaw clean`    | —                                                                                    |        No        |
 
 ---
