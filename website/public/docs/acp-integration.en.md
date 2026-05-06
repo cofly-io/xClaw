@@ -199,7 +199,7 @@ When a new session is created, the agent returns config options that the client 
 The ACP agent resolves its configuration in the following order:
 
 1. **CLI arguments**: `--agent` and `--workspace` take highest priority
-2. **WORKING_DIR config**: read `agents.active_agent` from `config.json` inside `WORKING_DIR` (default `~/.xClaw`, or `~/.copaw` for legacy installations; overridable via the `xClaw_WORKING_DIR` environment variable)
+2. **WORKING_DIR config**: read `agents.active_agent` from `config.json` inside `WORKING_DIR` (default `~/.xClaw`, or `~/.xClaw` for legacy installations; overridable via the `xClaw_WORKING_DIR` environment variable)
 3. **Defaults**: fall back to agent ID `"default"` and workspace directory `WORKING_DIR/workspaces/default/`
 
 ---

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """supOS X 个人助手 - 桌面入口
 
-使用 PyWebView 作为桌面壳，内嵌 CoPaw 后端。
+使用 PyWebView 作为桌面壳，内嵌 xClaw 后端。
 """
 import multiprocessing
 import os

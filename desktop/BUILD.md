@@ -16,7 +16,7 @@
 - 离线构建：把上述 zip 放到 `desktop/node-v20.18.1-win-x64.zip` 或 `desktop/cache/` 下同名文件。
 - 跳过：加 `--skip-node-bundle`（需自行保证目标机有 Node 或手动拷贝 `node/` 目录）。
 - **npm 依赖**：若技能目录含 `package.json`，需在打包前于该目录执行 `npm ci` / `npm install`，
-  以便 `node_modules` 随 `copaw/agents/skills` 一并打进 PyInstaller（否则仅有 `node.exe` 仍缺包）。
+  以便 `node_modules` 随 `xClaw/agents/skills` 一并打进 PyInstaller（否则仅有 `node.exe` 仍缺包）。
 
 ## 打包步骤
 
@@ -39,7 +39,7 @@ pnpm build
 ### 3. 同步前端产物到后端静态目录
 
 ```powershell
-Copy-Item -Recurse -Force "console\dist\*" "src\copaw\console\"
+Copy-Item -Recurse -Force "console\dist\*" "src\xClaw\console\"
 ```
 
 ### 4. 打包
@@ -70,8 +70,8 @@ makensis desktop/installer.nsi
 
 ## 注意事项
 
-- 大模型配置存储在 `~/.copaw/`，不会被打包进 EXE，用户首次运行需自行配置
-- spec 文件使用 `subprocess` 获取包路径，避免 `import copaw` 触发 pygame/litellm 等副作用导致打包卡死
+- 大模型配置存储在 `~/.xClaw/`，不会被打包进 EXE，用户首次运行需自行配置
+- spec 文件使用 `subprocess` 获取包路径，避免 `import xClaw` 触发 pygame/litellm 等副作用导致打包卡死
 - `hook-block-sandbox.py` 用于屏蔽 agentscope_runtime 的 sandbox，打包时必须存在
 
 ## 文件说明

@@ -3,11 +3,11 @@
  */
 import { CatPawIcon } from "./CatPawIcon.tsx";
 
-interface CopawMascotProps {
+interface xClawMascotProps {
   size?: number;
   className?: string;
 }
 
-export function CopawMascot({ size = 80, className = "" }: CopawMascotProps) {
+export function xClawMascot({ size = 80, className = "" }: xClawMascotProps) {
   return <CatPawIcon size={size} className={className} />;
 }

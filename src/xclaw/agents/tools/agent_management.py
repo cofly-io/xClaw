@@ -9,7 +9,8 @@ import uuid
 from typing import Any, Callable, Dict, Optional, Set, Tuple
 
 import httpx
-from agentscope.message import Msg
+from agentscope.message import TextBlock
+from agentscope.tool import ToolResponse
 
 from ...config.utils import read_last_api
 
@@ -268,14 +269,12 @@ def _format_task_status_message(task_id: str, status_body: Dict[str, Any]) -> st
     return "\n".join(lines)
 
 
-async def list_agents() -> Msg:
+async def list_agents() -> ToolResponse:
     base = resolve_agent_api_base_url()
     data = await asyncio.to_thread(list_agents_data, base)
     text = json.dumps(data, ensure_ascii=False, indent=2)
-    return Msg(
-        name="Friday",
-        role="assistant",
-        content=[{"type": "text", "text": text}],
+    return ToolResponse(
+        content=[TextBlock(type="text", text=text)],
     )
 
 
@@ -287,7 +286,7 @@ async def chat_with_agent(
     task_id: Optional[str] = None,
     session_id: Optional[str] = None,
     timeout: float = 300.0,
-) -> Msg:
+) -> ToolResponse:
     base = resolve_agent_api_base_url()
 
     if background and task_id:
@@ -299,18 +298,14 @@ async def chat_with_agent(
             timeout=min(timeout, 120.0),
         )
         body = _format_task_status_message(task_id, status)
-        return Msg(
-            name="Friday",
-            role="assistant",
-            content=[{"type": "text", "text": body}],
+        return ToolResponse(
+            content=[TextBlock(type="text", text=body)],
         )
 
     if not await asyncio.to_thread(agent_exists, to_agent, base):
         aid = _normalize_agent_id(to_agent)
-        return Msg(
-            name="Friday",
-            role="assistant",
-            content=[{"type": "text", "text": f"Agent [{aid}] not exists"}],
+        return ToolResponse(
+            content=[TextBlock(type="text", text=f"Agent [{aid}] not exists")],
         )
 
     sid, payload, _ = build_agent_chat_request(
@@ -333,10 +328,8 @@ async def chat_with_agent(
             f"[TASK_ID: {tid}]\n[SESSION: {sid}]\n\n"
             f"{submitted.get('message', 'Task submitted.')}"
         )
-        return Msg(
-            name="Friday",
-            role="assistant",
-            content=[{"type": "text", "text": msg}],
+        return ToolResponse(
+            content=[TextBlock(type="text", text=msg)],
         )
 
     final = await asyncio.to_thread(
@@ -351,8 +344,6 @@ async def chat_with_agent(
         if final
         else "(No response received)"
     )
-    return Msg(
-        name="Friday",
-        role="assistant",
-        content=[{"type": "text", "text": out_text}],
+    return ToolResponse(
+        content=[TextBlock(type="text", text=out_text)],
     )

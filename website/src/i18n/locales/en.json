@@ -330,7 +330,7 @@
         "li5bLink": "GitHub Releases",
         "li5bSuffix": ".",
         "li5c": "Reinstall.",
-        "p2": "If you previously used CoPaw, upgrading to xClaw only requires downloading the latest xClaw. No extra migration is needed; your configuration, memory, skills, and other data from the CoPaw era continue to work."
+        "p2": "If you previously used xClaw, upgrading to xClaw only requires downloading the latest xClaw. No extra migration is needed; your configuration, memory, skills, and other data from the xClaw era continue to work."
       },
       "initialize": {
         "q": "How to initialize and start xClaw service",

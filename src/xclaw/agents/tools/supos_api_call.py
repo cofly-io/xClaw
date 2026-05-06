@@ -21,7 +21,7 @@ from ...security.xclaw_env_crypto import decrypt_from_b64
 
 
 def _load_supos_url() -> str:
-    """Load `supos_url` from `supos_config.json` under CoPaw working dir."""
+    """Load `supos_url` from `supos_config.json` under xClaw working dir."""
     cfg_path = Path(WORKING_DIR) / "supos_config.json"
     if not cfg_path.is_file():
         raise RuntimeError(
@@ -50,7 +50,7 @@ def _load_supOS_ak() -> str:
     if not ak:
         raise RuntimeError(
             "未找到 SUPOS_AK 环境变量（Open API 认证所需）。"
-            "请在启动目录放置 xclaw.env，或在 CoPaw 设置/配置里保存 SUPOS_AK。"
+            "请在启动目录放置 xclaw.env，或在 xClaw 设置/配置里保存 SUPOS_AK。"
         )
     return ak
 

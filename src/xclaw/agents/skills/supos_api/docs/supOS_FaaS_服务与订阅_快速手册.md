@@ -60,5 +60,5 @@ data: null
 
 ## 长文档（按需精读）
 
-`src/copaw/agents/skills/supos_api/docs/supOS_服务与订阅管理_API文档.md`
+`src/xClaw/agents/skills/supos_api/docs/supOS_服务与订阅管理_API文档.md`
 

@@ -758,7 +758,7 @@ The agent will modify the PRD and wait for confirmation again.
 - Phase: execution
 - Project: todo-cli-app
 - Progress: 2/4 stories passed
-- Loop dir: ~/.copaw/workspaces/default/missions/mission-20260415-123456
+- Loop dir: ~/.xClaw/workspaces/default/missions/mission-20260415-123456
 
   ✅ US-001: Add Task Feature
   ✅ US-002: List Tasks Feature
@@ -774,7 +774,7 @@ The agent will modify the PRD and wait for confirmation again.
 
 ### Working Directory Structure
 
-Each mission creates a working directory under `~/.copaw/workspaces/default/missions/mission-<timestamp>/`:
+Each mission creates a working directory under `~/.xClaw/workspaces/default/missions/mission-<timestamp>/`:
 
 ```
 mission-20260415-123456/

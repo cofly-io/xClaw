@@ -110,5 +110,5 @@ data: {
 - UNS 文件/文件夹创建、模板、导入导出等管理类接口
 - 大批量属性/历史查询组合、复杂筛选条件等
 
-长文档路径：`src/copaw/agents/skills/supos_api/docs/supOS_工业元建模_API文档.md`
+长文档路径：`src/xClaw/agents/skills/supos_api/docs/supOS_工业元建模_API文档.md`
 

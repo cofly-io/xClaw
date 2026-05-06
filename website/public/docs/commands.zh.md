@@ -757,7 +757,7 @@ Agent 会修改 PRD，再次等待确认。
 - Phase: execution
 - Project: todo-cli-app
 - Progress: 2/4 stories passed
-- Loop dir: ~/.copaw/workspaces/default/missions/mission-20260415-123456
+- Loop dir: ~/.xClaw/workspaces/default/missions/mission-20260415-123456
 
   ✅ US-001: 添加任务功能
   ✅ US-002: 列出任务功能
@@ -773,7 +773,7 @@ Agent 会修改 PRD，再次等待确认。
 
 ### 工作目录结构
 
-每个 mission 在 `~/.copaw/workspaces/default/missions/mission-<timestamp>/` 下创建工作目录：
+每个 mission 在 `~/.xClaw/workspaces/default/missions/mission-<timestamp>/` 下创建工作目录：
 
 ```
 mission-20260415-123456/

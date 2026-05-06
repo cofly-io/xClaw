@@ -8,7 +8,7 @@ xClaw 打包脚本。
   3. 在项目根目录执行：python desktop/build.py
 
 会在 dist/xClaw/ 生成 xclaw.env（与 xClaw.exe 同级），运行时自动加载。
-本机若已在 CoPaw 里保存过 AK（~/.copaw.secret/envs.json），打包脚本会自动读取用于写入 xclaw.env。
+本机若已在 xClaw 里保存过 AK（~/.xClaw/envs.json），打包脚本会自动读取用于写入 xclaw.env。
 
 Windows 打包默认还会把官方便携 Node 解压到 dist/xClaw/node/（与 exe 同级），
 运行时会优先加入 PATH，技能里可直接使用 node/npm。可用 --skip-node-bundle 跳过。
@@ -16,7 +16,7 @@ Windows 打包默认还会把官方便携 Node 解压到 dist/xClaw/node/（与 
 开发迭代想快一点：
   python desktop/build.py --fast --allow-missing-supos-ak
   等价于 --no-clean --skip-console --skip-node-bundle（需已存在 console/dist 且已同步到
-  src/copaw/console；否则不要用 --skip-console / --fast）。
+  src/xclaw/console；否则不要用 --skip-console / --fast）。
   发版或怀疑缓存坏了时，用默认（带 --clean）全量打包。
 """
 import json
@@ -62,7 +62,7 @@ DEFAULT_SUPOS_AK_FILE = os.path.join(ROOT, "desktop", "supos_ak.env")
 
 
 def _read_supos_ak_from_copaw_envs_json() -> str:
-    """本机开发时 CoPaw 持久化在 ~/.copaw.secret/envs.json 的 SUPOS_AK（未提交仓库）。"""
+    """本机开发时 xClaw 持久化在 ~/.xClaw/envs.json 的 SUPOS_AK（未提交仓库）。"""
     path = os.path.join(os.path.expanduser("~"), ".copaw.secret", "envs.json")
     if not os.path.isfile(path):
         return ""
@@ -442,7 +442,7 @@ def main():
             "ERROR: SUPOS_AK is required for a distributable build.\n"
             "  Set env SUPOS_AK, or: python desktop/build.py --supos-ak YOUR_KEY\n"
             "  Or create desktop/supos_ak.env (see desktop/supos_ak.env.example)\n"
-            "  Or save SUPOS_AK in CoPaw settings so ~/.copaw.secret/envs.json exists\n"
+            "  Or save SUPOS_AK in xClaw settings so ~/.xClaw/envs.json exists\n"
             "  Or pass: --allow-missing-supos-ak  (dev only; exe will not have bundled AK)",
         )
         sys.exit(1)

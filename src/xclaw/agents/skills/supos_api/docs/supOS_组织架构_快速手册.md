@@ -47,5 +47,5 @@ data: null
 
 ## 长文档（按需精读）
 
-`src/copaw/agents/skills/supos_api/docs/supOS_企业组织架构_API文档.md`
+`src/xClaw/agents/skills/supos_api/docs/supOS_企业组织架构_API文档.md`
 

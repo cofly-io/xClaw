@@ -58,7 +58,7 @@ data:   对应请求的数据
 
 ### 1) 查询 UNS 树（懒加载单层）
 
-- **doc**：`src/copaw/agents/skills/supos_api/docs/supOS_工业元建模_API文档.md`
+- **doc**：`src/xClaw/agents/skills/supos_api/docs/supOS_工业元建模_API文档.md`
 - **path**：`/os/open-api/uns/v2/instance/condition/tree`
 
 调用 `supos_api_call`：
@@ -71,7 +71,7 @@ data: {"parentId":"0","pageNo":1,"pageSize":100,"keyword":"","searchType":1}
 
 ### 2) 查询报警原始记录
 
-- **doc**：`src/copaw/agents/skills/supos_api/docs/supOS_位号报警_API文档.md`
+- **doc**：`src/xClaw/agents/skills/supos_api/docs/supOS_位号报警_API文档.md`
 - **path**：`/os/open-api/alarm/history/v1/raw`
 
 ```text
@@ -91,15 +91,15 @@ data: {"clientId":"xclaw","pageNum":1,"pageSize":50,"sortBy":"activeTime","sortO
 
 | 分类 | 文档路径 | 覆盖能力 |
 |------|----------|----------|
-| 用户与认证 | `src/copaw/agents/skills/supos_api/docs/supOS_用户和认证_API文档.md` | 用户列表/详情/创建/更新/启停/锁定，basePath: `/os/open-api/auth/v1/` |
-| 角色与菜单 | `src/copaw/agents/skills/supos_api/docs/supOS_角色管理_API文档.md` 和 `src/copaw/agents/skills/supos_api/docs/supOS_菜单配置_API文档.md` | 角色增删改查，菜单列表，basePath: `/os/open-api/rbac/v1/` |
-| 企业组织架构 | **优先** `src/copaw/agents/skills/supos_api/docs/supOS_组织架构_快速手册.md`；需要再读 `src/copaw/agents/skills/supos_api/docs/supOS_企业组织架构_API文档.md` | 公司/部门/人员/岗位等；快速手册用于定位路径与常用规则 |
-| 工业元建模(UNS) | **优先** `src/copaw/agents/skills/supos_api/docs/supOS_UNS_快速手册.md`；需要再读 `src/copaw/agents/skills/supos_api/docs/supOS_工业元建模_API文档.md` | 树查询、写入规则与常用模板；长文档覆盖所有 UNS 接口 |
-| 时序数据库 | `src/copaw/agents/skills/supos_api/docs/supOS_时序数据库_API文档.md` | 实时值读写、历史聚合/采样/原始查询、设备管理，basePath: `/os/open-api/` |
-| 报警管理 | `src/copaw/agents/skills/supos_api/docs/supOS_位号报警_API文档.md` | 原始报警记录查询、报警统计分析，basePath: `/os/open-api/alarm/history/v1/` |
-| 待办中心 | `src/copaw/agents/skills/supos_api/docs/supOS_待办中心_API文档.md` | 待办流程和任务的创建/查询/更新，basePath: `/os/open-api/` |
-| 事件开放 | `src/copaw/agents/skills/supos_api/docs/supOS_事件开放_API文档.md` | 事件主题查询、事件发布、订阅拉取与确认，basePath: `/os/open-api/event-center/v1` |
-| 服务与订阅脚本(FaaS) | **优先** `src/copaw/agents/skills/supos_api/docs/supOS_FaaS_服务与订阅_快速手册.md`；需要再读 `src/copaw/agents/skills/supos_api/docs/supOS_服务与订阅管理_API文档.md` | 命名空间/分组/订阅脚本等；快速手册用于定位路径与常用模板 |
-| 联邦查询 | `src/copaw/agents/skills/supos_api/docs/supOS_联邦查询_API文档.md` | 跨数据库 SQL 查询，Database/Schema/Table 元数据，basePath: `/os/open-api/fedquery/v1/` |
-| 桌面管理 | `src/copaw/agents/skills/supos_api/docs/supOS_桌面管理服务_API文档.md` | 组件和公司动态增删改查，basePath: `/os/open-api/desktop/v1/` |
-| 文件服务 | `src/copaw/agents/skills/supos_api/docs/supOS_文件服务_API文档.md` | 文件上传/下载/删除/列表，basePath: `/os/open-api/file-server/v2/` |
+| 用户与认证 | `src/xClaw/agents/skills/supos_api/docs/supOS_用户和认证_API文档.md` | 用户列表/详情/创建/更新/启停/锁定，basePath: `/os/open-api/auth/v1/` |
+| 角色与菜单 | `src/xClaw/agents/skills/supos_api/docs/supOS_角色管理_API文档.md` 和 `src/xClaw/agents/skills/supos_api/docs/supOS_菜单配置_API文档.md` | 角色增删改查，菜单列表，basePath: `/os/open-api/rbac/v1/` |
+| 企业组织架构 | **优先** `src/xClaw/agents/skills/supos_api/docs/supOS_组织架构_快速手册.md`；需要再读 `src/xClaw/agents/skills/supos_api/docs/supOS_企业组织架构_API文档.md` | 公司/部门/人员/岗位等；快速手册用于定位路径与常用规则 |
+| 工业元建模(UNS) | **优先** `src/xClaw/agents/skills/supos_api/docs/supOS_UNS_快速手册.md`；需要再读 `src/xClaw/agents/skills/supos_api/docs/supOS_工业元建模_API文档.md` | 树查询、写入规则与常用模板；长文档覆盖所有 UNS 接口 |
+| 时序数据库 | `src/xClaw/agents/skills/supos_api/docs/supOS_时序数据库_API文档.md` | 实时值读写、历史聚合/采样/原始查询、设备管理，basePath: `/os/open-api/` |
+| 报警管理 | `src/xClaw/agents/skills/supos_api/docs/supOS_位号报警_API文档.md` | 原始报警记录查询、报警统计分析，basePath: `/os/open-api/alarm/history/v1/` |
+| 待办中心 | `src/xClaw/agents/skills/supos_api/docs/supOS_待办中心_API文档.md` | 待办流程和任务的创建/查询/更新，basePath: `/os/open-api/` |
+| 事件开放 | `src/xClaw/agents/skills/supos_api/docs/supOS_事件开放_API文档.md` | 事件主题查询、事件发布、订阅拉取与确认，basePath: `/os/open-api/event-center/v1` |
+| 服务与订阅脚本(FaaS) | **优先** `src/xClaw/agents/skills/supos_api/docs/supOS_FaaS_服务与订阅_快速手册.md`；需要再读 `src/xClaw/agents/skills/supos_api/docs/supOS_服务与订阅管理_API文档.md` | 命名空间/分组/订阅脚本等；快速手册用于定位路径与常用模板 |
+| 联邦查询 | `src/xClaw/agents/skills/supos_api/docs/supOS_联邦查询_API文档.md` | 跨数据库 SQL 查询，Database/Schema/Table 元数据，basePath: `/os/open-api/fedquery/v1/` |
+| 桌面管理 | `src/xClaw/agents/skills/supos_api/docs/supOS_桌面管理服务_API文档.md` | 组件和公司动态增删改查，basePath: `/os/open-api/desktop/v1/` |
+| 文件服务 | `src/xClaw/agents/skills/supos_api/docs/supOS_文件服务_API文档.md` | 文件上传/下载/删除/列表，basePath: `/os/open-api/file-server/v2/` |
