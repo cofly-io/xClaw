@@ -1,0 +1,33 @@
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+
+  :global(.xclaw-dark) & {
+    background: rgba(0, 0, 0, 0.85);
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.text {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.65);
+
+  :global(.xclaw-dark) & {
+    color: rgba(255, 255, 255, 0.65);
+  }
+}

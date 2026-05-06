@@ -1215,6 +1215,7 @@
     "prompt2": "能告诉我你有哪些技能吗？",
     "prompt3": "能告诉我supOS平台信息吗？",
     "inputPlaceholder": "输入 / 查看快捷指令；审批时可使用 /approve 或 /deny ...",
+    "loadingSession": "加载对话中...",
     "commands": {
       "clear": {
         "description": "清空对话上下文"

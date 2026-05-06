@@ -67,8 +67,17 @@ export const chatApi = {
       body: JSON.stringify(chat),
     }),
 
-  getChat: (chatId: string) =>
-    request<ChatHistory>(`/chats/${encodeURIComponent(chatId)}`),
+  getChat: (chatId: string, lastN?: number, skipLastN?: number) => {
+    const search = new URLSearchParams();
+    if (lastN != null) search.set("last_n", String(lastN));
+    if (skipLastN != null && skipLastN > 0) {
+      search.set("skip_last_n", String(skipLastN));
+    }
+    const query = search.toString();
+    return request<ChatHistory>(
+      `/chats/${encodeURIComponent(chatId)}${query ? `?${query}` : ""}`,
+    );
+  },
 
   updateChat: (chatId: string, chat: ChatUpdateRequest) =>
     request<ChatSpec>(`/chats/${encodeURIComponent(chatId)}`, {

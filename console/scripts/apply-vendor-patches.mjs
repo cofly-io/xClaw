@@ -140,6 +140,28 @@ patchFile("@agentscope-ai/chat/lib/ChatAnywhere/Chat/index.js", "FLUSHSYNC_HOTFI
     );
 });
 
+// Patch Markdown Link to avoid leaking non-DOM props onto <a>
+// (e.g. domNode / streamStatus from markdown pipeline).
+const MARKDOWN_LINK_NEEDLE = `export default function Link(props) {
+  if (props['data-footnote-ref'] === '') return /*#__PURE__*/_jsx(Sup, _objectSpread({}, props));
+  if (props.children === '↩' && props['data-footnote-backref'] === '') return null;
+  return /*#__PURE__*/_jsx("a", _objectSpread({}, props));
+}`;
+
+const MARKDOWN_LINK_REPL = `export default function Link(props) {
+  // LINK_PROP_FILTER: strip non-DOM props to silence React warnings.
+  var cleaned = _objectWithoutProperties(props, ["domNode", "streamStatus"]);
+  if (cleaned['data-footnote-ref'] === '') return /*#__PURE__*/_jsx(Sup, _objectSpread({}, cleaned));
+  if (cleaned.children === '↩' && cleaned['data-footnote-backref'] === '') return null;
+  return /*#__PURE__*/_jsx("a", _objectSpread({}, cleaned));
+}`;
+
+patchFile(
+  "@agentscope-ai/chat/lib/Markdown/core/components/Link.js",
+  "LINK_PROP_FILTER",
+  (s) => (s.includes(MARKDOWN_LINK_NEEDLE) ? s.replace(MARKDOWN_LINK_NEEDLE, MARKDOWN_LINK_REPL) : s),
+);
+
 // Patch Tool.js to show Chinese tool names in the chat UI.
 const TOOL_TITLE_NEEDLE = `var title = "".concat(serverLabel).concat(toolName);`;
 const TOOL_TITLE_REPL = `var TOOL_LABELS_ZH = {
@@ -273,6 +295,147 @@ patchFile(
       );
     }
     t = t.replace("import * as ReactDOM from 'react-dom';\n", "");
+    return t;
+  },
+);
+
+const MESSAGE_LIST_IMPORT_NEEDLE = `import { ChatAnywhereSessionsContext } from "../../Context/ChatAnywhereSessionsContext";
+import cls from 'classnames';`;
+
+const MESSAGE_LIST_IMPORT_REPL = `import { ChatAnywhereSessionsContext } from "../../Context/ChatAnywhereSessionsContext";
+import { useChatAnywhereOptions } from "../../Context/ChatAnywhereOptionsContext";
+import cls from 'classnames';`;
+
+const MESSAGE_LIST_MESSAGES_NEEDLE = `  var messages = useContextSelector(ChatAnywhereMessagesContext, function (v) {
+    return v.messages;
+  });
+  var safeMessages = React.useMemo(function () {
+    return _toConsumableArray(messages || []).reverse();
+  }, [messages]);`;
+
+const MESSAGE_LIST_MESSAGES_REPL = `  var messages = useContextSelector(ChatAnywhereMessagesContext, function (v) {
+    return v.messages;
+  });
+  var setMessages = useContextSelector(ChatAnywhereMessagesContext, function (v) {
+    return v.setMessages;
+  });
+  var sessionApi = useChatAnywhereOptions(function (v) {
+    var _v$session;
+    return (_v$session = v.session) === null || _v$session === void 0 ? void 0 : _v$session.api;
+  });
+  var safeMessages = React.useMemo(function () {
+    return _toConsumableArray(messages || []).reverse();
+  }, [messages]);`;
+
+const MESSAGE_LIST_REF_NEEDLE = `  var listRef = React.useRef(null);
+  var prevMessagesLengthRef = React.useRef(safeMessages.length);`;
+
+const MESSAGE_LIST_REF_REPL = `  var listRef = React.useRef(null);
+  var prevMessagesLengthRef = React.useRef(safeMessages.length);
+  var justLoadedHistoryRef = React.useRef(false);`;
+
+const MESSAGE_LIST_SCROLL_NEEDLE = `  React.useEffect(function () {
+    if (safeMessages.length > prevMessagesLengthRef.current) {
+      var _listRef$current;
+      (_listRef$current = listRef.current) === null || _listRef$current === void 0 || _listRef$current.scrollToBottom();
+    }
+    prevMessagesLengthRef.current = safeMessages.length;
+  }, [safeMessages.length]);`;
+
+const MESSAGE_LIST_SCROLL_REPL = `  React.useEffect(function () {
+    if (safeMessages.length > prevMessagesLengthRef.current) {
+      if (justLoadedHistoryRef.current) {
+        justLoadedHistoryRef.current = false;
+      } else {
+        var _listRef$current;
+        (_listRef$current = listRef.current) === null || _listRef$current === void 0 || _listRef$current.scrollToBottom();
+      }
+    }
+    prevMessagesLengthRef.current = safeMessages.length;
+  }, [safeMessages.length]);`;
+
+const MESSAGE_LIST_SET_HISTORY_NEEDLE = `      if (older.length > 0) {
+        setMessages(function (prev) {
+          return [].concat(older, _toConsumableArray(prev));
+        });
+      }`;
+
+const MESSAGE_LIST_SET_HISTORY_REPL = `      if (older.length > 0) {
+        justLoadedHistoryRef.current = true;
+        setMessages(function (prev) {
+          return [].concat(older, _toConsumableArray(prev));
+        });
+      }`;
+
+const MESSAGE_LIST_LOADMORE_NEEDLE = `  var _useSimulatedMessageP = useSimulatedMessagePagination(safeMessages, currentSessionId),
+    visibleMessages = _useSimulatedMessageP.visibleMessages,
+    noMore = _useSimulatedMessageP.noMore,
+    loadMore = _useSimulatedMessageP.loadMore;
+  React.useEffect(function () {`;
+
+const MESSAGE_LIST_LOADMORE_REPL = `  var _useSimulatedMessageP = useSimulatedMessagePagination(safeMessages, currentSessionId),
+    visibleMessages = _useSimulatedMessageP.visibleMessages,
+    noMore = _useSimulatedMessageP.noMore,
+    loadMore = _useSimulatedMessageP.loadMore;
+  var _useState3 = useState(false),
+    _useState4 = _slicedToArray(_useState3, 2),
+    backendNoMore = _useState4[0],
+    setBackendNoMore = _useState4[1];
+  useEffect(function () {
+    setBackendNoMore(false);
+  }, [currentSessionId]);
+  var handleLoadMore = useCallback(function () {
+    console.debug('[xclaw][MessageList] handleLoadMore', { noMore: noMore, backendNoMore: backendNoMore, hasGetSessionMore: !!(sessionApi && sessionApi.getSessionMore), currentSessionId: currentSessionId });
+    if (!noMore) {
+      return loadMore();
+    }
+    if (backendNoMore) {
+      console.debug('[xclaw][MessageList] backendNoMore=true, skip');
+      return Promise.resolve();
+    }
+    if (!(sessionApi !== null && sessionApi !== void 0 && sessionApi.getSessionMore) || !currentSessionId) {
+      console.debug('[xclaw][MessageList] no getSessionMore or no sessionId, skip');
+      return Promise.resolve();
+    }
+    console.debug('[xclaw][MessageList] calling getSessionMore', currentSessionId);
+    return Promise.resolve(sessionApi.getSessionMore(currentSessionId)).then(function (result) {
+      var older = (result !== null && result !== void 0 && result.messages ? result.messages : []).map(function (item) {
+        return Object.assign({}, item, {
+          history: true
+        });
+      });
+      if (older.length > 0) {
+        setMessages(function (prev) {
+          return [].concat(older, _toConsumableArray(prev));
+        });
+      }
+      if ((result === null || result === void 0 ? void 0 : result.noMore) || older.length === 0) {
+        setBackendNoMore(true);
+      }
+    }).catch(function () {
+      setBackendNoMore(true);
+    });
+  }, [noMore, loadMore, backendNoMore, sessionApi, currentSessionId, setMessages]);
+  React.useEffect(function () {`;
+
+const MESSAGE_LIST_BUBBLE_NEEDLE = `    onLoadMore: noMore ? undefined : loadMore,
+    noMore: noMore,`;
+
+const MESSAGE_LIST_BUBBLE_REPL = `    onLoadMore: backendNoMore && noMore ? undefined : handleLoadMore,
+    noMore: backendNoMore ? noMore : false,`;
+
+patchFile(
+  "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Chat/MessageList/index.js",
+  "sessionApi.getSessionMore",
+  (s) => {
+    let t = s;
+    if (t.includes(MESSAGE_LIST_IMPORT_NEEDLE)) t = t.replace(MESSAGE_LIST_IMPORT_NEEDLE, MESSAGE_LIST_IMPORT_REPL);
+    if (t.includes(MESSAGE_LIST_MESSAGES_NEEDLE)) t = t.replace(MESSAGE_LIST_MESSAGES_NEEDLE, MESSAGE_LIST_MESSAGES_REPL);
+    if (t.includes(MESSAGE_LIST_REF_NEEDLE)) t = t.replace(MESSAGE_LIST_REF_NEEDLE, MESSAGE_LIST_REF_REPL);
+    if (t.includes(MESSAGE_LIST_LOADMORE_NEEDLE)) t = t.replace(MESSAGE_LIST_LOADMORE_NEEDLE, MESSAGE_LIST_LOADMORE_REPL);
+    if (t.includes(MESSAGE_LIST_SET_HISTORY_NEEDLE)) t = t.replace(MESSAGE_LIST_SET_HISTORY_NEEDLE, MESSAGE_LIST_SET_HISTORY_REPL);
+    if (t.includes(MESSAGE_LIST_SCROLL_NEEDLE)) t = t.replace(MESSAGE_LIST_SCROLL_NEEDLE, MESSAGE_LIST_SCROLL_REPL);
+    if (t.includes(MESSAGE_LIST_BUBBLE_NEEDLE)) t = t.replace(MESSAGE_LIST_BUBBLE_NEEDLE, MESSAGE_LIST_BUBBLE_REPL);
     return t;
   },
 );

@@ -1,4 +1,4 @@
-import {
+﻿import {
   AgentScopeRuntimeWebUI,
   IAgentScopeRuntimeWebUIOptions,
   type IAgentScopeRuntimeWebUIRef,
@@ -35,6 +35,7 @@ import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatNewSessionBridge from "./components/ChatNewSessionBridge";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
 import ChatSessionsRefreshListener from "./components/ChatSessionsRefreshListener";
+import ChatLoadingOverlay from "./components/ChatLoadingOverlay";
 import {
   toDisplayUrl,
   copyText,
@@ -481,6 +482,7 @@ export default function ChatPage() {
     return match?.[1];
   }, [location.pathname]);
   const [showModelPrompt, setShowModelPrompt] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(false);
   const { selectedAgent } = useAgentStore();
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
@@ -523,14 +525,16 @@ export default function ChatPage() {
 
   // Tell sessionApi which session to put first in getSessionList, so the library's
   // useMount auto-selects the correct session without an extra getSession round-trip.
-  if (chatId && sessionApi.preferredChatId !== chatId) {
-    sessionApi.preferredChatId = chatId;
-  }
+  useEffect(() => {
+    if (chatId) {
+      sessionApi.preferredChatId = chatId;
+    }
+  }, [chatId]);
 
   // Register session API event callbacks for URL synchronization
 
   useEffect(() => {
-    sessionApi.onSessionIdResolved = (realId) => {
+    sessionApi.onSessionIdResolved = (_tempId, realId) => {
       if (!isChatActiveRef.current) return;
       // Update URL when realId is resolved, regardless of current chatId
       // (chatId may be undefined if URL was cleared in onSessionCreated)
@@ -754,6 +758,26 @@ export default function ChatPage() {
     [multimodalCaps, t],
   );
 
+  /**
+   * Avoid auto-loading the newest (potentially huge) chat on a bare `/chat` refresh.
+   *
+   * Return empty session list when no chatId is present, preventing runtime from
+   * auto-selecting sessions[0]. When chatId exists, return full list so the
+   * ChatSessionInitializer can match and select the correct session.
+   */
+  const runtimeSessionApi = useMemo(() => {
+    return {
+      getSessionList: () =>
+        chatId ? sessionApi.getSessionList() : Promise.resolve([]),
+      getSession: (id: string) => sessionApi.getSession(id),
+      createSession: (s: any) => (sessionApi as any).createSession(s),
+      removeSession: (s: any) => (sessionApi as any).removeSession(s),
+      updateSession: (s: any) => (sessionApi as any).updateSession(s),
+      getSessionMore: (id: string) => (sessionApi as any).getSessionMore(id),
+      getSessionFull: (id: string) => (sessionApi as any).getSessionFull(id),
+    };
+  }, [chatId]);
+
   const options = useMemo(() => {
     const i18nConfig = getDefaultConfig(t);
     const commandSuggestions: CommandSuggestion[] = [
@@ -815,7 +839,7 @@ export default function ChatPage() {
         allowSpeech: true,
         prefix: (
           <>
-            <ChatSessionInitializer />
+            <ChatSessionInitializer onLoadingChange={setSessionLoading} />
             <ChatNewSessionBridge />
             <ChatSessionsRefreshListener />
             <RuntimeLoadingBridge bridgeRef={runtimeLoadingBridgeRef} />
@@ -862,7 +886,7 @@ export default function ChatPage() {
       session: {
         multiple: true,
         hideBuiltInSessionList: true,
-        api: sessionApi,
+        api: runtimeSessionApi as any,
       },
       api: {
         ...defaultConfig.api,
@@ -931,6 +955,7 @@ export default function ChatPage() {
     t,
     isDark,
     multimodalCaps,
+    runtimeSessionApi,
   ]);
 
   return (
@@ -940,9 +965,17 @@ export default function ChatPage() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
+        position: "relative",
       }}
     >
-      <div className={styles.chatMessagesArea}>
+      <ChatLoadingOverlay visible={sessionLoading} />
+      <div
+        className={styles.chatMessagesArea}
+        style={{
+          visibility: sessionLoading ? "hidden" : "visible",
+          pointerEvents: sessionLoading ? "none" : "auto",
+        }}
+      >
         <AgentScopeRuntimeWebUI
           ref={chatRef}
           key={refreshKey}

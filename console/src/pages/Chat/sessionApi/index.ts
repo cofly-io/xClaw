@@ -15,6 +15,7 @@ import {
   fixedBucketToI18nKey,
   getSessionBucket,
 } from "../sessionCalendarGroup";
+import { requestSessionsListRefresh } from "../chatNewSessionBridge";
 
 // ---------------------------------------------------------------------------
 // Session date grouping
@@ -33,6 +34,8 @@ function getSessionGroup(tsMs: number): string {
 const DEFAULT_USER_ID = "default";
 const DEFAULT_CHANNEL = "console";
 const DEFAULT_SESSION_NAME = "New Chat";
+const PREVIEW_LAST_N = 50;
+const HISTORY_PAGE_SIZE = 50;
 const ROLE_TOOL = "tool";
 const ROLE_USER = "user";
 const ROLE_ASSISTANT = "assistant";
@@ -398,6 +401,9 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     Promise<IAgentScopeRuntimeWebUISession>
   > = new Map();
 
+  /** Track how many newest messages are already loaded per session id. */
+  private loadedTailCount: Map<string, number> = new Map();
+
   /**
    * Called when a temporary timestamp session id is resolved to a real backend
    * UUID. Consumers (e.g. Chat/index.tsx) can register here to update the URL.
@@ -542,6 +548,96 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
   /** Track the last session ID that triggered onSessionSelected to avoid duplicate calls. */
   private lastSelectedSessionId: string | null = null;
 
+  async getSessionMore(
+    sessionId: string,
+  ): Promise<{ messages: IAgentScopeRuntimeWebUIMessage[]; noMore: boolean }> {
+    const fromList = this.sessionList.find((s) => s.id === sessionId) as
+      | ExtendedSession
+      | undefined;
+
+    let backendId = sessionId;
+    if (isLocalTimestamp(sessionId)) {
+      if (fromList?.realId) {
+        backendId = fromList.realId;
+      } else {
+        await this.getSessionList();
+        const refreshed = this.sessionList.find((s) => s.id === sessionId) as
+          | ExtendedSession
+          | undefined;
+        if (!refreshed?.realId) {
+          return { messages: [], noMore: true };
+        }
+        backendId = refreshed.realId;
+      }
+    }
+
+    const loaded = this.loadedTailCount.get(sessionId) ?? PREVIEW_LAST_N;
+    console.debug('[xclaw][getSessionMore] fetching', { sessionId, backendId, skip_last_n: loaded, last_n: HISTORY_PAGE_SIZE });
+    const chatHistory = await api.getChat(
+      backendId,
+      HISTORY_PAGE_SIZE,
+      loaded,
+    );
+    const olderMessages = convertMessages(chatHistory.messages || []);
+    const fetchedCount = chatHistory.messages?.length || 0;
+    this.loadedTailCount.set(sessionId, loaded + fetchedCount);
+    return {
+      messages: olderMessages,
+      noMore: fetchedCount < HISTORY_PAGE_SIZE,
+    };
+  }
+
+  async getSessionFull(sessionId: string) {
+    console.debug("[xclaw][sessionApi] getSessionFull:start", { sessionId });
+    // Resolve backend id for local timestamp sessions
+    let backendId = sessionId;
+    const fromList = this.sessionList.find((s) => s.id === sessionId) as
+      | ExtendedSession
+      | undefined;
+
+    if (isLocalTimestamp(sessionId)) {
+      if (fromList?.realId) {
+        backendId = fromList.realId;
+      } else {
+        await this.getSessionList();
+        const refreshed = this.sessionList.find((s) => s.id === sessionId) as
+          | ExtendedSession
+          | undefined;
+        if (refreshed?.realId) {
+          backendId = refreshed.realId;
+        } else {
+          return this.getLocalSession(sessionId);
+        }
+      }
+    }
+
+    const chatHistory = await api.getChat(backendId);
+    console.debug("[xclaw][sessionApi] getSessionFull:fetched", {
+      sessionId,
+      backendId,
+      messageCount: chatHistory.messages?.length ?? 0,
+    });
+    const generating = isGenerating(chatHistory);
+    const messages = convertMessages(chatHistory.messages || []);
+    this.patchLastUserMessage(messages, generating, backendId);
+
+    const session: ExtendedSession = {
+      id: sessionId,
+      name: fromList?.name || DEFAULT_SESSION_NAME,
+      sessionId: fromList?.sessionId || sessionId,
+      userId: fromList?.userId || DEFAULT_USER_ID,
+      channel: fromList?.channel || DEFAULT_CHANNEL,
+      messages,
+      meta: fromList?.meta || {},
+      realId:
+        fromList?.realId || (backendId !== sessionId ? backendId : undefined),
+      generating,
+    };
+
+    this.updateWindowVariables(session);
+    return session;
+  }
+
   async getSession(sessionId: string) {
     const existingRequest = this.sessionRequests.get(sessionId);
     if (existingRequest) return existingRequest;
@@ -575,9 +671,10 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
 
       // If realId is already resolved, use it directly to fetch history.
       if (fromList?.realId) {
-        const chatHistory = await api.getChat(fromList.realId);
+        const chatHistory = await api.getChat(fromList.realId, PREVIEW_LAST_N);
         const generating = isGenerating(chatHistory);
         const messages = convertMessages(chatHistory.messages || []);
+        this.loadedTailCount.set(sessionId, chatHistory.messages?.length || 0);
         this.patchLastUserMessage(messages, generating, fromList.realId);
         const session: ExtendedSession = {
           id: sessionId,
@@ -614,9 +711,10 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
         | ExtendedSession
         | undefined;
       if (refreshed?.realId) {
-        const chatHistory = await api.getChat(refreshed.realId);
+        const chatHistory = await api.getChat(refreshed.realId, PREVIEW_LAST_N);
         const generating = isGenerating(chatHistory);
         const messages = convertMessages(chatHistory.messages || []);
+        this.loadedTailCount.set(sessionId, chatHistory.messages?.length || 0);
         this.patchLastUserMessage(messages, generating, refreshed.realId);
         const session: ExtendedSession = {
           id: sessionId,
@@ -645,10 +743,10 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     const fromList = this.sessionList.find((s) => s.id === sessionId) as
       | ExtendedSession
       | undefined;
-
-    const chatHistory = await api.getChat(sessionId);
+    const chatHistory = await api.getChat(sessionId, PREVIEW_LAST_N);
     const generating = isGenerating(chatHistory);
     const messages = convertMessages(chatHistory.messages || []);
+    this.loadedTailCount.set(sessionId, chatHistory.messages?.length || 0);
     this.patchLastUserMessage(messages, generating, sessionId);
     const session: ExtendedSession = {
       id: sessionId,
@@ -668,6 +766,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
   async updateSession(session: Partial<IAgentScopeRuntimeWebUISession>) {
     session.messages = [];
     const index = this.sessionList.findIndex((s) => s.id === session.id);
+    let listRefetched = false;
 
     if (index > -1) {
       this.sessionList[index] = { ...this.sessionList[index], ...session };
@@ -675,26 +774,29 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
       const existing = this.sessionList[index] as ExtendedSession;
       if (isLocalTimestamp(existing.id) && !existing.realId) {
         const tempId = existing.id;
-        this.getSessionList().then(() => {
-          const { list, realId } = resolveRealId(this.sessionList, tempId);
-          this.sessionList = list;
-          if (realId) {
-            this.onSessionIdResolved?.(tempId, realId);
-          }
-        });
+        await this.getSessionList();
+        listRefetched = true;
+        const resolved = resolveRealId(this.sessionList, tempId);
+        this.sessionList = resolved.list;
+        if (resolved.realId) {
+          this.onSessionIdResolved?.(tempId, resolved.realId);
+        }
       }
     } else {
       const tempId = session.id!;
-      await this.getSessionList().then(() => {
-        const { list, realId } = resolveRealId(this.sessionList, tempId);
-        this.sessionList = list;
-        if (realId) {
-          this.onSessionIdResolved?.(tempId, realId);
-        }
-      });
+      await this.getSessionList();
+      listRefetched = true;
+      const resolved = resolveRealId(this.sessionList, tempId);
+      this.sessionList = resolved.list;
+      if (resolved.realId) {
+        this.onSessionIdResolved?.(tempId, resolved.realId);
+      }
     }
 
     this.notifySubscribers();
+    if (listRefetched) {
+      requestSessionsListRefresh();
+    }
     return [...this.sessionList];
   }
 

@@ -1237,6 +1237,7 @@
     "prompt2": "Can you tell me what skills you have?",
     "prompt3": "Can you tell me about the supOS platform?",
     "inputPlaceholder": "Type / to see commands; use /approve or /deny during approval...",
+    "loadingSession": "Loading session...",
     "commands": {
       "clear": {
         "description": "Clear the conversation context"

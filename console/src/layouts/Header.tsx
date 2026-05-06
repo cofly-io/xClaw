@@ -4,7 +4,10 @@ import { useTranslation } from "react-i18next";
 import { FileText, Book, HelpCircle, Lock, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
-import { XCLAW_CHAT_HEADER_TITLE_EVENT } from "../pages/Chat/components/ChatHeaderTitle";
+import {
+  type ChatHeaderTitleDetail,
+  XCLAW_CHAT_HEADER_TITLE_EVENT,
+} from "../pages/Chat/components/ChatHeaderTitle";
 
 const { Header: AntHeader } = Layout;
 
@@ -24,21 +27,26 @@ export default function Header({ onLock }: HeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const [chatHeaderTitle, setChatHeaderTitle] = useState("");
+  const [chatHeaderTitle, setChatHeaderTitle] =
+    useState<ChatHeaderTitleDetail | null>(null);
   const isChatRoute =
     location.pathname === "/chat" || location.pathname.startsWith("/chat/");
 
   useEffect(() => {
     const onTitle = (e: Event) => {
-      const detail = (e as CustomEvent<string>).detail;
-      setChatHeaderTitle(detail || "");
+      const detail = (e as CustomEvent<ChatHeaderTitleDetail>).detail;
+      setChatHeaderTitle(
+        detail?.label
+          ? { label: detail.label, full: detail.full || detail.label }
+          : null,
+      );
     };
     window.addEventListener(XCLAW_CHAT_HEADER_TITLE_EVENT, onTitle);
     return () => window.removeEventListener(XCLAW_CHAT_HEADER_TITLE_EVENT, onTitle);
   }, []);
 
   useEffect(() => {
-    if (!isChatRoute) setChatHeaderTitle("");
+    if (!isChatRoute) setChatHeaderTitle(null);
   }, [isChatRoute]);
 
   const handleNavClick = (url: string) => {
@@ -62,8 +70,13 @@ export default function Header({ onLock }: HeaderProps) {
   return (
     <AntHeader className={styles.header}>
       <div className={styles.headerCenter}>
-        {isChatRoute && chatHeaderTitle ? (
-          <span className={styles.headerTitle}>{chatHeaderTitle}</span>
+        {isChatRoute && chatHeaderTitle?.label ? (
+          <span
+            className={styles.headerTitle}
+            title={chatHeaderTitle.full}
+          >
+            {chatHeaderTitle.label}
+          </span>
         ) : null}
       </div>
       <Space size="middle">

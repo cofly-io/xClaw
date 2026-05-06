@@ -16,6 +16,7 @@ import {
 import {
   requestSessionsListRefresh,
   XCLAW_NEW_CHAT_SESSION_EVENT,
+  XCLAW_REFRESH_SESSIONS_EVENT,
 } from "../../chatNewSessionBridge";
 import styles from "./index.module.less";
 
@@ -34,6 +35,16 @@ function getBackendId(session: ExtendedSession): string | null {
   if (!id) return null;
   if (!/^\d+$/.test(id)) return id;
   return null;
+}
+
+function sessionMatchesChatRoute(
+  session: ExtendedSession,
+  chatId: string | undefined,
+): boolean {
+  if (!chatId) return false;
+  if (session.id === chatId) return true;
+  if (session.realId === chatId) return true;
+  return getBackendId(session) === chatId;
 }
 
 function sessionSortTs(s: ExtendedSession): number {
@@ -85,8 +96,11 @@ export default function SidebarSessionList({
   useEffect(() => {
     const onRefresh = () => load();
     window.addEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, onRefresh);
-    return () =>
+    window.addEventListener(XCLAW_REFRESH_SESSIONS_EVENT, onRefresh);
+    return () => {
       window.removeEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, onRefresh);
+      window.removeEventListener(XCLAW_REFRESH_SESSIONS_EVENT, onRefresh);
+    };
   }, [load]);
 
   useEffect(() => {
@@ -121,8 +135,9 @@ export default function SidebarSessionList({
   );
 
   const handleSessionClick = useCallback(
-    (sessionId: string) => {
-      navigate(`/chat/${sessionId}`);
+    (session: ExtendedSession) => {
+      const targetId = getBackendId(session) ?? session.id;
+      navigate(`/chat/${targetId}`);
     },
     [navigate],
   );
@@ -215,13 +230,13 @@ export default function SidebarSessionList({
                     channelKey={channelKey || undefined}
                     channelLabel={channelLabel}
                     pinned={!!ext.pinned}
-                    active={session.id === chatId}
+                    active={sessionMatchesChatRoute(ext, chatId)}
                     editing={editingSessionId === session.id}
                     editValue={
                       editingSessionId === session.id ? editValue : undefined
                     }
                     onClick={() =>
-                      session.id && handleSessionClick(session.id)
+                      session.id && handleSessionClick(ext)
                     }
                     onEdit={() =>
                       handleEditStart(
@@ -261,13 +276,13 @@ export default function SidebarSessionList({
                       channelKey={channelKey || undefined}
                       channelLabel={channelLabel}
                       pinned={!!(ext as ExtendedSession).pinned}
-                      active={session.id === chatId}
+                      active={sessionMatchesChatRoute(ext, chatId)}
                       editing={editingSessionId === session.id}
                       editValue={
                         editingSessionId === session.id ? editValue : undefined
                       }
                       onClick={() =>
-                        session.id && handleSessionClick(session.id)
+                        session.id && handleSessionClick(ext)
                       }
                       onEdit={() =>
                         handleEditStart(

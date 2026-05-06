@@ -134,6 +134,22 @@ async def batch_delete_chats(
 @router.get("/{chat_id}", response_model=ChatHistory)
 async def get_chat(
     chat_id: str,
+    last_n: int | None = Query(
+        None,
+        ge=1,
+        description=(
+            "Return only the last N messages. "
+            "Omit to return all messages."
+        ),
+    ),
+    skip_last_n: int = Query(
+        0,
+        ge=0,
+        description=(
+            "Skip this many messages from the tail before taking last_n. "
+            "Used for loading older pages."
+        ),
+    ),
     mgr: ChatManager = Depends(get_chat_manager),
     session: SafeJSONSession = Depends(get_session),
     workspace=Depends(get_workspace),
@@ -141,8 +157,9 @@ async def get_chat(
     """Get detailed information about a specific chat by UUID.
 
     Args:
-        request: FastAPI request (for agent context)
         chat_id: Chat UUID
+        last_n: If set, return only the last N messages (for fast preview).
+        skip_last_n: Skip N newest messages first, then apply last_n.
         mgr: Chat manager dependency
         session: SafeJSONSession dependency
 
@@ -172,6 +189,13 @@ async def get_chat(
 
     memories = await memory.get_memory(prepend_summary=False)
     messages = agentscope_msg_to_message(memories)
+
+    if last_n is not None:
+        end = len(messages) - skip_last_n if skip_last_n > 0 else len(messages)
+        end = max(0, end)
+        start = max(0, end - last_n)
+        messages = messages[start:end]
+
     return ChatHistory(messages=messages, status=status)
 
 
