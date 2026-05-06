@@ -161,6 +161,106 @@ patchFile(
   (s) => s.includes(TOOL_TITLE_NEEDLE) ? s.replace(TOOL_TITLE_NEEDLE, TOOL_TITLE_REPL) : s,
 );
 
+/**
+ * @ant-design/x CodeHighlighter uses dynamic import(`.../prism/${lang}`), which
+ * browsers cannot resolve after Vite transform. Use static import paths per language.
+ */
+function patchAntDesignXCodeHighlighterEs() {
+  const pnpmDir = path.join(root, "node_modules", ".pnpm");
+  if (!fs.existsSync(pnpmDir)) return;
+  const sentinel = "VITE_PRISM_LANG_HOTFIX";
+  const loaderBlock = `const ${sentinel}_LOADERS = {
+  json: () => import('react-syntax-highlighter/dist/esm/languages/prism/json.js'),
+  javascript: () => import('react-syntax-highlighter/dist/esm/languages/prism/javascript.js'),
+  js: () => import('react-syntax-highlighter/dist/esm/languages/prism/javascript.js'),
+  typescript: () => import('react-syntax-highlighter/dist/esm/languages/prism/typescript.js'),
+  ts: () => import('react-syntax-highlighter/dist/esm/languages/prism/typescript.js'),
+  tsx: () => import('react-syntax-highlighter/dist/esm/languages/prism/tsx.js'),
+  jsx: () => import('react-syntax-highlighter/dist/esm/languages/prism/jsx.js'),
+  python: () => import('react-syntax-highlighter/dist/esm/languages/prism/python.js'),
+  py: () => import('react-syntax-highlighter/dist/esm/languages/prism/python.js'),
+  ruby: () => import('react-syntax-highlighter/dist/esm/languages/prism/ruby.js'),
+  rust: () => import('react-syntax-highlighter/dist/esm/languages/prism/rust.js'),
+  kotlin: () => import('react-syntax-highlighter/dist/esm/languages/prism/kotlin.js'),
+  csharp: () => import('react-syntax-highlighter/dist/esm/languages/prism/csharp.js'),
+  cs: () => import('react-syntax-highlighter/dist/esm/languages/prism/csharp.js'),
+  markdown: () => import('react-syntax-highlighter/dist/esm/languages/prism/markdown.js'),
+  md: () => import('react-syntax-highlighter/dist/esm/languages/prism/markdown.js'),
+  yaml: () => import('react-syntax-highlighter/dist/esm/languages/prism/yaml.js'),
+  yml: () => import('react-syntax-highlighter/dist/esm/languages/prism/yaml.js'),
+  shell: () => import('react-syntax-highlighter/dist/esm/languages/prism/bash.js'),
+  bash: () => import('react-syntax-highlighter/dist/esm/languages/prism/bash.js'),
+  sh: () => import('react-syntax-highlighter/dist/esm/languages/prism/bash.js'),
+  zsh: () => import('react-syntax-highlighter/dist/esm/languages/prism/bash.js'),
+  sql: () => import('react-syntax-highlighter/dist/esm/languages/prism/sql.js'),
+  css: () => import('react-syntax-highlighter/dist/esm/languages/prism/css.js'),
+  html: () => import('react-syntax-highlighter/dist/esm/languages/prism/markup.js'),
+  xml: () => import('react-syntax-highlighter/dist/esm/languages/prism/markup.js'),
+  diff: () => import('react-syntax-highlighter/dist/esm/languages/prism/diff.js'),
+  dockerfile: () => import('react-syntax-highlighter/dist/esm/languages/prism/docker.js'),
+};
+`;
+  const newGetAsync = `const getAsyncHighlighter = lang => {
+  if (!highlighterCache.has(lang)) {
+    const resolvedLang = ${sentinel}_LOADERS[lang] ? lang : 'javascript';
+    const LazyHighlighter = /*#__PURE__*/lazy(async () => {
+      try {
+        const load = ${sentinel}_LOADERS[resolvedLang] || ${sentinel}_LOADERS.javascript;
+        const mod = await load();
+        if (mod != null && mod.default) {
+          SyntaxHighlighter.registerLanguage(resolvedLang, mod.default);
+        }
+      } catch (error) {
+        console.warn(\`[CodeHighlighter] Failed to load language: \${lang}\`, error);
+      }
+      return {
+        default: ({
+          children,
+          ...rest
+        }) => /*#__PURE__*/React.createElement(SyntaxHighlighter, _extends({
+          language: resolvedLang
+        }, rest), children)
+      };
+    });
+    highlighterCache.set(lang, LazyHighlighter);
+  }
+  return highlighterCache.get(lang);
+};`;
+
+  for (const dir of fs.readdirSync(pnpmDir)) {
+    if (!dir.startsWith("@ant-design+x@")) continue;
+    const file = path.join(
+      pnpmDir,
+      dir,
+      "node_modules",
+      "@ant-design",
+      "x",
+      "es",
+      "code-highlighter",
+      "CodeHighlighter.js",
+    );
+    if (!fs.existsSync(file)) continue;
+    let s = fs.readFileSync(file, "utf8");
+    if (s.includes(sentinel)) continue;
+    const marker = "const getAsyncHighlighter = lang => {";
+    const idx = s.indexOf(marker);
+    if (idx === -1) continue;
+    const endMarker = "const getFullPrismHighlighter";
+    const endIdx = s.indexOf(endMarker, idx);
+    if (endIdx === -1) continue;
+    s =
+      s.slice(0, idx) +
+      loaderBlock +
+      "\n" +
+      newGetAsync +
+      "\n" +
+      s.slice(endIdx);
+    fs.writeFileSync(file, s, "utf8");
+  }
+}
+
+patchAntDesignXCodeHighlighterEs();
+
 patchFile(
   "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Context/ChatAnywhereSessionsContext.js",
   "FLUSHSYNC_SESSIONS_HOTFIX",
