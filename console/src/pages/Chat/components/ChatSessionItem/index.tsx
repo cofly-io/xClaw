@@ -11,6 +11,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { ChatStatus } from "../../../../api/types/chat";
 import { useTheme } from "../../../../contexts/ThemeContext";
 import {
   ContextMenu,
@@ -22,6 +23,14 @@ import styles from "./index.module.less";
 interface ChatSessionItemProps {
   /** Session display name */
   name: string;
+  /** Stable session id (drawer / virtual list; used with shared context menu) */
+  sessionId?: string;
+  /** Optional subtitle time string (drawer) */
+  time?: string;
+  /** Session lifecycle status (drawer) */
+  chatStatus?: ChatStatus;
+  /** Whether the session stream is still generating (drawer) */
+  generating?: boolean;
   /** Channel key (e.g. console, dingtalk) — used with shared channel icons */
   channelKey?: string;
   /** Localized channel label (e.g. Console, DingTalk) */
@@ -48,6 +57,8 @@ interface ChatSessionItemProps {
   onEditSubmit?: () => void;
   /** Cancel edit callback */
   onEditCancel?: () => void;
+  /** Drawer: parent-owned context menu (e.g. single menu for virtualized list) */
+  onContextMenu?: (sessionId: string, event: React.MouseEvent) => void;
   className?: string;
 }
 
@@ -170,11 +181,21 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
     return items;
   }, [props.onDelete, props.onEdit, props.onPin, props.pinned, t]);
 
+  const handleContextMenu =
+    props.editing
+      ? undefined
+      : props.onContextMenu && props.sessionId
+        ? (e: React.MouseEvent) => {
+            e.preventDefault();
+            props.onContextMenu!(props.sessionId!, e);
+          }
+        : contextMenu.show;
+
   return (
     <div
       className={className}
       onClick={props.editing ? undefined : props.onClick}
-      onContextMenu={props.editing ? undefined : contextMenu.show}
+      onContextMenu={handleContextMenu}
     >
       <Tooltip
         title={

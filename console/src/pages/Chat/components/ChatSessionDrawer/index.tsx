@@ -422,10 +422,15 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
                       editValue={
                         editingSessionId === session.id ? editValue : undefined
                       }
-                      onClick={handleSessionClick}
-                      onEdit={handleEditStart}
-                      onDelete={handleDelete}
-                      onPin={handlePinToggle}
+                      onClick={() => handleSessionClick(session.id!)}
+                      onEdit={() =>
+                        handleEditStart(
+                          session.id!,
+                          session.name || "New Chat",
+                        )
+                      }
+                      onDelete={() => void handleDelete(session.id!)}
+                      onPin={() => void handlePinToggle(session.id!)}
                       onEditChange={handleEditChange}
                       onEditSubmit={handleEditSubmit}
                       onEditCancel={handleEditCancel}
