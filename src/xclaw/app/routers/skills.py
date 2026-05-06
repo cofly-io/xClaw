@@ -38,6 +38,7 @@ from ...agents.skills_manager import (
     _default_workspace_manifest,
     _get_skill_mtime,
     _mutate_json,
+    _normalize_skill_manifest_entry,
     _read_skill_from_dir,
     get_pool_builtin_sync_status,
     get_pool_skill_manifest_path,
@@ -473,23 +474,36 @@ def _build_workspace_skill_specs(workspace_dir: Path) -> list[SkillSpec]:
     entries = manifest.get("skills", {})
     skill_root = get_workspace_skills_dir(workspace_dir)
     specs: list[SkillSpec] = []
-    for skill_name, entry in sorted(entries.items()):
-        source = entry.get("source", "customized")
-        skill_dir = skill_root / skill_name
-        skill = _read_skill_from_dir(skill_dir, source)
-        if skill is None:
-            continue
-        dump = skill.model_dump()
-        dump["tags"] = entry.get("tags") or []
-        specs.append(
-            SkillSpec(
-                **dump,
-                enabled=entry.get("enabled", False),
-                channels=entry.get("channels") or ["all"],
-                config=entry.get("config") or {},
-                last_updated=_get_skill_mtime(skill_dir),
-            ),
-        )
+    for skill_name, raw_entry in sorted(entries.items()):
+        entry = _normalize_skill_manifest_entry(raw_entry)
+        if raw_entry not in (None, entry):
+            logger.warning(
+                "Skipping malformed workspace skill entry '%s' in manifest",
+                skill_name,
+            )
+        try:
+            source = entry.get("source", "customized")
+            skill_dir = skill_root / skill_name
+            skill = _read_skill_from_dir(skill_dir, source)
+            if skill is None:
+                continue
+            dump = skill.model_dump()
+            dump["tags"] = entry.get("tags") or []
+            specs.append(
+                SkillSpec(
+                    **dump,
+                    enabled=entry.get("enabled", False),
+                    channels=entry.get("channels") or ["all"],
+                    config=entry.get("config") or {},
+                    last_updated=_get_skill_mtime(skill_dir),
+                ),
+            )
+        except Exception:
+            logger.warning(
+                "Skipping workspace skill '%s': failed to build spec",
+                skill_name,
+                exc_info=True,
+            )
     return specs
 
 
@@ -499,29 +513,42 @@ def _build_pool_skill_specs() -> list[PoolSkillSpec]:
     pool_dir = get_skill_pool_dir()
     sync_info = get_pool_builtin_sync_status()
     specs: list[PoolSkillSpec] = []
-    for skill_name, entry in sorted(entries.items()):
-        source = entry.get("source", "customized")
-        skill_dir = pool_dir / skill_name
-        skill = _read_skill_from_dir(skill_dir, source)
-        if skill is None:
-            continue
-        info = sync_info.get(skill_name, {})
-        dump = skill.model_dump(exclude={"version_text"})
-        dump["tags"] = entry.get("tags") or []
-        specs.append(
-            PoolSkillSpec(
-                **dump,
-                protected=bool(entry.get("protected", False)),
-                version_text=str(entry.get("version_text", "") or ""),
-                commit_text=str(entry.get("commit_text", "") or ""),
-                sync_status=str(info.get("sync_status", "") or ""),
-                latest_version_text=str(
-                    info.get("latest_version_text", "") or "",
+    for skill_name, raw_entry in sorted(entries.items()):
+        entry = _normalize_skill_manifest_entry(raw_entry)
+        if raw_entry not in (None, entry):
+            logger.warning(
+                "Skipping malformed pool skill entry '%s' in manifest",
+                skill_name,
+            )
+        try:
+            source = entry.get("source", "customized")
+            skill_dir = pool_dir / skill_name
+            skill = _read_skill_from_dir(skill_dir, source)
+            if skill is None:
+                continue
+            info = sync_info.get(skill_name, {})
+            dump = skill.model_dump(exclude={"version_text"})
+            dump["tags"] = entry.get("tags") or []
+            specs.append(
+                PoolSkillSpec(
+                    **dump,
+                    protected=bool(entry.get("protected", False)),
+                    version_text=str(entry.get("version_text", "") or ""),
+                    commit_text=str(entry.get("commit_text", "") or ""),
+                    sync_status=str(info.get("sync_status", "") or ""),
+                    latest_version_text=str(
+                        info.get("latest_version_text", "") or "",
+                    ),
+                    config=entry.get("config") or {},
+                    last_updated=_get_skill_mtime(skill_dir),
                 ),
-                config=entry.get("config") or {},
-                last_updated=_get_skill_mtime(skill_dir),
-            ),
-        )
+            )
+        except Exception:
+            logger.warning(
+                "Skipping pool skill '%s': failed to build spec",
+                skill_name,
+                exc_info=True,
+            )
     return specs
 
 

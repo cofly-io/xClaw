@@ -411,6 +411,11 @@ def _default_pool_manifest() -> dict[str, Any]:
     }
 
 
+def _normalize_skill_manifest_entry(entry: Any) -> dict[str, Any]:
+    """Return dict entry, fallback to empty dict for malformed legacy data."""
+    return entry if isinstance(entry, dict) else {}
+
+
 def _is_builtin_skill(skill_name: str, builtin_names: list[str]) -> bool:
     """Check if skill name is in builtin list."""
     return skill_name in builtin_names
@@ -418,7 +423,11 @@ def _is_builtin_skill(skill_name: str, builtin_names: list[str]) -> bool:
 
 def _is_pool_builtin_entry(entry: dict[str, Any] | None) -> bool:
     """Return whether one pool manifest entry represents a builtin slot."""
-    return bool(entry) and str(entry.get("source", "") or "") == "builtin"
+    normalized = _normalize_skill_manifest_entry(entry)
+    return (
+        bool(normalized)
+        and str(normalized.get("source", "") or "") == "builtin"
+    )
 
 
 def _classify_pool_skill_source(
@@ -816,7 +825,7 @@ def list_builtin_import_candidates() -> list[dict[str, Any]]:
 
     for skill_name, source_signature in sorted(builtin_sigs.items()):
         post = _read_frontmatter_safe(builtin_dir / skill_name, skill_name)
-        current = pool_skills.get(skill_name) or {}
+        current = _normalize_skill_manifest_entry(pool_skills.get(skill_name))
         current_signature = str(current.get("signature", "") or "")
         current_source = str(current.get("source", "") or "")
         status = "missing"
@@ -997,27 +1006,44 @@ def reconcile_pool_manifest() -> dict[str, Any]:
         }
 
         for skill_name, skill_dir in sorted(discovered.items()):
-            existing = skills.get(skill_name, {})
-            source, protected = _classify_pool_skill_source(
-                skill_name,
-                skill_dir,
-                existing,
-                builtin_names,
-            )
-            has_config = "config" in existing
-            config = existing.get("config") if has_config else None
-            existing_tags = existing.get("tags")
-            skills[skill_name] = _build_skill_metadata(
-                skill_name,
-                skill_dir,
-                source=source,
-                protected=protected,
-                compute_signature=source == "builtin",
-            )
-            if has_config:
-                skills[skill_name]["config"] = config
-            if existing_tags is not None:
-                skills[skill_name]["tags"] = existing_tags
+            raw_existing = skills.get(skill_name)
+            existing = _normalize_skill_manifest_entry(raw_existing)
+            if raw_existing not in (None, existing):
+                logger.warning(
+                    (
+                        "Malformed pool manifest entry for '%s'; "
+                        "rebuilding from disk"
+                    ),
+                    skill_name,
+                )
+            try:
+                source, protected = _classify_pool_skill_source(
+                    skill_name,
+                    skill_dir,
+                    existing,
+                    builtin_names,
+                )
+                has_config = "config" in existing
+                config = existing.get("config") if has_config else None
+                existing_tags = existing.get("tags")
+                new_entry = _build_skill_metadata(
+                    skill_name,
+                    skill_dir,
+                    source=source,
+                    protected=protected,
+                    compute_signature=source == "builtin",
+                )
+                if has_config:
+                    new_entry["config"] = config
+                if existing_tags is not None:
+                    new_entry["tags"] = existing_tags
+                skills[skill_name] = new_entry
+            except Exception:
+                logger.warning(
+                    "Skipping pool skill '%s' during reconcile",
+                    skill_name,
+                    exc_info=True,
+                )
 
         for skill_name in list(skills):
             if skill_name not in discovered:
@@ -1069,43 +1095,61 @@ def reconcile_workspace_manifest(workspace_dir: Path) -> dict[str, Any]:
         }
 
         for skill_name, skill_dir in sorted(discovered.items()):
-            existing = skills.get(skill_name) or {}
-            enabled = bool(existing.get("enabled", False))
-            channels = existing.get("channels") or ["all"]
-
-            # Inherit source from manifest when the entry already exists.
-            # For new skills, default to "builtin" if name matches a
-            # packaged builtin, otherwise "customized".
-            if existing:
-                source = existing.get("source", "customized")
-            else:
-                source = (
-                    "builtin" if skill_name in builtin_sigs else "customized"
+            raw_existing = skills.get(skill_name)
+            existing = _normalize_skill_manifest_entry(raw_existing)
+            if raw_existing not in (None, existing):
+                logger.warning(
+                    (
+                        "Malformed workspace manifest entry for '%s'; "
+                        "rebuilding from disk"
+                    ),
+                    skill_name,
                 )
+            try:
+                enabled = bool(existing.get("enabled", False))
+                channels = existing.get("channels") or ["all"]
 
-            metadata = _build_skill_metadata(
-                skill_name,
-                skill_dir,
-                source=source,
-                protected=False,
-                compute_signature=False,
-            )
-            next_entry = {
-                "enabled": enabled,
-                "channels": channels,
-                "source": source,
-                "metadata": metadata,
-                "requirements": metadata["requirements"],
-                "updated_at": metadata["updated_at"],
-            }
-            if "config" in existing:
-                next_entry["config"] = existing.get("config")
-            existing_tags = existing.get("tags")
-            if existing_tags is not None:
-                next_entry["tags"] = existing_tags
-            skills[skill_name] = next_entry
-            skills[skill_name].pop("sync_to_hub", None)
-            skills[skill_name].pop("sync_to_pool", None)
+                # Inherit source from manifest when the entry already exists.
+                # For new skills, default to "builtin" if name matches a
+                # packaged builtin, otherwise "customized".
+                if existing:
+                    source = existing.get("source", "customized")
+                else:
+                    source = (
+                        "builtin"
+                        if skill_name in builtin_sigs
+                        else "customized"
+                    )
+
+                metadata = _build_skill_metadata(
+                    skill_name,
+                    skill_dir,
+                    source=source,
+                    protected=False,
+                    compute_signature=False,
+                )
+                next_entry = {
+                    "enabled": enabled,
+                    "channels": channels,
+                    "source": source,
+                    "metadata": metadata,
+                    "requirements": metadata["requirements"],
+                    "updated_at": metadata["updated_at"],
+                }
+                if "config" in existing:
+                    next_entry["config"] = existing.get("config")
+                existing_tags = existing.get("tags")
+                if existing_tags is not None:
+                    next_entry["tags"] = existing_tags
+                skills[skill_name] = next_entry
+                skills[skill_name].pop("sync_to_hub", None)
+                skills[skill_name].pop("sync_to_pool", None)
+            except Exception:
+                logger.warning(
+                    "Skipping workspace skill '%s' during reconcile",
+                    skill_name,
+                    exc_info=True,
+                )
 
         for skill_name in list(skills):
             if skill_name not in discovered:
