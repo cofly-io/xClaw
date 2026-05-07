@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Idempotent hotfixes for vendor packages (React keys, antd deprecations).
  */
 import fs from "node:fs";
@@ -144,7 +144,7 @@ patchFile("@agentscope-ai/chat/lib/ChatAnywhere/Chat/index.js", "FLUSHSYNC_HOTFI
 // (e.g. domNode / streamStatus from markdown pipeline).
 const MARKDOWN_LINK_NEEDLE = `export default function Link(props) {
   if (props['data-footnote-ref'] === '') return /*#__PURE__*/_jsx(Sup, _objectSpread({}, props));
-  if (props.children === '↩' && props['data-footnote-backref'] === '') return null;
+  if (props.children === '鈫? && props['data-footnote-backref'] === '') return null;
   return /*#__PURE__*/_jsx("a", _objectSpread({}, props));
 }`;
 
@@ -152,7 +152,7 @@ const MARKDOWN_LINK_REPL = `export default function Link(props) {
   // LINK_PROP_FILTER: strip non-DOM props to silence React warnings.
   var cleaned = _objectWithoutProperties(props, ["domNode", "streamStatus"]);
   if (cleaned['data-footnote-ref'] === '') return /*#__PURE__*/_jsx(Sup, _objectSpread({}, cleaned));
-  if (cleaned.children === '↩' && cleaned['data-footnote-backref'] === '') return null;
+  if (cleaned.children === '鈫? && cleaned['data-footnote-backref'] === '') return null;
   return /*#__PURE__*/_jsx("a", _objectSpread({}, cleaned));
 }`;
 
@@ -165,15 +165,15 @@ patchFile(
 // Patch Tool.js to show Chinese tool names in the chat UI.
 const TOOL_TITLE_NEEDLE = `var title = "".concat(serverLabel).concat(toolName);`;
 const TOOL_TITLE_REPL = `var TOOL_LABELS_ZH = {
-  read_file: '读取文件', write_file: '写入文件', edit_file: '编辑文件', append_file: '追加文件',
-  execute_shell_command: '执行命令', grep_search: '搜索内容', glob_search: '搜索文件',
-  desktop_screenshot: '截取屏幕', browser_use: '操控浏览器',
-  view_image: '查看图片', view_video: '查看视频',
-  get_current_time: '获取当前时间', set_user_timezone: '设置时区',
-  list_agents: '列出助手', chat_with_agent: '与助手对话',
-  send_file_to_user: '发送文件给用户', get_token_usage: '获取用量',
-  supos_api_call: 'SupOS API 调用', memory_search: '搜索记忆',
-  list_directory: '列出目录'
+  read_file: '璇诲彇鏂囦欢', write_file: '鍐欏叆鏂囦欢', edit_file: '缂栬緫鏂囦欢', append_file: '杩藉姞鏂囦欢',
+  execute_shell_command: '鎵ц鍛戒护', grep_search: '鎼滅储鍐呭', glob_search: '鎼滅储鏂囦欢',
+  desktop_screenshot: '鎴彇灞忓箷', browser_use: '鎿嶆帶娴忚鍣?,
+  view_image: '鏌ョ湅鍥剧墖', view_video: '鏌ョ湅瑙嗛',
+  get_current_time: '鑾峰彇褰撳墠鏃堕棿', set_user_timezone: '璁剧疆鏃跺尯',
+  list_agents: '鍒楀嚭鍔╂墜', chat_with_agent: '涓庡姪鎵嬪璇?,
+  send_file_to_user: '鍙戦€佹枃浠剁粰鐢ㄦ埛', get_token_usage: '鑾峰彇鐢ㄩ噺',
+  supos_api_call: 'SupOS API 璋冪敤', memory_search: '鎼滅储璁板繂',
+  list_directory: '鍒楀嚭鐩綍'
 };
 var title = "".concat(serverLabel).concat(TOOL_LABELS_ZH[toolName] || toolName);`;
 
@@ -299,81 +299,102 @@ patchFile(
   },
 );
 
-const MESSAGE_LIST_IMPORT_NEEDLE = `import { ChatAnywhereSessionsContext } from "../../Context/ChatAnywhereSessionsContext";
-import cls from 'classnames';`;
+patchFile("@agentscope-ai/chat/lib/Bubble/BubbleList.js", "doLoadRef", (s) => {
+  let t = s;
+  if (t.includes(BUBBLE_LIST_LOADMORE_RAF_NEEDLE)) {
+    t = t.replace(BUBBLE_LIST_LOADMORE_RAF_NEEDLE, BUBBLE_LIST_LOADMORE_RAF_REPL);
+  }
+  if (t.includes(BUBBLE_LIST_IMPERATIVE_NEEDLE)) {
+    t = t.replace(BUBBLE_LIST_IMPERATIVE_NEEDLE, BUBBLE_LIST_IMPERATIVE_REPL);
+  }
+  if (t.includes(BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE)) {
+    t = t.replace(BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE, BUBBLE_LIST_OVERFLOW_ANCHOR_REPL);
+  }
+  if (t.includes(BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE)) {
+    t = t.replace(BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE, BUBBLE_LIST_DOLOAD_USEEFFECT_REPL);
+  }
+  return t;
+});
 
-const MESSAGE_LIST_IMPORT_REPL = `import { ChatAnywhereSessionsContext } from "../../Context/ChatAnywhereSessionsContext";
+// xclaw: MessageList is fully replaced (not incrementally patched) because the
+// scroll-anchor fix (remove useLayoutEffect) and doLoadRef fix (BubbleList)
+// interact with many internal details. Sentinel: XCLAW_MESSAGE_LIST_V3
+function writeMessageList() {
+  const rel = "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Chat/MessageList/index.js";
+  const file = path.join(root, "node_modules", ...rel.split("/"));
+  if (!fs.existsSync(file)) return;
+  const s = fs.readFileSync(file, "utf8");
+  if (s.includes("XCLAW_MESSAGE_LIST_V3")) return;
+  const content = `function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array\$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+import { Bubble, useProviderContext } from "../../../..";
+import { ChatAnywhereMessagesContext } from "../../Context/ChatAnywhereMessagesContext";
+import { useContextSelector } from "use-context-selector";
+import { ChatAnywhereSessionsContext } from "../../Context/ChatAnywhereSessionsContext";
 import { useChatAnywhereOptions } from "../../Context/ChatAnywhereOptionsContext";
-import cls from 'classnames';`;
-
-const MESSAGE_LIST_MESSAGES_NEEDLE = `  var messages = useContextSelector(ChatAnywhereMessagesContext, function (v) {
-    return v.messages;
-  });
-  var safeMessages = React.useMemo(function () {
-    return _toConsumableArray(messages || []).reverse();
-  }, [messages]);`;
-
-const MESSAGE_LIST_MESSAGES_REPL = `  var messages = useContextSelector(ChatAnywhereMessagesContext, function (v) {
-    return v.messages;
-  });
-  var setMessages = useContextSelector(ChatAnywhereMessagesContext, function (v) {
-    return v.setMessages;
-  });
+import cls from 'classnames';
+import Welcome from "../Welcome";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { jsx as _jsx } from "react/jsx-runtime";
+var PAGE_SIZE = 10;
+// XCLAW_MESSAGE_LIST_V3
+// historyDisplayCount = Infinity: noMore_sim is always true, so handleLoadMore never changes
+// reference due to intermediate renders — eliminates duplicate backend fetches.
+// useLayoutEffect removed: column-reverse with Chrome 79+ uses negative scrollTop (bottom=0),
+// so prepending older messages at the top does not shift the viewport — no correction needed.
+function useSimulatedMessagePagination(allMessages, sessionId) {
+  var _useState = useState(Infinity),
+    _useState2 = _slicedToArray(_useState, 2),
+    historyDisplayCount = _useState2[0],
+    setHistoryDisplayCount = _useState2[1];
+  useEffect(function () {
+    setHistoryDisplayCount(Infinity);
+  }, [sessionId]);
+  var historyMessages = useMemo(function () {
+    return allMessages.filter(function (m) { return m.history; });
+  }, [allMessages]);
+  var newMessages = useMemo(function () {
+    return allMessages.filter(function (m) { return !m.history; });
+  }, [allMessages]);
+  var visibleHistory = historyMessages.slice(0, historyDisplayCount);
+  var noMore = historyDisplayCount >= historyMessages.length;
+  var visibleMessages = useMemo(function () {
+    return [].concat(_toConsumableArray(newMessages), _toConsumableArray(visibleHistory));
+  }, [newMessages, visibleHistory]);
+  var loadMore = useCallback(function () {
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        setHistoryDisplayCount(function (prev) { return prev + PAGE_SIZE; });
+        resolve();
+      }, 300);
+    });
+  }, []);
+  return { visibleMessages: visibleMessages, noMore: noMore, loadMore: loadMore };
+}
+export default function MessageList(props) {
+  var messages = useContextSelector(ChatAnywhereMessagesContext, function (v) { return v.messages; });
+  var setMessages = useContextSelector(ChatAnywhereMessagesContext, function (v) { return v.setMessages; });
   var sessionApi = useChatAnywhereOptions(function (v) {
-    var _v$session;
-    return (_v$session = v.session) === null || _v$session === void 0 ? void 0 : _v$session.api;
+    var _v\$session;
+    return (_v\$session = v.session) === null || _v\$session === void 0 ? void 0 : _v\$session.api;
   });
   var safeMessages = React.useMemo(function () {
     return _toConsumableArray(messages || []).reverse();
-  }, [messages]);`;
-
-const MESSAGE_LIST_REF_NEEDLE = `  var listRef = React.useRef(null);
-  var prevMessagesLengthRef = React.useRef(safeMessages.length);`;
-
-const MESSAGE_LIST_REF_REPL = `  var listRef = React.useRef(null);
+  }, [messages]);
+  var prefixCls = useProviderContext().getPrefixCls('chat-anywhere-message-list');
+  var currentSessionId = useContextSelector(ChatAnywhereSessionsContext, function (v) { return v.currentSessionId; });
+  var listRef = React.useRef(null);
   var prevMessagesLengthRef = React.useRef(safeMessages.length);
-  var justLoadedHistoryRef = React.useRef(false);`;
-
-const MESSAGE_LIST_SCROLL_NEEDLE = `  React.useEffect(function () {
-    if (safeMessages.length > prevMessagesLengthRef.current) {
-      var _listRef$current;
-      (_listRef$current = listRef.current) === null || _listRef$current === void 0 || _listRef$current.scrollToBottom();
-    }
-    prevMessagesLengthRef.current = safeMessages.length;
-  }, [safeMessages.length]);`;
-
-const MESSAGE_LIST_SCROLL_REPL = `  React.useEffect(function () {
-    if (safeMessages.length > prevMessagesLengthRef.current) {
-      if (justLoadedHistoryRef.current) {
-        justLoadedHistoryRef.current = false;
-      } else {
-        var _listRef$current;
-        (_listRef$current = listRef.current) === null || _listRef$current === void 0 || _listRef$current.scrollToBottom();
-      }
-    }
-    prevMessagesLengthRef.current = safeMessages.length;
-  }, [safeMessages.length]);`;
-
-const MESSAGE_LIST_SET_HISTORY_NEEDLE = `      if (older.length > 0) {
-        setMessages(function (prev) {
-          return [].concat(older, _toConsumableArray(prev));
-        });
-      }`;
-
-const MESSAGE_LIST_SET_HISTORY_REPL = `      if (older.length > 0) {
-        justLoadedHistoryRef.current = true;
-        setMessages(function (prev) {
-          return [].concat(older, _toConsumableArray(prev));
-        });
-      }`;
-
-const MESSAGE_LIST_LOADMORE_NEEDLE = `  var _useSimulatedMessageP = useSimulatedMessagePagination(safeMessages, currentSessionId),
-    visibleMessages = _useSimulatedMessageP.visibleMessages,
-    noMore = _useSimulatedMessageP.noMore,
-    loadMore = _useSimulatedMessageP.loadMore;
-  React.useEffect(function () {`;
-
-const MESSAGE_LIST_LOADMORE_REPL = `  var _useSimulatedMessageP = useSimulatedMessagePagination(safeMessages, currentSessionId),
+  var justLoadedHistoryRef = React.useRef(false);
+  var _useSimulatedMessageP = useSimulatedMessagePagination(safeMessages, currentSessionId),
     visibleMessages = _useSimulatedMessageP.visibleMessages,
     noMore = _useSimulatedMessageP.noMore,
     loadMore = _useSimulatedMessageP.loadMore;
@@ -381,61 +402,52 @@ const MESSAGE_LIST_LOADMORE_REPL = `  var _useSimulatedMessageP = useSimulatedMe
     _useState4 = _slicedToArray(_useState3, 2),
     backendNoMore = _useState4[0],
     setBackendNoMore = _useState4[1];
-  useEffect(function () {
-    setBackendNoMore(false);
-  }, [currentSessionId]);
+  useEffect(function () { setBackendNoMore(false); }, [currentSessionId]);
   var handleLoadMore = useCallback(function () {
-    console.debug('[xclaw][MessageList] handleLoadMore', { noMore: noMore, backendNoMore: backendNoMore, hasGetSessionMore: !!(sessionApi && sessionApi.getSessionMore), currentSessionId: currentSessionId });
-    if (!noMore) {
-      return loadMore();
-    }
-    if (backendNoMore) {
-      console.debug('[xclaw][MessageList] backendNoMore=true, skip');
-      return Promise.resolve();
-    }
+    if (!noMore) { return loadMore(); }
+    if (backendNoMore) { return Promise.resolve(); }
     if (!(sessionApi !== null && sessionApi !== void 0 && sessionApi.getSessionMore) || !currentSessionId) {
-      console.debug('[xclaw][MessageList] no getSessionMore or no sessionId, skip');
       return Promise.resolve();
     }
-    console.debug('[xclaw][MessageList] calling getSessionMore', currentSessionId);
     return Promise.resolve(sessionApi.getSessionMore(currentSessionId)).then(function (result) {
       var older = (result !== null && result !== void 0 && result.messages ? result.messages : []).map(function (item) {
-        return Object.assign({}, item, {
-          history: true
-        });
+        return Object.assign({}, item, { history: true });
       });
       if (older.length > 0) {
-        setMessages(function (prev) {
-          return [].concat(older, _toConsumableArray(prev));
-        });
+        justLoadedHistoryRef.current = true;
+        setMessages(function (prev) { return [].concat(older, _toConsumableArray(prev)); });
       }
       if ((result === null || result === void 0 ? void 0 : result.noMore) || older.length === 0) {
         setBackendNoMore(true);
       }
-    }).catch(function () {
-      setBackendNoMore(true);
-    });
+    }).catch(function () { setBackendNoMore(true); });
   }, [noMore, loadMore, backendNoMore, sessionApi, currentSessionId, setMessages]);
-  React.useEffect(function () {`;
+  React.useEffect(function () {
+    if (safeMessages.length > prevMessagesLengthRef.current) {
+      if (justLoadedHistoryRef.current) {
+        justLoadedHistoryRef.current = false;
+      } else {
+        var _listRef\$current;
+        (_listRef\$current = listRef.current) === null || _listRef\$current === void 0 || _listRef\$current.scrollToBottom();
+      }
+    }
+    prevMessagesLengthRef.current = safeMessages.length;
+  }, [safeMessages.length]);
+  if (safeMessages.length === 0) return /*#__PURE__*/_jsx("div", {
+    className: cls(prefixCls, prefixCls + "-welcome"),
+    children: /*#__PURE__*/_jsx(Welcome, { onSubmit: props.onSubmit })
+  });
+  return /*#__PURE__*/_jsx(Bubble.List, {
+    ref: listRef,
+    onLoadMore: backendNoMore && noMore ? undefined : handleLoadMore,
+    noMore: backendNoMore ? noMore : false,
+    order: "desc",
+    classNames: { wrapper: prefixCls },
+    items: visibleMessages
+  }, currentSessionId);
+}
+`;
+  fs.writeFileSync(file, content, "utf8");
+}
 
-const MESSAGE_LIST_BUBBLE_NEEDLE = `    onLoadMore: noMore ? undefined : loadMore,
-    noMore: noMore,`;
-
-const MESSAGE_LIST_BUBBLE_REPL = `    onLoadMore: backendNoMore && noMore ? undefined : handleLoadMore,
-    noMore: backendNoMore ? noMore : false,`;
-
-patchFile(
-  "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Chat/MessageList/index.js",
-  "sessionApi.getSessionMore",
-  (s) => {
-    let t = s;
-    if (t.includes(MESSAGE_LIST_IMPORT_NEEDLE)) t = t.replace(MESSAGE_LIST_IMPORT_NEEDLE, MESSAGE_LIST_IMPORT_REPL);
-    if (t.includes(MESSAGE_LIST_MESSAGES_NEEDLE)) t = t.replace(MESSAGE_LIST_MESSAGES_NEEDLE, MESSAGE_LIST_MESSAGES_REPL);
-    if (t.includes(MESSAGE_LIST_REF_NEEDLE)) t = t.replace(MESSAGE_LIST_REF_NEEDLE, MESSAGE_LIST_REF_REPL);
-    if (t.includes(MESSAGE_LIST_LOADMORE_NEEDLE)) t = t.replace(MESSAGE_LIST_LOADMORE_NEEDLE, MESSAGE_LIST_LOADMORE_REPL);
-    if (t.includes(MESSAGE_LIST_SET_HISTORY_NEEDLE)) t = t.replace(MESSAGE_LIST_SET_HISTORY_NEEDLE, MESSAGE_LIST_SET_HISTORY_REPL);
-    if (t.includes(MESSAGE_LIST_SCROLL_NEEDLE)) t = t.replace(MESSAGE_LIST_SCROLL_NEEDLE, MESSAGE_LIST_SCROLL_REPL);
-    if (t.includes(MESSAGE_LIST_BUBBLE_NEEDLE)) t = t.replace(MESSAGE_LIST_BUBBLE_NEEDLE, MESSAGE_LIST_BUBBLE_REPL);
-    return t;
-  },
-);
+writeMessageList();

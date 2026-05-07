@@ -27,6 +27,11 @@ export interface ChatSessionInitializerProps {
  *   1. chatId changes → show overlay + setCurrentSessionId(matching.id)
  *   2. runtime currentSessionId switches to target AND session has messages
  *      (or a fallback timeout fires) → hide overlay
+ *
+ * Note: On bare `/chat`, runtimeSessionApi returns an empty session list so the
+ * library does not auto-pick sessions[0]. Navigating to `/chat/:id` does not
+ * always trigger a fresh list fetch; we must sync via getSessionList +
+ * setSessions before setCurrentSessionId can run.
  */
 const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
   onLoadingChange,
@@ -37,7 +42,7 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     return match?.[1];
   }, [location.pathname]);
 
-  const { sessions, currentSessionId, setCurrentSessionId } =
+  const { sessions, currentSessionId, setCurrentSessionId, setSessions } =
     useChatAnywhereSessionsState();
 
   const currentSessionIdRef = useRef(currentSessionId);
@@ -52,6 +57,10 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
   const [pendingId, setPendingId] = useState<string | null>(null);
   const pendingIdRef = useRef<string | null>(null);
   const loadingGuardRef = useRef<number | null>(null);
+  /** After `/chat` the library may still have []; sync list once per URL chatId. */
+  const emptyLibrarySyncDoneRef = useRef(false);
+  /** If URL id is missing from library list, refresh list once per chatId. */
+  const noMatchListRefreshRef = useRef<string | null>(null);
 
   // Global guard: never keep overlay forever if matching chain gets stuck.
   useEffect(() => {
@@ -68,7 +77,7 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
       onLoadingChange?.(false);
       pendingIdRef.current = null;
       setPendingId(null);
-    }, 4000);
+    }, 15000);
 
     return () => {
       if (loadingGuardRef.current !== null) {
@@ -77,6 +86,11 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
       }
     };
   }, [chatId, onLoadingChange]);
+
+  useEffect(() => {
+    emptyLibrarySyncDoneRef.current = false;
+    noMatchListRefreshRef.current = null;
+  }, [chatId]);
 
   // ── Step 1: react to URL chatId or session list changes ──────────────────
   useEffect(() => {
@@ -90,6 +104,19 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     if (sessions.length === 0) {
       // Sessions not loaded yet — proactively fetch; wait for next cycle
       onLoadingChange?.(true);
+      if (!emptyLibrarySyncDoneRef.current) {
+        emptyLibrarySyncDoneRef.current = true;
+        void sessionApi
+          .getSessionList()
+          .then(setSessions)
+          .catch((err) => {
+            emptyLibrarySyncDoneRef.current = false;
+            console.error(
+              "[xclaw][ChatSessionInitializer] getSessionList failed (library empty)",
+              err,
+            );
+          });
+      }
       void sessionApi.getSession(chatId).catch((err) => {
         console.error(
           "[xclaw][ChatSessionInitializer] getSession failed when sessions empty",
@@ -103,6 +130,21 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     const matching = sessions.find((s) => sessionMatchesChatId(s, chatId));
     if (!matching) {
       onLoadingChange?.(true);
+      if (noMatchListRefreshRef.current !== chatId) {
+        noMatchListRefreshRef.current = chatId;
+        void sessionApi
+          .getSessionList()
+          .then(setSessions)
+          .catch((err) => {
+            if (noMatchListRefreshRef.current === chatId) {
+              noMatchListRefreshRef.current = null;
+            }
+            console.error(
+              "[xclaw][ChatSessionInitializer] getSessionList failed (no matching session)",
+              err,
+            );
+          });
+      }
       void sessionApi.getSession(chatId).catch((err) => {
         console.error(
           "[xclaw][ChatSessionInitializer] getSession failed when no matching",
@@ -127,7 +169,7 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     setPendingId(matching.id);
     setCurrentSessionId(matching.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, sessions, setCurrentSessionId, onLoadingChange]);
+  }, [chatId, sessions, setCurrentSessionId, setSessions, onLoadingChange]);
 
   // ── Step 2: watch runtime state until target session is ready ────────────
   useEffect(() => {

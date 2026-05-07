@@ -34,8 +34,10 @@ function getSessionGroup(tsMs: number): string {
 const DEFAULT_USER_ID = "default";
 const DEFAULT_CHANNEL = "console";
 const DEFAULT_SESSION_NAME = "New Chat";
-const PREVIEW_LAST_N = 50;
-const HISTORY_PAGE_SIZE = 50;
+//打开会话时首屏请求的最近 last_n 条消息
+const PREVIEW_LAST_N = 100;
+//上滚「加载更多」时每页请求的条数
+const HISTORY_PAGE_SIZE = 100;
 const ROLE_TOOL = "tool";
 const ROLE_USER = "user";
 const ROLE_ASSISTANT = "assistant";
@@ -401,8 +403,50 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     Promise<IAgentScopeRuntimeWebUISession>
   > = new Map();
 
-  /** Track how many newest messages are already loaded per session id. */
+  /** Track how many newest messages are already loaded (keyed by backend chat UUID). */
   private loadedTailCount: Map<string, number> = new Map();
+
+  /**
+   * One in-flight getSessionMore per backend chat id so parallel onLoadMore /
+   * duplicate triggers cannot reuse the same skip_last_n.
+   */
+  private sessionMoreInFlight: Map<
+    string,
+    Promise<{ messages: IAgentScopeRuntimeWebUIMessage[]; noMore: boolean }>
+  > = new Map();
+
+  /** Persist tail counts under both runtime id and backend UUID when they differ. */
+  private setLoadedTailCount(
+    backendChatId: string,
+    runtimeSessionId: string,
+    count: number,
+  ): void {
+    this.loadedTailCount.set(backendChatId, count);
+    if (runtimeSessionId !== backendChatId) {
+      this.loadedTailCount.set(runtimeSessionId, count);
+    }
+  }
+
+  /** Resolve backend UUID for API calls (null if not yet available). */
+  private async resolveBackendChatId(sessionId: string): Promise<string | null> {
+    if (!sessionId || sessionId === "undefined" || sessionId === "null") {
+      return null;
+    }
+    if (!isLocalTimestamp(sessionId)) {
+      return sessionId;
+    }
+    const fromList = this.sessionList.find((s) => s.id === sessionId) as
+      | ExtendedSession
+      | undefined;
+    if (fromList?.realId) {
+      return fromList.realId;
+    }
+    await this.getSessionList();
+    const refreshed = this.sessionList.find((s) => s.id === sessionId) as
+      | ExtendedSession
+      | undefined;
+    return refreshed?.realId ?? null;
+  }
 
   /**
    * Called when a temporary timestamp session id is resolved to a real backend
@@ -551,27 +595,29 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
   async getSessionMore(
     sessionId: string,
   ): Promise<{ messages: IAgentScopeRuntimeWebUIMessage[]; noMore: boolean }> {
-    const fromList = this.sessionList.find((s) => s.id === sessionId) as
-      | ExtendedSession
-      | undefined;
-
-    let backendId = sessionId;
-    if (isLocalTimestamp(sessionId)) {
-      if (fromList?.realId) {
-        backendId = fromList.realId;
-      } else {
-        await this.getSessionList();
-        const refreshed = this.sessionList.find((s) => s.id === sessionId) as
-          | ExtendedSession
-          | undefined;
-        if (!refreshed?.realId) {
-          return { messages: [], noMore: true };
-        }
-        backendId = refreshed.realId;
-      }
+    const backendId = await this.resolveBackendChatId(sessionId);
+    if (!backendId) {
+      return { messages: [], noMore: true };
     }
 
-    const loaded = this.loadedTailCount.get(sessionId) ?? PREVIEW_LAST_N;
+    const existing = this.sessionMoreInFlight.get(backendId);
+    if (existing) return existing;
+
+    const p = this.loadSessionMoreOnce(sessionId, backendId).finally(() => {
+      this.sessionMoreInFlight.delete(backendId);
+    });
+    this.sessionMoreInFlight.set(backendId, p);
+    return p;
+  }
+
+  private async loadSessionMoreOnce(
+    sessionId: string,
+    backendId: string,
+  ): Promise<{ messages: IAgentScopeRuntimeWebUIMessage[]; noMore: boolean }> {
+    const loaded =
+      this.loadedTailCount.get(backendId) ??
+      this.loadedTailCount.get(sessionId) ??
+      PREVIEW_LAST_N;
     console.debug('[xclaw][getSessionMore] fetching', { sessionId, backendId, skip_last_n: loaded, last_n: HISTORY_PAGE_SIZE });
     const chatHistory = await api.getChat(
       backendId,
@@ -580,7 +626,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     );
     const olderMessages = convertMessages(chatHistory.messages || []);
     const fetchedCount = chatHistory.messages?.length || 0;
-    this.loadedTailCount.set(sessionId, loaded + fetchedCount);
+    this.setLoadedTailCount(backendId, sessionId, loaded + fetchedCount);
     return {
       messages: olderMessages,
       noMore: fetchedCount < HISTORY_PAGE_SIZE,
@@ -674,7 +720,8 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
         const chatHistory = await api.getChat(fromList.realId, PREVIEW_LAST_N);
         const generating = isGenerating(chatHistory);
         const messages = convertMessages(chatHistory.messages || []);
-        this.loadedTailCount.set(sessionId, chatHistory.messages?.length || 0);
+        const n = chatHistory.messages?.length || 0;
+        this.setLoadedTailCount(fromList.realId, sessionId, n);
         this.patchLastUserMessage(messages, generating, fromList.realId);
         const session: ExtendedSession = {
           id: sessionId,
@@ -714,7 +761,8 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
         const chatHistory = await api.getChat(refreshed.realId, PREVIEW_LAST_N);
         const generating = isGenerating(chatHistory);
         const messages = convertMessages(chatHistory.messages || []);
-        this.loadedTailCount.set(sessionId, chatHistory.messages?.length || 0);
+        const n = chatHistory.messages?.length || 0;
+        this.setLoadedTailCount(refreshed.realId, sessionId, n);
         this.patchLastUserMessage(messages, generating, refreshed.realId);
         const session: ExtendedSession = {
           id: sessionId,
@@ -746,7 +794,8 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     const chatHistory = await api.getChat(sessionId, PREVIEW_LAST_N);
     const generating = isGenerating(chatHistory);
     const messages = convertMessages(chatHistory.messages || []);
-    this.loadedTailCount.set(sessionId, chatHistory.messages?.length || 0);
+    const n = chatHistory.messages?.length || 0;
+    this.setLoadedTailCount(sessionId, sessionId, n);
     this.patchLastUserMessage(messages, generating, sessionId);
     const session: ExtendedSession = {
       id: sessionId,

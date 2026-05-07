@@ -1413,6 +1413,7 @@ class ToolGuardConfig(BaseModel):
     """
 
     enabled: bool = True
+    require_approval: bool = False
     guarded_tools: Optional[List[str]] = None
     denied_tools: List[str] = Field(default_factory=list)
     custom_rules: List[ToolGuardRuleConfig] = Field(default_factory=list)

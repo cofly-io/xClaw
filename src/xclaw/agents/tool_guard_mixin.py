@@ -96,8 +96,16 @@ class ToolGuardMixin:
     # ------------------------------------------------------------------
 
     def _should_require_approval(self) -> bool:
-        """``True`` when a ``session_id`` is available for approval."""
-        return bool(self._request_context.get("session_id"))
+        """True only when session exists and tool-guard approval is enabled."""
+        if not self._request_context.get("session_id"):
+            return False
+        try:
+            from ..config.utils import load_config
+
+            return bool(load_config().security.tool_guard.require_approval)
+        except Exception:
+            # Safe default: do not block execution on config-read failures.
+            return False
 
     def _tool_guard_ui_lang(self) -> str:
         """Locale for tool-guard alerts from agent language."""
