@@ -11,7 +11,8 @@ import json
 import logging
 import weakref
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, Callable, Coroutine
+from datetime import datetime, timezone
+from typing import Any, AsyncGenerator, Callable, Coroutine, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,8 @@ class _RunState:
     task: asyncio.Future
     queues: list[asyncio.Queue] = field(default_factory=list)
     buffer: list[str] = field(default_factory=list)
+    start_time: Optional[datetime] = None
+    finish_time: Optional[datetime] = None
 
 
 class TaskTracker:
@@ -38,6 +41,8 @@ class TaskTracker:
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
         self._runs: dict[str, _RunState] = {}
+        self._global_last_run_at: Optional[datetime] = None
+        self._global_last_finish_at: Optional[datetime] = None
 
     @property
     def lock(self) -> asyncio.Lock:
@@ -50,6 +55,29 @@ class TaskTracker:
         if state is None or state.task.done():
             return "idle"
         return "running"
+
+    async def get_global_status(self) -> dict:
+        """Get global agent status summary.
+
+        Returns:
+            dict with keys:
+                - status: 'idle' | 'running'
+                - running_task_count: int
+                - last_run_at: Optional[datetime]
+                - last_finish_at: Optional[datetime]
+        """
+        async with self._lock:
+            running_count = sum(
+                1 for state in self._runs.values() if not state.task.done()
+            )
+            status = "running" if running_count > 0 else "idle"
+
+            return {
+                "status": status,
+                "running_task_count": running_count,
+                "last_run_at": self._global_last_run_at,
+                "last_finish_at": self._global_last_finish_at,
+            }
 
     async def has_active_tasks(self) -> bool:
         """Check if any tasks are currently running.
@@ -95,6 +123,64 @@ class TaskTracker:
             return True
         except asyncio.TimeoutError:
             return False
+
+    async def register_external_task(self, run_key: str) -> None:
+        """Register an externally-managed task so it is visible to
+        :meth:`has_active_tasks` and :meth:`wait_all_done`.
+
+        This is used for tasks managed outside of QwenPaw's own streaming
+        pipeline (e.g. background tasks dispatched through
+        ``agentscope_runtime``'s ``AgentApp``).  The caller **must** call
+        :meth:`unregister_external_task` when the task completes.
+
+        Args:
+            run_key: Unique identifier for the external task.
+        """
+        start_time = datetime.now(timezone.utc)
+        async with self._lock:
+            if run_key in self._runs and not self._runs[run_key].task.done():
+                logger.debug(
+                    "External task already registered: %s",
+                    run_key,
+                )
+                return
+            # Use an unresolved Future as the "task" — it stays not-done
+            # until unregister_external_task resolves it.
+            future: asyncio.Future = asyncio.get_running_loop().create_future()
+            self._runs[run_key] = _RunState(
+                task=future,
+                queues=[],
+                buffer=[],
+                start_time=start_time,
+            )
+            self._global_last_run_at = start_time
+            logger.debug("Registered external task: %s", run_key)
+
+    async def unregister_external_task(self, run_key: str) -> None:
+        """Mark an externally-managed task as done and remove it.
+
+        Sends the sentinel value to any subscriber queues so their
+        :meth:`stream_from_queue` consumers terminate cleanly instead of
+        hanging. Idempotent — safe to call even if *run_key* was never
+        registered or was already unregistered.
+
+        Args:
+            run_key: Unique identifier previously passed to
+                :meth:`register_external_task`.
+        """
+        finish_time = datetime.now(timezone.utc)
+        async with self._lock:
+            state = self._runs.pop(run_key, None)
+            if state is None:
+                return
+            # Notify any subscriber queues so consumers exit cleanly.
+            for q in state.queues:
+                q.put_nowait(_SENTINEL)
+            if not state.task.done():
+                state.task.set_result(None)
+            state.finish_time = finish_time
+            self._global_last_finish_at = finish_time
+            logger.debug("Unregistered external task: %s", run_key)
 
     async def attach(self, run_key: str) -> asyncio.Queue | None:
         """Attach to an existing run.
@@ -169,7 +255,16 @@ class TaskTracker:
             tracker_ref = weakref.ref(self)
 
             async def _producer() -> None:
+                start_time = datetime.now(timezone.utc)
+
                 try:
+                    tracker = tracker_ref()
+                    if tracker is not None:
+                        async with tracker.lock:
+                            run.start_time = start_time
+                            # pylint: disable=protected-access
+                            tracker._global_last_run_at = start_time
+
                     async for sse in stream_fn(payload):
                         tracker = tracker_ref()
                         if tracker is None:
@@ -193,9 +288,13 @@ class TaskTracker:
                             for q in run.queues:
                                 q.put_nowait(err_sse)
                 finally:
+                    finish_time = datetime.now(timezone.utc)
                     tracker = tracker_ref()
                     if tracker is not None:
                         async with tracker.lock:
+                            run.finish_time = finish_time
+                            # pylint: disable=protected-access
+                            tracker._global_last_finish_at = finish_time
                             for q in run.queues:
                                 q.put_nowait(_SENTINEL)
                             # pylint: disable=protected-access
