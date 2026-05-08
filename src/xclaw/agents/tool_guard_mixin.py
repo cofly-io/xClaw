@@ -398,6 +398,18 @@ class ToolGuardMixin:
             from xclaw.security.tool_guard.utils import log_findings
 
             log_findings(tool_name, guard_result)
+            if engine.should_auto_deny_result(guard_result):
+                logger.warning(
+                    "Tool guard: tool '%s' matched auto-denied rule(s), "
+                    "auto-denying",
+                    tool_name,
+                )
+                return _GuardAction(
+                    "auto_denied",
+                    tool_name,
+                    tool_input,
+                    guard_result=guard_result,
+                )
             if self._should_require_approval():
                 return _GuardAction(
                     "needs_approval",
