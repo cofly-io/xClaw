@@ -205,7 +205,29 @@ function useMultimodalCapabilities(
     supportsVideo: boolean;
   }>({ supportsMultimodal: false, supportsImage: false, supportsVideo: false });
 
+  const updateCapsIfChanged = useCallback(
+    (next: {
+      supportsMultimodal: boolean;
+      supportsImage: boolean;
+      supportsVideo: boolean;
+    }) => {
+      setMultimodalCaps((prev) =>
+        prev.supportsMultimodal === next.supportsMultimodal &&
+        prev.supportsImage === next.supportsImage &&
+        prev.supportsVideo === next.supportsVideo
+          ? prev
+          : next,
+      );
+    },
+    [],
+  );
+
   const fetchMultimodalCaps = useCallback(async () => {
+    const noCaps = {
+      supportsMultimodal: false,
+      supportsImage: false,
+      supportsVideo: false,
+    };
     try {
       const [providers, activeModels] = await Promise.all([
         providerApi.listProviders(),
@@ -217,22 +239,14 @@ function useMultimodalCapabilities(
       const activeProviderId = activeModels?.active_llm?.provider_id;
       const activeModelId = activeModels?.active_llm?.model;
       if (!activeProviderId || !activeModelId) {
-        setMultimodalCaps({
-          supportsMultimodal: false,
-          supportsImage: false,
-          supportsVideo: false,
-        });
+        updateCapsIfChanged(noCaps);
         return;
       }
       const provider = (providers as ProviderInfo[]).find(
         (p) => p.id === activeProviderId,
       );
       if (!provider) {
-        setMultimodalCaps({
-          supportsMultimodal: false,
-          supportsImage: false,
-          supportsVideo: false,
-        });
+        updateCapsIfChanged(noCaps);
         return;
       }
       const allModels: ModelInfo[] = [
@@ -240,19 +254,15 @@ function useMultimodalCapabilities(
         ...(provider.extra_models ?? []),
       ];
       const model = allModels.find((m) => m.id === activeModelId);
-      setMultimodalCaps({
+      updateCapsIfChanged({
         supportsMultimodal: model?.supports_multimodal ?? false,
         supportsImage: model?.supports_image ?? false,
         supportsVideo: model?.supports_video ?? false,
       });
     } catch {
-      setMultimodalCaps({
-        supportsMultimodal: false,
-        supportsImage: false,
-        supportsVideo: false,
-      });
+      updateCapsIfChanged(noCaps);
     }
-  }, [selectedAgent]);
+  }, [selectedAgent, updateCapsIfChanged]);
 
   // Fetch caps on mount and whenever refreshKey changes
   useEffect(() => {
@@ -905,10 +915,10 @@ export default function ChatPage() {
           return toDisplayUrl(url);
         },
         cancel(data: { session_id: string }) {
-          const chatId =
+          const resolvedChatId =
             sessionApi.getRealIdForSession(data.session_id) ?? data.session_id;
-          if (chatId) {
-            chatApi.stopChat(chatId).catch((err) => {
+          if (resolvedChatId) {
+            chatApi.stopChat(resolvedChatId).catch((err) => {
               console.error("Failed to stop chat:", err);
             });
           }
