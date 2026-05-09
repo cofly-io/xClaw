@@ -158,7 +158,7 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
         )
         # Initialize parent ReActAgent
         super().__init__(
-            name="Friday",
+            name=agent_config.name or "Friday",
             model=model,
             sys_prompt=sys_prompt,
             toolkit=toolkit,

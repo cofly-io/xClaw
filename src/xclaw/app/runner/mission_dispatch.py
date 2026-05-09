@@ -28,11 +28,12 @@ async def maybe_handle_mission_command(
     agent_id: str,
     rewrite_fn: Any,
     session_id: str | None,
+    agent_name: str = "Friday",
 ) -> Any:
     """Handle `/mission` control path when mission module is enabled.
 
     Default stub: no-op (return ``None``). Replace with real implementation
     when `agents.mission` is wired in.
     """
-    _ = (query, msgs, workspace_dir, agent_id, rewrite_fn, session_id)
+    _ = (query, msgs, workspace_dir, agent_id, rewrite_fn, session_id, agent_name)
     return None

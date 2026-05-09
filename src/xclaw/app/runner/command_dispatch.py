@@ -111,7 +111,7 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
             )
             # Yield hint first so user sees it before restart runs.
             hint = Msg(
-                name="Friday",
+                name=runner.agent_name,
                 role="assistant",
                 content=[
                     TextBlock(
@@ -133,8 +133,11 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
             manager=manager,
             agent_id=agent_id,
             session_id=session_id,
+            agent_name=runner.agent_name,
         )
         msg = await handler.handle_daemon_command(query, daemon_ctx)
+        if parsed[0] in ("reload-config", "restart"):
+            runner.invalidate_agent_name_cache()
         yield msg, True
         logger.info("handle_daemon_command %s completed", query)
         return
@@ -147,7 +150,7 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
                 "run_command_path: control command but workspace not set",
             )
             error_msg = Msg(
-                name="Friday",
+                name=runner.agent_name,
                 role="assistant",
                 content=[
                     TextBlock(
@@ -177,7 +180,7 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
                 f"run_command_path: channel not found: {channel_id}",
             )
             error_msg = Msg(
-                name="Friday",
+                name=runner.agent_name,
                 role="assistant",
                 content=[
                     TextBlock(
@@ -210,7 +213,7 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
                 control_ctx,
             )
             response_msg = Msg(
-                name="Friday",
+                name=runner.agent_name,
                 role="assistant",
                 content=[TextBlock(type="text", text=response_text)],
             )
@@ -222,7 +225,7 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
             else:
                 logger.exception("Control command unexpected error: %s", query)
             error_msg = Msg(
-                name="Friday",
+                name=runner.agent_name,
                 role="assistant",
                 content=[
                     TextBlock(
@@ -245,7 +248,7 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
     memory.load_state_dict(memory_state, strict=False)
 
     conv_handler = CommandHandler(
-        agent_name="Friday",
+        agent_name=runner.agent_name,
         memory=memory,
         memory_manager=runner.memory_manager,
         enable_memory_manager=runner.memory_manager is not None,
@@ -254,7 +257,7 @@ async def run_command_path(  # pylint: disable=too-many-statements,too-many-bran
         response_msg = await conv_handler.handle_conversation_command(query)
     except (RuntimeError, AppBaseException) as e:
         response_msg = Msg(
-            name="Friday",
+            name=runner.agent_name,
             role="assistant",
             content=[TextBlock(type="text", text=str(e))],
         )
