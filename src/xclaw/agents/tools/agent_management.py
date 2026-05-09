@@ -13,6 +13,7 @@ from agentscope.message import TextBlock
 from agentscope.tool import ToolResponse
 
 from ...config.utils import read_last_api
+from ...utils.http import trust_env_for_url
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,11 @@ def create_agent_api_client(
     base = (base_url or "").rstrip("/")
     if not base.endswith("/api"):
         base = f"{base}/api"
-    return httpx.Client(base_url=base, timeout=timeout)
+    return httpx.Client(
+        base_url=base,
+        timeout=timeout,
+        trust_env=trust_env_for_url(base),
+    )
 
 
 def resolve_agent_api_base_url() -> str:
