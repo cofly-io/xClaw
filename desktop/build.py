@@ -49,7 +49,7 @@ def _pnpm_executable() -> str:
             return p
     print(
         "ERROR: pnpm not found in PATH. Install Node.js + pnpm, or use "
-        "--skip-console after building console and syncing to src/copaw/console.",
+        "--skip-console after building console and syncing to src/xclaw/console.",
     )
     sys.exit(1)
 
@@ -116,18 +116,28 @@ def resolve_supos_ak(cli_ak: str, cli_file: str) -> str:
 
 
 def _sync_console_dist_to_package() -> None:
-    """console/dist -> src/copaw/console（PyInstaller 从包内 copaw/console 收集静态资源）。"""
+    """console/dist -> src/xclaw/console（PyInstaller 从包内 xclaw/console 收集静态资源）。"""
     dist_dir = os.path.join(ROOT, "console", "dist")
-    target = os.path.join(ROOT, "src", "copaw", "console")
+    target = os.path.join(ROOT, "src", "xclaw", "console")
     if not os.path.isdir(dist_dir):
         print(
             f"ERROR: {dist_dir} not found. Run: pnpm --dir console install && pnpm --dir console build"
         )
         sys.exit(1)
+    # Prefer a clean replace, but on Windows this can fail when files are
+    # temporarily locked by dev tools/indexers. Fall back to in-place overwrite.
     if os.path.isdir(target):
-        shutil.rmtree(target)
+        try:
+            shutil.rmtree(target)
+        except OSError as e:
+            print(
+                f"==> WARN: failed to remove {target}, fallback to overwrite copy: {e}",
+            )
+            shutil.copytree(dist_dir, target, dirs_exist_ok=True)
+            print("==> Synced console/dist -> src/xclaw/console (overwrite)")
+            return
     shutil.copytree(dist_dir, target)
-    print("==> Synced console/dist -> src/copaw/console")
+    print("==> Synced console/dist -> src/xclaw/console")
 
 
 def _run_console_build() -> None:
@@ -400,7 +410,7 @@ def main():
     parser.add_argument(
         "--skip-console",
         action="store_true",
-        help="Skip pnpm build and skip syncing console/dist -> src/copaw/console",
+        help="Skip pnpm build and skip syncing console/dist -> src/xclaw/console",
     )
     parser.add_argument(
         "--skip-node-bundle",
@@ -422,7 +432,7 @@ def main():
         action="store_true",
         help=(
             "Dev shortcut: enables --no-clean, --skip-console, --skip-node-bundle "
-            "(console must already be built and synced to src/copaw/console)."
+            "(console must already be built and synced to src/xclaw/console)."
         ),
     )
     args = parser.parse_args()
