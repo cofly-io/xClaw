@@ -1015,6 +1015,7 @@ export default function ChatPage() {
           </>
         ),
         attachments: {
+          multiple: true,
           trigger: function (props: any) {
             const tooltipKey = multimodalCaps.supportsMultimodal
               ? multimodalCaps.supportsImage && !multimodalCaps.supportsVideo
