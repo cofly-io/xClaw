@@ -445,6 +445,145 @@ DEEPSEEK_MODELS: List[ModelInfo] = [
     ),
 ]
 
+VOLCENGINE_MODELS: List[ModelInfo] = [
+    ModelInfo(
+        id="doubao-seed-2-0-code-preview-260215",
+        name="Doubao-Seed-2.0-Code",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-2-0-pro-260215",
+        name="Doubao-Seed-2.0-pro",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-2-0-lite-260428",
+        name="Doubao-Seed-2.0-lite",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-code-preview-251028",
+        name="Doubao-Seed-Code",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="glm-4-7-251222",
+        name="GLM-4.7",
+        supports_image=False,
+        supports_video=False,
+        probe_source="documentation",
+    ),
+    ModelInfo(
+        id="deepseek-v3-2-251201",
+        name="DeepSeek-V3.2",
+        supports_image=False,
+        supports_video=False,
+        probe_source="documentation",
+    ),
+    ModelInfo(
+        id="doubao-seed-1-8-251228",
+        name="Doubao-Seed-1.8",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-2-0-mini-260428",
+        name="Doubao-Seed-2.0-mini",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-character-251128",
+        name="Doubao-Seed-Character",
+        supports_image=False,
+        supports_video=False,
+        probe_source="documentation",
+    ),
+]
+
+VOLCENGINE_CODINGPLAN_MODELS: List[ModelInfo] = [
+    ModelInfo(
+        id="doubao-seed-2-0-code-preview-260215",
+        name="Doubao-Seed-2.0-Code",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-2-0-pro-260215",
+        name="Doubao-Seed-2.0-pro",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-2-0-lite-260428",
+        name="Doubao-Seed-2.0-lite",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="doubao-seed-code-preview-251028",
+        name="Doubao-Seed-Code",
+        supports_image=True,
+        supports_video=True,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="glm-5.1",
+        name="GLM-5.1",
+        supports_image=False,
+        supports_video=False,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="minimax-m2.7",
+        name="MiniMax-M2.7",
+        supports_image=False,
+        supports_video=False,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="kimi-k2.6",
+        name="Kimi-K2.6",
+        supports_image=False,
+        supports_video=False,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="kimi-k2.5",
+        name="Kimi-K2.5",
+        supports_image=False,
+        supports_video=False,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="glm-4-7-251222",
+        name="GLM-4.7",
+        supports_image=False,
+        supports_video=False,
+        probe_source="probed",
+    ),
+    ModelInfo(
+        id="deepseek-v3-2-251201",
+        name="DeepSeek-V3.2",
+        supports_image=False,
+        supports_video=False,
+        probe_source="probed",
+    ),
+]
+
 ANTHROPIC_MODELS: List[ModelInfo] = []
 
 GEMINI_MODELS: List[ModelInfo] = [
@@ -736,6 +875,26 @@ PROVIDER_SILICONFLOW_INTL = OpenAIProvider(
     require_api_key=True,
 )
 
+PROVIDER_VOLCENGINE_CN = OpenAIProvider(
+    id="volcengine-cn",
+    name="Volcano Engine",
+    base_url="https://ark.cn-beijing.volces.com/api/v3",
+    api_key_prefix="",
+    models=VOLCENGINE_MODELS,
+    freeze_url=True,
+    support_model_discovery=False,
+)
+
+PROVIDER_VOLCENGINE_CN_CODINGPLAN = OpenAIProvider(
+    id="volcengine-cn-codingplan",
+    name="Volcano Engine Coding Plan",
+    base_url="https://ark.cn-beijing.volces.com/api/coding/v3",
+    api_key_prefix="",
+    models=VOLCENGINE_CODINGPLAN_MODELS,
+    support_connection_check=False,
+    freeze_url=True,
+    support_model_discovery=False,
+)
 
 class ProviderManager:  # pylint: disable=too-many-public-methods
     """A manager class to handle all providers,
@@ -801,6 +960,8 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
         self._add_builtin(PROVIDER_ZHIPU_INTL_CODINGPLAN)
         self._add_builtin(PROVIDER_SILICONFLOW_CN)
         self._add_builtin(PROVIDER_SILICONFLOW_INTL)
+        self._add_builtin(PROVIDER_VOLCENGINE_CN)
+        self._add_builtin(PROVIDER_VOLCENGINE_CN_CODINGPLAN)
 
     def _add_builtin(self, provider: Provider):
         self.builtin_providers[provider.id] = provider
