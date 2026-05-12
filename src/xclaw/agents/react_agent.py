@@ -38,6 +38,7 @@ from .tool_guard_mixin import ToolGuardMixin
 from .tools import (
     browser_use,
     chat_with_agent,
+    delegate_external_agent,
     desktop_screenshot,
     edit_file,
     execute_shell_command,
@@ -248,6 +249,7 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
             "get_token_usage": get_token_usage,
             "list_agents": list_agents,
             "chat_with_agent": chat_with_agent,
+            "delegate_external_agent": delegate_external_agent,
         }
 
         multimodal = get_active_model_supports_multimodal()
