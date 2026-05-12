@@ -24,7 +24,7 @@ metadata:
 |---------------------|-----------------------------------|-----------------------------------|
 | 安装、依赖、首次使用 | `quickstart`、`intro` | `src/xclaw/cli/`、`pyproject.toml` |
 | 配置、config.json、环境变量 | `config` | `src/xclaw/config/config.py`、`src/xclaw/constant.py` |
-| 技能、SKILL、skill_pool、内置技能 | `skills` | `src/xclaw/agents/skills_manager.py`、`src/xclaw/agents/skills/` |
+| 技能、SKILL、skill_pool、内置技能 | `skills` | `src/xclaw/agents/skill_system/`、`src/xclaw/agents/skills/` |
 | MCP、插件 | `mcp` | `src/xclaw/app/routers/`（按需 grep `mcp`） |
 | 多智能体、工作区、agent、内置 QA | `multi-agent` | `src/xclaw/app/routers/agents.py`、`src/xclaw/app/migration.py`、`src/xclaw/constant.py`（`BUILTIN_QA_AGENT_ID` 等） |
 | 记忆、MEMORY、memory_search | `memory` | `src/xclaw/agents/memory/memory_manager.py`、`src/xclaw/agents/tools/memory_search.py` |
