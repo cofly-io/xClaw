@@ -1107,7 +1107,15 @@
     "enableAllSuccess": "Все инструменты включены",
     "disableAllSuccess": "Все инструменты отключены",
     "allEnabled": "Все инструменты уже включены",
-    "allDisabled": "Все инструменты уже отключены"
+    "allDisabled": "Все инструменты уже отключены",
+    "asyncExecution": "Асинхронное выполнение",
+    "asyncExecutionEnabled": "Асинхронное выполнение включено",
+    "asyncExecutionDisabled": "Асинхронное выполнение отключено",
+    "configure": "Настроить",
+    "configured": "Настроено",
+    "requiresConfig": "Требуется настройка",
+    "configSaved": "Конфигурация инструмента сохранена",
+    "configSaveError": "Не удалось сохранить конфигурацию инструмента"
   },
   "modelConfig": {
     "promptTitle": "Требуется LLM-модель — выберите в Chat после настройки",

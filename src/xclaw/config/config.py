@@ -1210,6 +1210,10 @@ class BuiltinToolConfig(BaseModel):
         default=None,
         description="Emoji icon for the tool",
     )
+    config: Dict[str, Any] | None = Field(
+        default=None,
+        description="Optional per-tool configuration (e.g. plugin API keys)",
+    )
 
 
 def _default_builtin_tools() -> Dict[str, BuiltinToolConfig]:

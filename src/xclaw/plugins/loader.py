@@ -456,7 +456,7 @@ class PluginLoader:
 
         Executes any registered shutdown hooks, removes the plugin
         module from ``sys.modules``, cleans up the plugin registry, and
-        removes the plugin's tools from ``qwenpaw.agents.tools``.
+        removes the plugin's tools from ``xclaw.agents.tools``.
 
         Args:
             plugin_id: Plugin identifier to unload
@@ -526,7 +526,7 @@ class PluginLoader:
         plugin_id: str,
         record: PluginRecord,
     ) -> None:
-        """Remove plugin tools from ``qwenpaw.agents.tools``.
+        """Remove plugin tools from ``xclaw.agents.tools``.
 
         Uses ``sys.modules`` directly to avoid the parent-package
         attribute cache that would bypass any test/runtime overrides.
@@ -536,7 +536,7 @@ class PluginLoader:
             record: PluginRecord whose tools should be removed
         """
         try:
-            tools_module = sys.modules.get("qwenpaw.agents.tools")
+            tools_module = sys.modules.get("xclaw.agents.tools")
             if tools_module is None:
                 return
 
