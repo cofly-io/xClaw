@@ -1,7 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
-"""QwenPaw ACP Agent server.
+"""xClaw ACP Agent server.
 
-Exposes QwenPaw as an ACP-compliant agent that external clients
+Exposes xClaw as an ACP-compliant agent that external clients
 (Zed, OpenCode, etc.) can connect to via stdio JSON-RPC.
 
 Uses the full ``Workspace`` lifecycle so the ACP agent has exactly
@@ -141,7 +141,7 @@ def _msg_to_updates(  # pylint: disable=too-many-branches
     msg: Any,
     tracker: _StreamTracker | None = None,
 ) -> list[Any]:
-    """Convert a QwenPaw Msg into ACP session update(s).
+    """Convert an AgentScope ``Msg`` into ACP session update(s).
 
     When *tracker* is provided, text and thinking content blocks are
     emitted as **incremental** deltas rather than cumulative snapshots,
@@ -324,11 +324,12 @@ def _get_msg_text(msg: Any) -> str:
     return ""
 
 
-class QwenPawACPAgent(Agent):
+class XClawACPAgent(Agent):
     """ACP Agent backed by a full ``Workspace``.
 
     Instead of creating a bare ``AgentRunner``, this class boots a
-    complete ``Workspace`` 鈥?the same lifecycle the web console uses 鈥?    so MCP tools, memory, chat persistence, sub-agent calls, etc. are
+    complete ``Workspace``—the same lifecycle the web console uses—so
+    MCP tools, memory, chat persistence, sub-agent calls, etc. are
     all available.
     """
 
@@ -413,7 +414,7 @@ class QwenPawACPAgent(Agent):
         self._workspace = workspace
         self._workspace_ready = True
         logger.info(
-            "QwenPaw ACP Agent workspace started: agent_id=%s workspace=%s",
+            "xClaw ACP Agent workspace started: agent_id=%s workspace=%s",
             agent_id,
             workspace_dir,
         )
@@ -458,8 +459,8 @@ class QwenPawACPAgent(Agent):
                 ),
             ),
             agent_info=Implementation(
-                name="qwenpaw",
-                title="QwenPaw",
+                name="xclaw",
+                title="xClaw",
                 version=__version__,
             ),
         )
@@ -886,12 +887,12 @@ class QwenPawACPAgent(Agent):
         save_agent_config(agent_id, agent_config)
 
 
-async def run_qwenpaw_agent(
+async def run_xclaw_acp_agent(
     agent_id: str | None = None,
     workspace_dir: Path | None = None,
 ) -> None:
-    """Entry point: run QwenPaw as an ACP agent over stdio."""
-    agent = QwenPawACPAgent(
+    """Entry point: run xClaw as an ACP agent over stdio."""
+    agent = XClawACPAgent(
         agent_id=agent_id,
         workspace_dir=workspace_dir,
     )

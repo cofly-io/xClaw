@@ -73,6 +73,7 @@ build-backend = "setuptools.build_meta"
 
 [project.scripts]
 xclaw = "xclaw.cli.main:cli"
+xclaw-acp = "xclaw.agents.acp.cli:main"
 copaw = "xclaw.cli.main:cli"
 qwenpaw = "xclaw.cli.main:cli"
 
