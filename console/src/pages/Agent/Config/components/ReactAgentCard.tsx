@@ -1,5 +1,6 @@
 import {
   Form,
+  Input,
   InputNumber,
   Select,
   Card,
@@ -117,6 +118,19 @@ export function ReactAgentCard({
             min={1}
             step={10}
             placeholder={t("agentConfig.shellCommandTimeoutPlaceholder")}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={t("agentConfig.shellCommandExecutable")}
+          name="shell_command_executable"
+          tooltip={t("agentConfig.shellCommandExecutableTooltip")}
+          className={styles.reactAgentField}
+        >
+          <Input
+            style={{ width: "100%" }}
+            placeholder={t("agentConfig.shellCommandExecutablePlaceholder")}
+            allowClear
           />
         </Form.Item>
       </div>

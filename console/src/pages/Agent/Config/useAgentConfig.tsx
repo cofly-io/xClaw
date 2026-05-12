@@ -39,6 +39,7 @@ export function useAgentConfig() {
         ...config,
         auto_continue_on_text_only: config.auto_continue_on_text_only ?? false,
         shell_command_timeout: config.shell_command_timeout ?? 60.0,
+        shell_command_executable: config.shell_command_executable ?? "",
         auto_title_config: config.auto_title_config ?? {
           enabled: true,
           timeout_seconds: 30.0,
