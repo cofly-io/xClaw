@@ -186,10 +186,21 @@ async def generate_and_update_title(
             {"role": "user", "content": message},
         ]
 
-        raw_title = await asyncio.wait_for(
-            _consume_model_response(model, messages),
-            timeout=timeout,
-        )
+        try:
+            raw_title = await asyncio.wait_for(
+                _consume_model_response(model, messages),
+                timeout=timeout,
+            )
+        except TimeoutError:
+            # wait_for cancels the inner coroutine; slow LLM / network is
+            # expected — keep placeholder name without a noisy traceback.
+            logger.warning(
+                "Title generation timed out after %.1fs for chat %s "
+                "(placeholder name kept)",
+                timeout,
+                chat_id,
+            )
+            return
         title = _clean_title(raw_title)
         if not title:
             logger.debug(

@@ -682,7 +682,7 @@ class AutoTitleConfig(BaseModel):
     )
 
     timeout_seconds: float = Field(
-        default=30.0,
+        default=45.0,
         ge=1.0,
         description=(
             "Hard timeout for the title-generation LLM call. The "
