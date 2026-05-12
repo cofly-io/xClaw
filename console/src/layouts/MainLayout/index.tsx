@@ -10,6 +10,7 @@ import {
   FolderOpen,
   Hammer,
   ListTodo,
+  Package,
   Play,
   Radio,
   Save,
@@ -40,6 +41,7 @@ import TokenUsagePage from "../../pages/Settings/TokenUsage";
 import AgentsPage from "../../pages/Settings/Agents";
 import VoiceTranscriptionPage from "../../pages/Settings/VoiceTranscription";
 import BackupsPage from "../../pages/Settings/Backups";
+import PluginManagerPage from "../../pages/Settings/PluginManager";
 import { KEY_TO_LABEL } from "../constants";
 
 const { Content } = Layout;
@@ -60,6 +62,7 @@ const ALL_MORE_MENU_KEYS = [
   "token-usage",
   "backups",
   "voice-transcription",
+  "plugin-manager",
 ] as const;
 
 const MORE_MENU_KEYS = [
@@ -75,6 +78,7 @@ const MORE_MENU_KEYS = [
   "models",
   "environments",
   "backups",
+  "plugin-manager",
 ] as const satisfies readonly MoreMenuKey[];
 
 type MoreMenuKey = (typeof ALL_MORE_MENU_KEYS)[number];
@@ -98,6 +102,7 @@ const MORE_MENU_ICON_MAP: Record<VisibleMoreMenuKey, LucideIcon> = {
   models: Cpu,
   environments: Braces,
   backups: Save,
+  "plugin-manager": Package,
 };
 
 export default function MainLayout() {
@@ -149,6 +154,8 @@ export default function MainLayout() {
         return <TokenUsagePage />;
       case "voice-transcription":
         return <VoiceTranscriptionPage />;
+      case "plugin-manager":
+        return <PluginManagerPage />;
       default:
         return null;
     }
@@ -221,6 +228,7 @@ export default function MainLayout() {
                   path="/voice-transcription"
                   element={<VoiceTranscriptionPage />}
                 />
+                <Route path="/plugin-manager" element={<PluginManagerPage />} />
               </Routes>
             </div>
           </Content>

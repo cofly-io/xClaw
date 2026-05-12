@@ -50,7 +50,8 @@
     "security": "Security",
     "tokenUsage": "Token Usage",
     "voiceTranscription": "Voice Transcription",
-    "backups": "Backups"
+    "backups": "Backups",
+    "pluginManager": "Plugin Manager"
   },
   "acp": {
     "title": "ACP",
@@ -1669,5 +1670,37 @@
     "progressSaving": "Saving backup file...",
     "progressDone": "Backup complete",
     "localModelsNotice": "Backup files do not include local model files. For cross-device migration, you will need to re-download the required local models on the target device."
+  },
+  "pluginManager": {
+    "title": "Plugin Manager",
+    "description": "Install, manage, and remove plugins without restarting the service.",
+    "installed": "Installed Plugins",
+    "noPlugins": "No plugins installed yet",
+    "installBtn": "Install Plugin",
+    "installTitle": "Install Plugin",
+    "dropPrimary": "Drop folder or ZIP here",
+    "dropSecondary": "or click to browse a ZIP file",
+    "orFromUrl": "or from URL",
+    "installFromUrl": "Install from URL",
+    "urlPlaceholder": "https://example.com/plugin.zip",
+    "zipOnly": "Only ZIP files can be dropped as files — drag a folder for directory install",
+    "dropFailed": "Failed to read dropped folder",
+    "restartHint": "Some plugins (e.g. hooks, monkey-patches) may require an app restart to fully take effect or be removed.",
+    "installing": "Installing...",
+    "installSuccess": "Plugin installed successfully",
+    "installFailed": "Plugin installation failed",
+    "uninstall": "Uninstall",
+    "uninstallConfirm": "Uninstall plugin \"{{name}}\"? This cannot be undone. Some plugins may require an app restart to be fully removed.",
+    "uninstalling": "Uninstalling...",
+    "uninstallSuccess": "Plugin uninstalled successfully",
+    "uninstallFailed": "Plugin uninstallation failed",
+    "statusLoaded": "Running",
+    "statusUnloaded": "Not loaded",
+    "type": "Type",
+    "version": "Version",
+    "author": "Author",
+    "unknown": "Unknown",
+    "loadFailed": "Failed to load plugin list",
+    "confirmTitle": "Confirm Uninstall"
   }
 }

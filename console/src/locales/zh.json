@@ -50,7 +50,8 @@
     "security": "安全",
     "tokenUsage": "Token 消耗",
     "voiceTranscription": "语音转写",
-    "backups": "备份"
+    "backups": "备份",
+    "pluginManager": "插件管理"
   },
   "workspace": {
     "title": "文件",
@@ -1681,5 +1682,37 @@
     "progressSaving": "正在写入备份文件...",
     "progressDone": "备份完成",
     "localModelsNotice": "备份文件不包含本地模型文件。如需跨设备迁移，请在目标设备上重新下载所需的本地模型。"
+  },
+  "pluginManager": {
+    "title": "插件管理",
+    "description": "安装、管理和卸载插件，无需重启服务。",
+    "installed": "已安装插件",
+    "noPlugins": "暂无已安装插件",
+    "installBtn": "安装插件",
+    "installTitle": "安装插件",
+    "dropPrimary": "拖入文件夹或 ZIP 文件",
+    "dropSecondary": "或点击选择 ZIP 文件",
+    "orFromUrl": "或通过 URL 安装",
+    "installFromUrl": "从 URL 安装",
+    "urlPlaceholder": "https://example.com/plugin.zip",
+    "zipOnly": "直接拖入文件时仅支持 ZIP，如需安装文件夹请直接拖入文件夹",
+    "dropFailed": "读取拖入的文件夹失败",
+    "restartHint": "部分插件（如 hook、monkey-patch 类型）安装或卸载后可能需要重启应用才能完全生效。",
+    "installing": "安装中...",
+    "installSuccess": "插件安装成功",
+    "installFailed": "插件安装失败",
+    "uninstall": "卸载",
+    "uninstallConfirm": "确定要卸载插件 \"{{name}}\"？操作无法撤销。部分插件可能需要重启应用才能完全移除。",
+    "uninstalling": "卸载中...",
+    "uninstallSuccess": "插件卸载成功",
+    "uninstallFailed": "插件卸载失败",
+    "statusLoaded": "运行中",
+    "statusUnloaded": "未加载",
+    "type": "类型",
+    "version": "版本",
+    "author": "作者",
+    "unknown": "未知",
+    "loadFailed": "加载插件列表失败",
+    "confirmTitle": "确认卸载"
   }
 }
