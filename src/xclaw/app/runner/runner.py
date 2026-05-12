@@ -631,6 +631,7 @@ class AgentRunner(Runner):
 
             # Ensure session file has a valid plan_notebook dict
             # to prevent TypeError/KeyError during load_state_dict
+            plan_notebook = getattr(agent, "plan_notebook", None)
             if plan_notebook is not None:
                 try:
                     _states = await self.session.get_session_state_dict(
