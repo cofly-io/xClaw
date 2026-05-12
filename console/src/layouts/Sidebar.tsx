@@ -26,6 +26,16 @@ import SidebarSessionList from "../pages/Chat/components/SidebarSessionList";
 
 const { Sider } = Layout;
 
+const MOBILE_SIDEBAR_QUERY = "(max-width: 768px)";
+
+function isMobileSidebarViewport() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia(MOBILE_SIDEBAR_QUERY).matches
+  );
+}
+
 interface SidebarProps {
   onOpenSettingsMore: () => void;
 }
@@ -40,6 +50,7 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(isMobileSidebarViewport);
   const [suposUsername, setSuposUsername] = useState("");
   const chatRouteActive = location.pathname.startsWith("/chat");
   const navIconProps = {
@@ -76,6 +87,30 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
     window.addEventListener("storage", readSuposUser);
     return () => window.removeEventListener("storage", readSuposUser);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(MOBILE_SIDEBAR_QUERY);
+    const syncMobileSidebar = () => {
+      setIsMobile(mediaQuery.matches);
+      if (mediaQuery.matches) {
+        setCollapsed(true);
+      }
+    };
+
+    syncMobileSidebar();
+    mediaQuery.addEventListener("change", syncMobileSidebar);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncMobileSidebar);
+    };
+  }, []);
 
   const handleUpdateProfile = async (values: {
     currentPassword: string;
@@ -141,6 +176,8 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
     },
   ];
 
+  const siderWidth = collapsed ? (isMobile ? 56 : 72) : 255;
+
   return (
     <>
       {/* Dot grip — fixed on sidebar right edge */}
@@ -159,7 +196,7 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
       <Sider
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        width={255}
+        width={siderWidth}
         className={`${styles.sider}${isDark ? ` ${styles.siderDark}` : ""}`}
       >
         <div className={styles.sidebarMain}>
