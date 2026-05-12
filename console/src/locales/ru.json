@@ -946,7 +946,7 @@
     "llmAcquireTimeoutGtPauseJitter": "Таймаут получения слота должен быть больше суммы паузы и джиттера",
     "contextManagementTitle": "Управление контекстом",
     "memoryManagerBackend": "Бэкенд менеджера памяти",
-    "memoryManagerBackendTooltip": "Тип бэкенда менеджера памяти. В настоящее время поддерживается только ReMeLight.",
+    "memoryManagerBackendTooltip": "ReMeLight — локальная сессионная память; ADBPG — опциональное долговременное семантическое хранилище в AnalyticDB (нужна конфигурация).",
     "memoryManagerBackendRestartWarning": "Смена бэкенда менеджера памяти не поддерживает горячую перезагрузку. Сохраните и перезапустите xClaw для применения изменений.",
     "maxIters": "Макс. итераций",
     "maxItersTooltip": "Максимальное число итераций рассуждение-действие для агента ReAct",
@@ -1092,7 +1092,28 @@
     "embeddingEnableHint": "Заполните Base URL и название модели для активации эмбеддинга. API Key — опционально.",
     "rebuildMemoryIndexOnStart": "Перестроить индекс памяти при запуске",
     "rebuildMemoryIndexOnStartTooltip": "Очищать и перестраивать индекс поиска по памяти при запуске агента. Отключите, чтобы пропустить переиндексацию и отслеживать только новые файлы (быстрый запуск, но индекс может не совпадать с файлами).",
-    "toolResultCompactRecentGtOld": "Порог для последних сообщений должен быть больше или равен порогу для старых сообщений"
+    "toolResultCompactRecentGtOld": "Порог для последних сообщений должен быть больше или равен порогу для старых сообщений",
+    "adbpgMemoryTitle": "Долгосрочная память ADBPG",
+    "adbpgConfig": {
+      "title": "Конфигурация памяти ADBPG",
+      "apiMode": "Режим API",
+      "host": "Хост",
+      "port": "Порт",
+      "user": "Пользователь",
+      "password": "Пароль",
+      "dbname": "База данных",
+      "llmModel": "Модель LLM",
+      "llmApiKey": "Ключ API LLM",
+      "llmBaseUrl": "Базовый URL LLM",
+      "embeddingModel": "Модель эмбеддингов",
+      "embeddingApiKey": "Ключ API эмбеддингов",
+      "embeddingBaseUrl": "Базовый URL эмбеддингов",
+      "embeddingDims": "Размерность эмбеддингов",
+      "restBaseUrl": "Базовый URL REST",
+      "restApiKey": "Ключ REST API",
+      "memoryIsolation": "Изоляция памяти (на агента)",
+      "searchTimeout": "Таймаут поиска"
+    }
   },
   "tools": {
     "title": "Встроенные инструменты",

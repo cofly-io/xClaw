@@ -38,10 +38,12 @@ logger = logging.getLogger(__name__)
 
 def _resolve_memory_class(backend: str) -> type:
     """Return the memory manager class for the given backend name."""
-    from ...agents.memory import ReMeLightMemoryManager
+    from ...agents.memory import ADBPGMemoryManager, ReMeLightMemoryManager
 
     if backend == "remelight":
         return ReMeLightMemoryManager
+    if backend == "adbpg":
+        return ADBPGMemoryManager
     raise ConfigurationException(
         message=f"Unsupported memory manager backend: '{backend}'",
     )

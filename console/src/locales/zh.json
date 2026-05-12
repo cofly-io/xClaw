@@ -1018,7 +1018,7 @@
     "llmAcquireTimeoutGtPauseJitter": "槽位获取超时必须大于限流暂停时长与抖动范围之和",
     "contextManagementTitle": "上下文管理",
     "memoryManagerBackend": "记忆管理后端",
-    "memoryManagerBackendTooltip": "记忆管理器的后端类型，目前仅支持 ReMeLight",
+    "memoryManagerBackendTooltip": "记忆管理后端：ReMeLight 负责本地会话记忆；ADBPG 可选用 AnalyticDB 长期语义检索（需填写下方配置）。",
     "memoryManagerBackendRestartWarning": "切换记忆管理后端不支持热更新，保存后需要重启 xClaw 才能生效",
     "maxIters": "最大迭代次数",
     "maxItersTooltip": "ReAct 智能体的最大推理-行动迭代次数",
@@ -1164,7 +1164,28 @@
     "embeddingEnableHint": "同时填写 Base URL 和模型名称后即可启用向量模型功能，API Key 按需填写",
     "rebuildMemoryIndexOnStart": "启动时重建记忆索引",
     "rebuildMemoryIndexOnStartTooltip": "智能体启动时清空并重建记忆搜索索引。关闭后跳过重新索引，仅监听新文件变化（启动更快，但索引可能与文件不同步）",
-    "toolResultCompactRecentGtOld": "最新消息阈值必须大于或等于早期消息阈值"
+    "toolResultCompactRecentGtOld": "最新消息阈值必须大于或等于早期消息阈值",
+    "adbpgMemoryTitle": "ADBPG 长期记忆",
+    "adbpgConfig": {
+      "title": "ADBPG 记忆配置",
+      "apiMode": "API 模式",
+      "host": "主机地址",
+      "port": "端口",
+      "user": "用户名",
+      "password": "密码",
+      "dbname": "数据库名",
+      "llmModel": "LLM 模型",
+      "llmApiKey": "LLM API Key",
+      "llmBaseUrl": "LLM Base URL",
+      "embeddingModel": "Embedding 模型",
+      "embeddingApiKey": "Embedding API Key",
+      "embeddingBaseUrl": "Embedding Base URL",
+      "embeddingDims": "Embedding 维度",
+      "restBaseUrl": "REST Base URL",
+      "restApiKey": "REST API Key",
+      "memoryIsolation": "记忆隔离（按 Agent）",
+      "searchTimeout": "搜索超时"
+    }
   },
   "tools": {
     "title": "内置工具",

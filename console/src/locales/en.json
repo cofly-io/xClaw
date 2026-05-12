@@ -1040,7 +1040,7 @@
     "llmAcquireTimeoutGtPauseJitter": "Slot acquire timeout must be greater than rate limit pause + jitter",
     "contextManagementTitle": "Context Management",
     "memoryManagerBackend": "Memory Manager Backend",
-    "memoryManagerBackendTooltip": "Backend for the memory manager. Currently only ReMeLight is supported.",
+    "memoryManagerBackendTooltip": "Backend for the memory manager. ReMeLight provides local session memory; ADBPG adds AnalyticDB long-term semantic search (optional config).",
     "memoryManagerBackendRestartWarning": "Switching the memory manager backend does not support hot reload. Save and restart xClaw for changes to take effect.",
     "maxIters": "Max Iterations",
     "maxItersTooltip": "Maximum number of reasoning-acting iterations for ReAct agent",
@@ -1186,7 +1186,28 @@
     "embeddingEnableHint": "Fill in both Base URL and Model Name to enable the embedding feature. API Key is optional.",
     "rebuildMemoryIndexOnStart": "Rebuild Memory Index on Start",
     "rebuildMemoryIndexOnStartTooltip": "Clear and rebuild the memory search index when the agent starts. Disable to skip re-indexing and only watch for new file changes (faster startup, but index may be out of sync).",
-    "toolResultCompactRecentGtOld": "Recent messages threshold must be greater than or equal to the older messages threshold"
+    "toolResultCompactRecentGtOld": "Recent messages threshold must be greater than or equal to the older messages threshold",
+    "adbpgMemoryTitle": "ADBPG long-term memory",
+    "adbpgConfig": {
+      "title": "ADBPG memory configuration",
+      "apiMode": "API mode",
+      "host": "Host",
+      "port": "Port",
+      "user": "Username",
+      "password": "Password",
+      "dbname": "Database",
+      "llmModel": "LLM model",
+      "llmApiKey": "LLM API key",
+      "llmBaseUrl": "LLM base URL",
+      "embeddingModel": "Embedding model",
+      "embeddingApiKey": "Embedding API key",
+      "embeddingBaseUrl": "Embedding base URL",
+      "embeddingDims": "Embedding dimensions",
+      "restBaseUrl": "REST base URL",
+      "restApiKey": "REST API key",
+      "memoryIsolation": "Memory isolation (per agent)",
+      "searchTimeout": "Search timeout"
+    }
   },
   "tools": {
     "title": "Built-in Tools",

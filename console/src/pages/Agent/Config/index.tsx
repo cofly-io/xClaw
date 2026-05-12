@@ -10,6 +10,7 @@ import {
   ToolResultCompactCard,
   MemorySummaryCard,
   EmbeddingConfigCard,
+  ADBPGConfigCard,
 } from "./components";
 import { PageHeader } from "@/components/PageHeader";
 import styles from "./index.module.less";
@@ -164,6 +165,19 @@ function AgentConfigPage() {
                 children: (
                   <div className={styles.tabContent}>
                     <EmbeddingConfigCard />
+                  </div>
+                ),
+              },
+              {
+                key: "adbpgMemory",
+                label: (
+                  <span className={styles.tabLabel}>
+                    {t("agentConfig.adbpgMemoryTitle")}
+                  </span>
+                ),
+                children: (
+                  <div className={styles.tabContent}>
+                    <ADBPGConfigCard />
                   </div>
                 ),
               },

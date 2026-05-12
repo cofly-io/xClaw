@@ -19,6 +19,7 @@ const LANGUAGE_OPTIONS = [
 
 const MEMORY_MANAGER_BACKEND_OPTIONS = [
   { value: "remelight", label: "ReMeLight" },
+  { value: "adbpg", label: "ADBPG" },
 ];
 
 interface ReactAgentCardProps {

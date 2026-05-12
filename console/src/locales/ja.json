@@ -921,7 +921,7 @@
     "llmAcquireTimeoutGtPauseJitter": "スロット取得タイムアウトはレート制限一時停止とジッターの合計より大きい必要があります",
     "contextManagementTitle": "コンテキスト管理",
     "memoryManagerBackend": "メモリマネージャーバックエンド",
-    "memoryManagerBackendTooltip": "メモリマネージャーのバックエンドタイプ。現在は ReMeLight のみサポートされています。",
+    "memoryManagerBackendTooltip": "ReMeLight はローカルセッション記憶を担当します。ADBPG は AnalyticDB を使った長期記憶検索のオプションです（要設定）。",
     "memoryManagerBackendRestartWarning": "メモリマネージャーバックエンドの切り替えはホットリロードに対応していません。変更を反映するには保存後に xClaw を再起動してください。",
     "maxIters": "最大反復回数",
     "maxItersTooltip": "ReActエージェントの推論・行動サイクルの最大反復回数",
@@ -1067,7 +1067,28 @@
     "embeddingEnableHint": "Base URLとモデル名を両方入力すると埋め込み機能が有効になります。APIキーは必要に応じて入力してください",
     "rebuildMemoryIndexOnStart": "起動時に記憶インデックスを再構築",
     "rebuildMemoryIndexOnStartTooltip": "エージェント起動時に記憶検索インデックスをクリアして再構築します。無効にすると再インデックス化をスキップし、新しいファイルの変更のみを監視します（起動が速くなりますが、インデックスが同期しなくなる可能性があります）",
-    "toolResultCompactRecentGtOld": "最新メッセージの閾値は古いメッセージの閾値以上である必要があります"
+    "toolResultCompactRecentGtOld": "最新メッセージの閾値は古いメッセージの閾値以上である必要があります",
+    "adbpgMemoryTitle": "ADBPG 長期記憶",
+    "adbpgConfig": {
+      "title": "ADBPG メモリ設定",
+      "apiMode": "API モード",
+      "host": "ホスト",
+      "port": "ポート",
+      "user": "ユーザー名",
+      "password": "パスワード",
+      "dbname": "データベース名",
+      "llmModel": "LLM モデル",
+      "llmApiKey": "LLM API キー",
+      "llmBaseUrl": "LLM ベース URL",
+      "embeddingModel": "埋め込みモデル",
+      "embeddingApiKey": "埋め込み API キー",
+      "embeddingBaseUrl": "埋め込みベース URL",
+      "embeddingDims": "埋め込み次元",
+      "restBaseUrl": "REST ベース URL",
+      "restApiKey": "REST API キー",
+      "memoryIsolation": "メモリ分離（エージェント単位）",
+      "searchTimeout": "検索タイムアウト"
+    }
   },
   "tools": {
     "title": "ビルトインツール",
