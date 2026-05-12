@@ -522,6 +522,13 @@
     "feishuRegionTooltip": "Выберите Feishu для Китая или Lark для международного использования",
     "feishuChina": "Feishu (Китай)",
     "feishuInternational": "Lark (Международный)",
+    "feishuScanGuide": "Отсканируйте QR-код в Feishu для мгновенного создания бота. Приложение Feishu будет создано автоматически, а App ID и App Secret будут заполнены.",
+    "feishuScanLogin": "Сканировать для создания бота",
+    "feishuGetQrcode": "Получить QR-код Feishu",
+    "feishuScanHint": "Отсканируйте QR-код выше с помощью Feishu. App ID и App Secret будут заполнены автоматически после авторизации.",
+    "feishuAuthSuccess": "Бот Feishu создан. App ID и App Secret заполнены автоматически.",
+    "feishuQrcodeExpired": "QR-код истёк. Получите новый.",
+    "feishuQrcodeFailed": "Не удалось получить QR-код Feishu. Попробуйте ещё раз.",
     "weixinSetupGuide": "Бот для личного аккаунта WeChat (протокол iLink). При первом запуске без Bot Token будет выведена ссылка на QR-код для авторизации. Токен сохраняется локально для дальнейшего использования.",
     "weixinContextTokenLimit": "Ограничение платформы WeChat iLink: context_token каждого сообщения пользователя позволяет отправить максимум 10 ответных сообщений. Это жёсткое ограничение платформы. Рекомендуется отключить вывод размышлений и инструментов или включить функцию объединения сообщений, чтобы избежать превышения лимита и ошибок отправки.",
     "weixinBotToken": "Bot Token",
@@ -540,7 +547,9 @@
     "weixinScanHint": "Отсканируйте QR-код в WeChat, затем нажмите Сохранить",
     "weixinQrcodeFailed": "Не удалось получить QR-код, попробуйте снова",
     "weixinLoginSuccess": "Вход через WeChat выполнен, токен заполнен",
-    "weixinQrcodeExpired": "QR-код истёк, получите новый"
+    "weixinQrcodeExpired": "QR-код истёк, получите новый",
+    "onebotShareSessionInGroup": "Общий сеанс в группе",
+    "onebotShareSessionInGroupTooltip": "Если включено, все участники группы используют один сеанс разговора. Если выключено, у каждого участника свой сеанс."
   },
   "sessions": {
     "title": "Сессии",
