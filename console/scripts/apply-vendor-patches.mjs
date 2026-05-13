@@ -322,31 +322,8 @@ patchFile(
   },
 );
 
-patchFile("@agentscope-ai/chat/lib/Bubble/BubbleList.js", "doLoadRef", (s) => {
-  let t = s;
-  if (t.includes(BUBBLE_LIST_LOADMORE_RAF_NEEDLE)) {
-    t = t.replace(
-      BUBBLE_LIST_LOADMORE_RAF_NEEDLE,
-      BUBBLE_LIST_LOADMORE_RAF_REPL,
-    );
-  }
-  if (t.includes(BUBBLE_LIST_IMPERATIVE_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_IMPERATIVE_NEEDLE, BUBBLE_LIST_IMPERATIVE_REPL);
-  }
-  if (t.includes(BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE)) {
-    t = t.replace(
-      BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE,
-      BUBBLE_LIST_OVERFLOW_ANCHOR_REPL,
-    );
-  }
-  if (t.includes(BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE)) {
-    t = t.replace(
-      BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE,
-      BUBBLE_LIST_DOLOAD_USEEFFECT_REPL,
-    );
-  }
-  return t;
-});
+// BubbleList.js patch removed: MessageList is fully replaced (see writeMessageList below)
+// so incremental BubbleList patches are not needed.
 
 // xclaw: MessageList is fully replaced (not incrementally patched) because the
 // scroll-anchor fix (remove useLayoutEffect) and doLoadRef fix (BubbleList)
