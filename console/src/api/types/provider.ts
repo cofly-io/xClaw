@@ -1,6 +1,8 @@
 export interface ModelInfo {
   id: string;
   name: string;
+  /** When true, model is offered at no API cost (e.g. coding plan free tier). */
+  is_free?: boolean | null;
   supports_multimodal: boolean | null;
   supports_image: boolean | null;
   supports_video: boolean | null;
