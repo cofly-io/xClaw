@@ -10,12 +10,10 @@ import {
   FolderOpen,
   Hammer,
   ListTodo,
-  Package,
   Play,
   Radio,
   Save,
   Sparkles,
-  SquareTerminal,
   type LucideIcon,
 } from "lucide-react";
 import Sidebar from "../Sidebar";
@@ -72,13 +70,11 @@ const MORE_MENU_KEYS = [
   "workspace",
   "skills",
   "tools",
-  "acp",
   "agent-config",
   "agents",
   "models",
   "environments",
   "backups",
-  "plugin-manager",
 ] as const satisfies readonly MoreMenuKey[];
 
 type MoreMenuKey = (typeof ALL_MORE_MENU_KEYS)[number];
@@ -96,13 +92,11 @@ const MORE_MENU_ICON_MAP: Record<VisibleMoreMenuKey, LucideIcon> = {
   workspace: FolderOpen,
   skills: Sparkles,
   tools: Hammer,
-  acp: SquareTerminal,
   "agent-config": Play,
   agents: Bot,
   models: Cpu,
   environments: Braces,
   backups: Save,
-  "plugin-manager": Package,
 };
 
 export default function MainLayout() {

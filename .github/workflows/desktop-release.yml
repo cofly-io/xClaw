@@ -121,8 +121,8 @@ jobs:
 
       - name: Build macOS .app
         run: |
-          chmod +x scripts/pack/build_macos.sh
-          conda run -n xclaw-build bash -c 'CREATE_ZIP=1 ./scripts/pack/build_macos.sh'
+          chmod +x scripts/pack/macos/build.sh scripts/pack/build_macos.sh
+          conda run -n xclaw-build bash -c 'CREATE_ZIP=1 ./scripts/pack/macos/build.sh'
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4

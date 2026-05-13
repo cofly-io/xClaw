@@ -24,12 +24,13 @@ Dependencies follow `pyproject.toml`.
 
 From the **repo root**:
 
-**macOS**
+**macOS** (implementation lives in `scripts/pack/macos/`; wrapper keeps the old path working)
 ```bash
-bash ./scripts/pack/build_macos.sh
+bash ./scripts/pack/macos/build.sh
 # Output: dist/xClaw.app
 
-CREATE_ZIP=1 bash ./scripts/pack/build_macos.sh   # also create .zip
+CREATE_ZIP=1 bash ./scripts/pack/macos/build.sh   # also create .zip
+# Equivalent: bash ./scripts/pack/build_macos.sh
 ```
 
 **Windows (PowerShell)**
@@ -85,7 +86,8 @@ When users download the xClaw macOS app (e.g. from Releases) as a `.app` (in a z
 | File | Description |
 |------|-------------|
 | `build_common.py` | Create temporary conda env, install `xclaw[full]` from a wheel, conda-pack; produces archive. |
-| `build_macos.sh` | One-click: build wheel → build_common → unpack into xClaw.app; optional zip. |
+| `macos/build.sh` | One-click: build wheel → build_common → unpack into xClaw.app; optional zip. |
+| `build_macos.sh` | Thin wrapper → `macos/build.sh` (CI / backwards compatibility). |
 | `build_win.ps1` | One-click: build wheel → build_common → unpack → create VBS/BAT launchers → makensis installer. |
 | `desktop.nsi` | NSIS script: pack `dist/win-unpacked`, add icons, and create shortcuts. |
 | `assets/icon.ico` | Pre-generated Windows icon (installer and shortcuts). |

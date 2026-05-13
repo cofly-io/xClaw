@@ -23,12 +23,13 @@
 
 在**仓库根目录**执行：
 
-**macOS**
+**macOS**（实现位于 `scripts/pack/macos/`，原路径 `build_macos.sh` 仍为兼容入口）
 ```bash
-bash ./scripts/pack/build_macos.sh
+bash ./scripts/pack/macos/build.sh
 # 产出: dist/xClaw.app
 
-CREATE_ZIP=1 bash ./scripts/pack/build_macos.sh   # 同时生成 .zip
+CREATE_ZIP=1 bash ./scripts/pack/macos/build.sh   # 同时生成 .zip
+# 等价: bash ./scripts/pack/build_macos.sh
 ```
 
 **Windows (PowerShell)**
@@ -83,7 +84,8 @@ PYTHONPATH= PYTHONHOME="$APP_ENV" "$APP_ENV/bin/python" -m xclaw desktop
 | 文件 | 说明 |
 |------|------|
 | `build_common.py` | 创建临时 conda 环境，从 wheel 安装 `xclaw[full]`，conda-pack 产出归档 |
-| `build_macos.sh` | 一键：构建 wheel → build_common → 解压到 xClaw.app；可选打 zip |
+| `macos/build.sh` | 一键：构建 wheel → build_common → 解压到 xClaw.app；可选打 zip |
+| `build_macos.sh` | 薄封装，转调 `macos/build.sh`（CI / 兼容旧命令） |
 | `build_win.ps1` | 一键：构建 wheel → build_common → 解压 → 创建 VBS/BAT 启动器 → makensis 安装包 |
 | `desktop.nsi` | NSIS 脚本：打包 `dist/win-unpacked`，添加图标，创建快捷方式 |
 | `assets/icon.ico` | 预生成的 Windows 图标（安装包和快捷方式使用） |

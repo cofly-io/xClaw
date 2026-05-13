@@ -3,7 +3,7 @@
 # pylint:disable=too-many-statements
 """
 Create a temporary conda env, install xClaw from a wheel, run conda-pack.
-Used by build_macos.sh and build_win.ps1. Run from repo root.
+Used by macos/build.sh (and build_macos.sh wrapper) and build_win.ps1. Run from repo root.
 """
 from __future__ import annotations
 

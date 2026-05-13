@@ -644,15 +644,12 @@ def read_skill_pool_manifest() -> dict[str, Any]:
 
 
 def _extract_emoji_from_metadata(metadata: Any) -> str:
-    """Extract emoji from metadata.xclaw.emoji (or legacy qwenpaw)."""
+    """Extract emoji from metadata.xclaw.emoji."""
     if not isinstance(metadata, dict):
         return ""
-    for key in ("xclaw", "qwenpaw"):
-        block = metadata.get(key)
-        if isinstance(block, dict):
-            emoji = str(block.get("emoji", "") or "")
-            if emoji:
-                return emoji
+    block = metadata.get("xclaw")
+    if isinstance(block, dict):
+        return str(block.get("emoji", "") or "")
     return ""
 
 
@@ -673,7 +670,7 @@ def _read_skill_from_dir(skill_dir: Path, source: str) -> SkillInfo | None:
             post = frontmatter.loads(content)
             description = str(post.get("description", "") or "")
 
-            # Extract emoji from metadata.xclaw / metadata.qwenpaw
+            # Extract emoji from metadata.xclaw.emoji
             emoji = _extract_emoji_from_metadata(post.get("metadata", {}))
         except Exception:
             pass

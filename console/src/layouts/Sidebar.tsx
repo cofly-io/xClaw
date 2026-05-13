@@ -12,7 +12,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Ellipsis, MessageSquarePlus, SquarePlus } from "lucide-react";
 import {
-  SparkChatTabFill,
   SparkExitFullscreenLine,
   SparkSearchUserLine,
 } from "@agentscope-ai/icons";
@@ -52,7 +51,6 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(isMobileSidebarViewport);
   const [suposUsername, setSuposUsername] = useState("");
-  const chatRouteActive = location.pathname.startsWith("/chat");
   const navIconProps = {
     size: 16,
     strokeWidth: 1.8,
@@ -216,16 +214,6 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
           {!collapsed && (
             <div className={styles.agentSelectorContainer}>
               <AgentSelector hideLabel />
-              <button
-                type="button"
-                className={`${styles.stickyChatButton}${
-                  chatRouteActive ? ` ${styles.stickyChatButtonActive}` : ""
-                }`}
-                onClick={() => navigate("/chat")}
-              >
-                <SparkChatTabFill size={16} />
-                <span>{t("nav.chat")}</span>
-              </button>
             </div>
           )}
           {collapsed ? (
