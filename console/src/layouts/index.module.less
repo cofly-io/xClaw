@@ -95,10 +95,40 @@
   height: 100vh;
   box-shadow: 2px 0 8px rgba(24, 100, 255, 0.04);
 
+  // AgentSelector + Chat — sticky under logo (QwenPaw #4240 port)
   .agentSelectorContainer {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin-bottom: 4px;
+    padding: 0 4px 4px;
+    background: #fdfaf3;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .stickyChatButton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 40px;
+    padding: 0 8px;
+    margin-top: 2px;
+    border: none;
+    border-radius: 8px;
     background: transparent;
-    padding: 0;
+    color: rgba(0, 0, 0, 0.88);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  .stickyChatButtonActive {
+    background: rgba(43, 18, 0, 0.08);
   }
 
   .sideMenu {
@@ -303,9 +333,22 @@
   background: #1a1a1a !important;
   border-right-color: rgba(255, 255, 255, 0.08) !important;
 
-  // AgentSelector container - fixed at top (dark mode)
   .agentSelectorContainer {
-    background: transparent;
+    background: #1e1e1e;
+  }
+
+  .stickyChatButton {
+    color: rgba(255, 255, 255, 0.75);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.95);
+    }
+  }
+
+  .stickyChatButtonActive {
+    background: rgba(22, 201, 255, 0.35);
+    color: #16b5ff;
   }
 
   :global {
