@@ -17,7 +17,6 @@ def detect_active_mission_phase(
 ) -> Optional[Dict[str, Any]]:
     """Return mission state for *session_id* if a mission loop is active."""
     _ = (workspace, session_id)
-    return None
 
 
 async def maybe_handle_mission_command(
@@ -36,4 +35,3 @@ async def maybe_handle_mission_command(
     when `agents.mission` is wired in.
     """
     _ = (query, msgs, workspace_dir, agent_id, rewrite_fn, session_id, agent_name)
-    return None

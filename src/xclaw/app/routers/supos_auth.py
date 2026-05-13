@@ -185,13 +185,19 @@ def supos_login(req: SuposLoginRequest) -> SuposLoginResponse:
             msg = result.get("message") or result.get("msg") or "登录失败"
             return SuposLoginResponse(success=False, message=msg, data=result)
 
-    except requests.exceptions.ConnectionError:
-        raise HTTPException(status_code=502, detail="无法连接到 supOS 平台，请检查地址是否正确")
-    except requests.exceptions.Timeout:
-        raise HTTPException(status_code=504, detail="连接 supOS 平台超时")
-    except Exception as e:
-        logger.error(f"supOS login error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except requests.exceptions.ConnectionError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="无法连接到 supOS 平台，请检查地址是否正确",
+        ) from exc
+    except requests.exceptions.Timeout as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="连接 supOS 平台超时",
+        ) from exc
+    except Exception as exc:
+        logger.error(f"supOS login error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 # ─── UNS 代理 ─────────────────────────────────────────────────────────────────
@@ -211,7 +217,10 @@ def proxy_uns_tree(body: UnsTreeRequest):
     ticket = data.get("ticket", "")
     supos_url = data.get("supos_url", "")
     if not ticket:
-        raise HTTPException(status_code=401, detail="未登录或 ticket 已过期，请先在 xClaw 界面登录")
+        raise HTTPException(
+            status_code=401,
+            detail="未登录或 ticket 已过期，请先在 xClaw 界面登录",
+        )
     if not supos_url:
         raise HTTPException(status_code=400, detail="supOS 平台地址未配置")
 
@@ -225,9 +234,15 @@ def proxy_uns_tree(body: UnsTreeRequest):
             verify=False,
         )
         return resp.json()
-    except requests.exceptions.ConnectionError:
-        raise HTTPException(status_code=502, detail="无法连接到 supOS 平台")
-    except requests.exceptions.Timeout:
-        raise HTTPException(status_code=504, detail="连接 supOS 平台超时")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except requests.exceptions.ConnectionError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="无法连接到 supOS 平台",
+        ) from exc
+    except requests.exceptions.Timeout as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="连接 supOS 平台超时",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

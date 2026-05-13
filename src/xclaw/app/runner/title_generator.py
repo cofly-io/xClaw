@@ -126,7 +126,7 @@ def _clean_title(raw: str) -> str:
     return title
 
 
-async def generate_and_update_title(
+async def generate_and_update_title(  # pylint: disable=too-many-return-statements
     workspace: "Workspace",
     chat_id: str,
     user_message: str,

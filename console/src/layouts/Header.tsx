@@ -42,7 +42,8 @@ export default function Header({ onLock }: HeaderProps) {
       );
     };
     window.addEventListener(XCLAW_CHAT_HEADER_TITLE_EVENT, onTitle);
-    return () => window.removeEventListener(XCLAW_CHAT_HEADER_TITLE_EVENT, onTitle);
+    return () =>
+      window.removeEventListener(XCLAW_CHAT_HEADER_TITLE_EVENT, onTitle);
   }, []);
 
   useEffect(() => {
@@ -71,10 +72,7 @@ export default function Header({ onLock }: HeaderProps) {
     <AntHeader className={styles.header}>
       <div className={styles.headerCenter}>
         {isChatRoute && chatHeaderTitle?.label ? (
-          <span
-            className={styles.headerTitle}
-            title={chatHeaderTitle.full}
-          >
+          <span className={styles.headerTitle} title={chatHeaderTitle.full}>
             {chatHeaderTitle.label}
           </span>
         ) : null}

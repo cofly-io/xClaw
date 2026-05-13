@@ -1,11 +1,6 @@
 import { Select, Tag, Tooltip } from "antd";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Bot,
-  CheckCircle,
-  EyeOff,
-  ChevronRight,
-} from "lucide-react";
+import { Bot, CheckCircle, EyeOff, ChevronRight } from "lucide-react";
 import { useAgentStore } from "../../stores/agentStore";
 import { agentsApi } from "../../api/modules/agents";
 import { useTranslation } from "react-i18next";

@@ -112,8 +112,7 @@ export default function SidebarSessionList({
   }, [sessions]);
 
   const pinnedSessions = useMemo(
-    () =>
-      sorted.filter((s) => (s as ExtendedSession).pinned),
+    () => sorted.filter((s) => (s as ExtendedSession).pinned),
     [sorted],
   );
 
@@ -235,14 +234,9 @@ export default function SidebarSessionList({
                     editValue={
                       editingSessionId === session.id ? editValue : undefined
                     }
-                    onClick={() =>
-                      session.id && handleSessionClick(ext)
-                    }
+                    onClick={() => session.id && handleSessionClick(ext)}
                     onEdit={() =>
-                      handleEditStart(
-                        session.id!,
-                        session.name || "New Chat",
-                      )
+                      handleEditStart(session.id!, session.name || "New Chat")
                     }
                     onDelete={() => session.id && handleDelete(session.id)}
                     onPin={() => session.id && handlePin(session.id)}
@@ -281,14 +275,9 @@ export default function SidebarSessionList({
                       editValue={
                         editingSessionId === session.id ? editValue : undefined
                       }
-                      onClick={() =>
-                        session.id && handleSessionClick(ext)
-                      }
+                      onClick={() => session.id && handleSessionClick(ext)}
                       onEdit={() =>
-                        handleEditStart(
-                          session.id!,
-                          session.name || "New Chat",
-                        )
+                        handleEditStart(session.id!, session.name || "New Chat")
                       }
                       onDelete={() => session.id && handleDelete(session.id)}
                       onPin={() => session.id && handlePin(session.id)}

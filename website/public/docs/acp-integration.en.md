@@ -206,13 +206,13 @@ The ACP agent resolves its configuration in the following order:
 
 ## ACP Server vs ACP Tool
 
-| Aspect               | xClaw as an ACP Server                      | xClaw using ACP as a Tool                            |
-| -------------------- | --------------------------------------------- | ------------------------------------------------------ |
-| xClaw's role       | Server / target agent                         | Client / orchestrator                                  |
-| Connection direction | External client connects to xClaw           | xClaw connects to an external runner                 |
-| Main purpose         | Let editors or external clients drive xClaw | Let xClaw delegate work to another agent             |
+| Aspect               | xClaw as an ACP Server                      | xClaw using ACP as a Tool                              |
+| -------------------- | ------------------------------------------- | ------------------------------------------------------ |
+| xClaw's role         | Server / target agent                       | Client / orchestrator                                  |
+| Connection direction | External client connects to xClaw           | xClaw connects to an external runner                   |
+| Main purpose         | Let editors or external clients drive xClaw | Let xClaw delegate work to another agent               |
 | Typical entry point  | `xClaw acp`                                 | Delegation tool + ACP runner configuration             |
-| Best for             | Editor integration, programmatic control      | Multi-agent collaboration, external specialist runners |
+| Best for             | Editor integration, programmatic control    | Multi-agent collaboration, external specialist runners |
 
 ---
 

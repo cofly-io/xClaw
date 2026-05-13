@@ -501,7 +501,9 @@ def invalidate_config_cache() -> None:
     _config_cache_path = None
 
 
-def load_config(config_path: Optional[Path] = None) -> Config:
+def load_config(  # pylint: disable=too-many-return-statements
+    config_path: Optional[Path] = None,
+) -> Config:
     """Load config from file with caching based on file mtime.
 
     Returns cached Config if file hasn't changed since last read.

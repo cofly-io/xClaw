@@ -135,7 +135,7 @@ class ADBPGMemoryManager(ReMeLightMemoryManager):
             self._client = None
 
     # ------------------------------------------------------------------
-    # memory_search ù ReMeLight vector/FTS + ADBPG semantic hits
+    # memory_search: ReMeLight vector/FTS + ADBPG semantic hits
     # ------------------------------------------------------------------
 
     async def memory_search(

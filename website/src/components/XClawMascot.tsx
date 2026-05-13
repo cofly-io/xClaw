@@ -8,9 +8,6 @@ interface XClawMascotProps {
   className?: string;
 }
 
-export function XClawMascot({
-  size = 80,
-  className = "",
-}: XClawMascotProps) {
+export function XClawMascot({ size = 80, className = "" }: XClawMascotProps) {
   return <CatPawIcon size={size} className={className} />;
 }

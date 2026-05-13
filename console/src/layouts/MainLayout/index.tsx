@@ -156,17 +156,19 @@ export default function MainLayout() {
   };
 
   const mountedPages = useMemo(() => {
-    return MORE_MENU_KEYS.filter((key) => mountedMoreKeys.has(key)).map((key) => (
-      <div
-        key={key}
-        style={{
-          display: moreActiveKey === key ? "block" : "none",
-          height: "100%",
-        }}
-      >
-        {renderMorePage(key)}
-      </div>
-    ));
+    return MORE_MENU_KEYS.filter((key) => mountedMoreKeys.has(key)).map(
+      (key) => (
+        <div
+          key={key}
+          style={{
+            display: moreActiveKey === key ? "block" : "none",
+            height: "100%",
+          }}
+        >
+          {renderMorePage(key)}
+        </div>
+      ),
+    );
   }, [mountedMoreKeys, moreActiveKey]);
 
   useEffect(() => {
@@ -190,7 +192,10 @@ export default function MainLayout() {
       {locked && <LockScreen onUnlock={() => setLocked(false)} />}
       <Layout className={styles.mainLayout} style={{ background: "#f0f5ff" }}>
         <Sidebar onOpenSettingsMore={() => setMoreModalOpen(true)} />
-        <Layout className={styles.pageContainer} style={{ background: "#f0f5ff" }}>
+        <Layout
+          className={styles.pageContainer}
+          style={{ background: "#f0f5ff" }}
+        >
           <Header onLock={() => setLocked(true)} />
           <Content className="page-container">
             <ConsoleCronBubble />
@@ -268,7 +273,8 @@ export default function MainLayout() {
                     );
                   })()}
                   <span>
-                    {MORE_MENU_LABEL_OVERRIDE[key] ?? t(KEY_TO_LABEL[key] ?? key)}
+                    {MORE_MENU_LABEL_OVERRIDE[key] ??
+                      t(KEY_TO_LABEL[key] ?? key)}
                   </span>
                 </span>
               </button>

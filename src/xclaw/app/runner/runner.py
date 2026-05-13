@@ -557,7 +557,8 @@ class AgentRunner(Runner):
             # Session-bound mission (distinct from /mission command): inject after
             # agent exists; does not set _headless_tool_guard (matches QwenPaw).
             if mission_info is None:
-                mission_info = detect_active_mission_phase(
+                # Stub returns None until mission loop is implemented.
+                mission_info = detect_active_mission_phase(  # pylint: disable=assignment-from-none
                     self._workspace,
                     session_id=str(session_id or ""),
                 )

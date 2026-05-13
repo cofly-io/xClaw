@@ -114,7 +114,14 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
       onClick: props.onDelete,
     });
     return items;
-  }, [t, props.onClick, props.onEdit, props.onPin, props.onDelete, props.pinned]);
+  }, [
+    t,
+    props.onClick,
+    props.onEdit,
+    props.onPin,
+    props.onDelete,
+    props.pinned,
+  ]);
 
   const className = [
     styles.chatSessionItem,
@@ -181,15 +188,14 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
     return items;
   }, [props.onDelete, props.onEdit, props.onPin, props.pinned, t]);
 
-  const handleContextMenu =
-    props.editing
-      ? undefined
-      : props.onContextMenu && props.sessionId
-        ? (e: React.MouseEvent) => {
-            e.preventDefault();
-            props.onContextMenu!(props.sessionId!, e);
-          }
-        : contextMenu.show;
+  const handleContextMenu = props.editing
+    ? undefined
+    : props.onContextMenu && props.sessionId
+    ? (e: React.MouseEvent) => {
+        e.preventDefault();
+        props.onContextMenu!(props.sessionId!, e);
+      }
+    : contextMenu.show;
 
   return (
     <div
@@ -200,7 +206,9 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
       <Tooltip
         title={
           channelTip ? (
-            <span style={{ fontSize: 12, lineHeight: "18px" }}>{channelTip}</span>
+            <span style={{ fontSize: 12, lineHeight: "18px" }}>
+              {channelTip}
+            </span>
           ) : undefined
         }
         mouseEnterDelay={0.3}

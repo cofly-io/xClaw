@@ -94,10 +94,7 @@ function SkillsPage() {
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const confirmOverwrite = (
-    title: React.ReactNode,
-    content: React.ReactNode,
-  ) =>
+  const confirmOverwrite = (title: React.ReactNode, content: React.ReactNode) =>
     new Promise<boolean>((resolve) => {
       Modal.confirm({
         title,

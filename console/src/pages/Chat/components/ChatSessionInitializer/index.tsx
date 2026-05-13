@@ -97,7 +97,7 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
   // ── Step 1: react to URL chatId or session list changes ──────────────────
   useEffect(() => {
     if (!chatId) {
-      console.log('[xclaw][ChatSessionInitializer] no chatId, hiding loading');
+      console.log("[xclaw][ChatSessionInitializer] no chatId, hiding loading");
       onLoadingChange?.(false);
       pendingIdRef.current = null;
       setPendingId(null);
@@ -106,7 +106,9 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
 
     if (sessions.length === 0) {
       // Sessions not loaded yet — proactively fetch; wait for next cycle
-      console.log('[xclaw][ChatSessionInitializer] sessions empty, showing loading');
+      console.log(
+        "[xclaw][ChatSessionInitializer] sessions empty, showing loading",
+      );
       onLoadingChange?.(true);
       if (!emptyLibrarySyncDoneRef.current) {
         emptyLibrarySyncDoneRef.current = true;
@@ -126,7 +128,9 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
           "[xclaw][ChatSessionInitializer] getSession failed when sessions empty",
           err,
         );
-        console.log('[xclaw][ChatSessionInitializer] getSession failed, hiding loading (sessions empty case)');
+        console.log(
+          "[xclaw][ChatSessionInitializer] getSession failed, hiding loading (sessions empty case)",
+        );
         onLoadingChange?.(false);
       });
       return;
@@ -134,7 +138,9 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
 
     const matching = sessions.find((s) => sessionMatchesChatId(s, chatId));
     if (!matching) {
-      console.log('[xclaw][ChatSessionInitializer] no matching session, showing loading');
+      console.log(
+        "[xclaw][ChatSessionInitializer] no matching session, showing loading",
+      );
       onLoadingChange?.(true);
       if (noMatchListRefreshRef.current !== chatId) {
         noMatchListRefreshRef.current = chatId;
@@ -156,7 +162,9 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
           "[xclaw][ChatSessionInitializer] getSession failed when no matching",
           err,
         );
-        console.log('[xclaw][ChatSessionInitializer] getSession failed, hiding loading (no match case)');
+        console.log(
+          "[xclaw][ChatSessionInitializer] getSession failed, hiding loading (no match case)",
+        );
         onLoadingChange?.(false);
       });
       return;
@@ -167,7 +175,9 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     const isCurrentSession = currentSessionIdRef.current === matching.id;
     if (isCurrentSession && !isFirstMountRef.current) {
       // Already on the correct session — nothing to do
-      console.log('[xclaw][ChatSessionInitializer] already on correct session, hiding loading');
+      console.log(
+        "[xclaw][ChatSessionInitializer] already on correct session, hiding loading",
+      );
       onLoadingChange?.(false);
       pendingIdRef.current = null;
       setPendingId(null);
@@ -178,7 +188,10 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     isFirstMountRef.current = false;
 
     // Need to switch — show overlay and queue the switch
-    console.log('[xclaw][ChatSessionInitializer] switching to session, showing loading:', matching.id);
+    console.log(
+      "[xclaw][ChatSessionInitializer] switching to session, showing loading:",
+      matching.id,
+    );
     onLoadingChange?.(true);
     pendingIdRef.current = matching.id;
     setPendingId(matching.id);
@@ -196,7 +209,9 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     // Runtime has switched to the target session — dismiss overlay.
     // Use sessionsRef (not sessions) to avoid resetting the timer on list updates.
     const finish = () => {
-      console.log('[xclaw][ChatSessionInitializer] session loaded, hiding loading');
+      console.log(
+        "[xclaw][ChatSessionInitializer] session loaded, hiding loading",
+      );
       if (loadingGuardRef.current !== null) {
         window.clearTimeout(loadingGuardRef.current);
         loadingGuardRef.current = null;
@@ -218,7 +233,7 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     // During remount, the session might not have messages loaded yet even though getSession is running
     const t = window.setTimeout(finish, 1000);
     return () => window.clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionId, pendingId, onLoadingChange]);
 
   return null;

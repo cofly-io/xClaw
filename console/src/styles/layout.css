@@ -860,7 +860,7 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
 }
 /* ── Sessions panel layout ── */
 .xclaw-chat-anywhere-sessions {
-  background: #F8F8F8 !important;
+  background: #f8f8f8 !important;
   border-right: 1px solid #e6eeff;
   position: relative !important;
 }
@@ -904,7 +904,7 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   height: 30px !important;
   padding: 0 14px !important;
   /* font-size: 12px !important; */
-  background: #F8F8F8;
+  background: #f8f8f8;
   box-shadow: none !important;
   font-weight: 800 !important;
 }
@@ -913,8 +913,8 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   max-width: 80% !important;
 }
 
-.xclaw-chat-anywhere-chat{
-  background: #F8F8F8 !important;
+.xclaw-chat-anywhere-chat {
+  background: #f8f8f8 !important;
 }
 
 /* Chat message content font */
@@ -936,8 +936,8 @@ html.dark-mode [class*="chat-anywhere"] [class*="message"] a {
   overflow: visible !important;
 }
 
-[class*="chat-anywhere-welcome-default"] [class*="-avatar"]>img,
-[class*="message-list-welcome"] [class*="-avatar"]>img {
+[class*="chat-anywhere-welcome-default"] [class*="-avatar"] > img,
+[class*="message-list-welcome"] [class*="-avatar"] > img {
   object-fit: contain !important;
   object-position: center;
 }

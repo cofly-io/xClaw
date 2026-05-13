@@ -41,10 +41,13 @@ const acpApi = {
       body: JSON.stringify(payload),
     }),
   updateACPAgentConfig: (agentKey: string, config: ACPAgentConfig) =>
-    request<ACPAgentConfig>(`/agent/acp/agents/${encodeURIComponent(agentKey)}`, {
-      method: "PUT",
-      body: JSON.stringify(config),
-    }),
+    request<ACPAgentConfig>(
+      `/agent/acp/agents/${encodeURIComponent(agentKey)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(config),
+      },
+    ),
 };
 
 function ACPPage() {

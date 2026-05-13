@@ -56,15 +56,15 @@ $QWENPAW_SECRET_DIR/                       # 默认 ~/.xclaw.secret
 
 **路径相关：**
 
-| 变量                       | 默认值              | 说明                                                                                        |
-| -------------------------- | ------------------- | ------------------------------------------------------------------------------------------- |
-| `QWENPAW_WORKING_DIR`      | `~/.xclaw`        | 工作目录根路径                                                                              |
-| `QWENPAW_SECRET_DIR`       | `~/.xclaw.secret` | 敏感数据目录（存放 `providers.json` 和 `envs.json`）。Docker 中默认为 `/app/working.secret` |
-| `QWENPAW_CONFIG_FILE`      | `config.json`       | 配置文件名（相对于 `QWENPAW_WORKING_DIR`）                                                  |
-| `QWENPAW_HEARTBEAT_FILE`   | `HEARTBEAT.md`      | 心跳文件名（相对于智能体工作区）                                                            |
-| `QWENPAW_JOBS_FILE`        | `jobs.json`         | 定时任务文件名（相对于智能体工作区）                                                        |
-| `QWENPAW_CHATS_FILE`       | `chats.json`        | 对话历史文件名（相对于智能体工作区）                                                        |
-| `QWENPAW_TOKEN_USAGE_FILE` | `token_usage.json`  | Token 消耗记录文件名（相对于智能体工作区）                                                  |
+| 变量                       | 默认值             | 说明                                                                                        |
+| -------------------------- | ------------------ | ------------------------------------------------------------------------------------------- |
+| `QWENPAW_WORKING_DIR`      | `~/.xclaw`         | 工作目录根路径                                                                              |
+| `QWENPAW_SECRET_DIR`       | `~/.xclaw.secret`  | 敏感数据目录（存放 `providers.json` 和 `envs.json`）。Docker 中默认为 `/app/working.secret` |
+| `QWENPAW_CONFIG_FILE`      | `config.json`      | 配置文件名（相对于 `QWENPAW_WORKING_DIR`）                                                  |
+| `QWENPAW_HEARTBEAT_FILE`   | `HEARTBEAT.md`     | 心跳文件名（相对于智能体工作区）                                                            |
+| `QWENPAW_JOBS_FILE`        | `jobs.json`        | 定时任务文件名（相对于智能体工作区）                                                        |
+| `QWENPAW_CHATS_FILE`       | `chats.json`       | 对话历史文件名（相对于智能体工作区）                                                        |
+| `QWENPAW_TOKEN_USAGE_FILE` | `token_usage.json` | Token 消耗记录文件名（相对于智能体工作区）                                                  |
 
 **其他配置：**
 
@@ -140,8 +140,8 @@ $QWENPAW_SECRET_DIR/                       # 默认 ~/.xclaw.secret
 | --------------------- | -------------- | -------------- | ------------------------------------------------ |
 | `agents.active_agent` | string         | `"default"`    | 当前激活的智能体 ID                              |
 | `agents.profiles`     | object         | `{}`           | 智能体配置引用字典（key 为 agent_id）            |
-| `last_api.host`       | string \| null | `null`         | 上次 `xclaw app` 启动的主机地址                |
-| `last_api.port`       | int \| null    | `null`         | 上次 `xclaw app` 启动的端口                    |
+| `last_api.host`       | string \| null | `null`         | 上次 `xclaw app` 启动的主机地址                  |
+| `last_api.port`       | int \| null    | `null`         | 上次 `xclaw app` 启动的端口                      |
 | `show_tool_details`   | bool           | `true`         | 是否在频道消息中显示工具调用/返回详情            |
 | `user_timezone`       | string         | _（系统时区）_ | IANA 时区名称（如 `"Asia/Shanghai"`）            |
 | `last_dispatch`       | object \| null | `null`         | 最近一次消息分发目标（用于心跳 `target="last"`） |
@@ -472,7 +472,7 @@ xClaw 需要 LLM 提供商才能运行。配置存储在 `$QWENPAW_SECRET_DIR/pr
 
 | 提供商                        | ID                      | 说明                   |
 | ----------------------------- | ----------------------- | ---------------------- |
-| xClaw Local                 | `xclaw-local`         | 本地 llama.cpp 后端    |
+| xClaw Local                   | `xclaw-local`           | 本地 llama.cpp 后端    |
 | Ollama                        | `ollama`                | 本地 Ollama 服务       |
 | LM Studio                     | `lmstudio`              | 本地 LM Studio 服务    |
 | ModelScope（魔搭）            | `modelscope`            | 魔搭社区模型服务       |

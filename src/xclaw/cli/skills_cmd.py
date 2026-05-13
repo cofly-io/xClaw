@@ -17,7 +17,6 @@ from ..agents.skill_system import (
     reconcile_workspace_manifest,
 )
 from ..agents.skill_system.registry import list_workspaces
-from ..agents.skill_system.store import _validate_skill_content
 from ..agents.skill_system.hub import (
     import_pool_skill_from_hub,
     install_skill_from_hub,

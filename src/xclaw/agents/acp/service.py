@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """High-level ACP service built on the official Python SDK."""
 from __future__ import annotations
 

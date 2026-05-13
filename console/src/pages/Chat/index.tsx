@@ -369,7 +369,10 @@ function useMessageHistoryNavigation(
         target?.closest('[class*="sender"]') !== null;
 
       if (!isChatSender) return;
-      if (isComposingRef.current || (e as unknown as { isComposing?: boolean }).isComposing)
+      if (
+        isComposingRef.current ||
+        (e as unknown as { isComposing?: boolean }).isComposing
+      )
         return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
@@ -494,13 +497,13 @@ export default function ChatPage() {
   }, [location.pathname]);
   const [showModelPrompt, setShowModelPrompt] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(false);
-  
+
   // Wrap setSessionLoading to add logging
   const setSessionLoadingWithLog = useCallback((loading: boolean) => {
-    console.log('[xclaw][Chat] loading overlay:', loading ? 'SHOW' : 'HIDE');
+    console.log("[xclaw][Chat] loading overlay:", loading ? "SHOW" : "HIDE");
     setSessionLoading(loading);
   }, []);
-  
+
   const { selectedAgent } = useAgentStore();
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
@@ -528,7 +531,7 @@ export default function ChatPage() {
   const chatRef = useRef<IAgentScopeRuntimeWebUIRef>(null);
   const pendingClearHistoryRef = useRef(false);
   const previousChatIdRef = useRef<string | undefined>(undefined);
-  
+
   // Generate a unique key when chatId changes to force remount and clear messages
   const [chatComponentKey, setChatComponentKey] = useState(0);
 
@@ -541,40 +544,49 @@ export default function ChatPage() {
   // This prevents UI freezing when leaving a chat with hundreds of loaded messages
   useEffect(() => {
     const prevChatId = previousChatIdRef.current;
-    
+
     // If we're switching from one chat to another (not initial load)
     if (prevChatId && prevChatId !== chatId) {
-      console.log('[xclaw][Chat] switching from', prevChatId, 'to', chatId);
-      
+      console.log("[xclaw][Chat] switching from", prevChatId, "to", chatId);
+
       // Get the actual loaded message count from sessionApi
       // Note: chatRef.current.messages is card count, not message count
       const cardCount = chatRef.current?.messages?.getMessages?.()?.length ?? 0;
       const realId = sessionApi.getRealIdForSession(prevChatId) ?? prevChatId;
       const loadedCount = sessionApi.getLoadedMessageCount(realId);
-      
-      console.log('[xclaw][Chat] card count:', cardCount, 'loaded message count:', loadedCount);
-      
+
+      console.log(
+        "[xclaw][Chat] card count:",
+        cardCount,
+        "loaded message count:",
+        loadedCount,
+      );
+
       // Cancel any pending history loads for the previous chat
       sessionApi.cancelPendingLoads(prevChatId);
-      
+
       // Only force remount if there are many messages to prevent UI freezing
       // Threshold: 200 backend messages (not cards)
       const REMOUNT_THRESHOLD = 200;
       if (loadedCount >= REMOUNT_THRESHOLD) {
-        console.log(`[xclaw][Chat] ${loadedCount} messages >= threshold (${REMOUNT_THRESHOLD}), forcing remount to prevent UI freeze`);
-        
+        console.log(
+          `[xclaw][Chat] ${loadedCount} messages >= threshold (${REMOUNT_THRESHOLD}), forcing remount to prevent UI freeze`,
+        );
+
         // Force remount by changing key - this completely unmounts and remounts
         // the AgentScopeRuntimeWebUI component, clearing all internal state
-        setChatComponentKey(prev => prev + 1);
-        
+        setChatComponentKey((prev) => prev + 1);
+
         // Note: We don't manually manage isRemounting here
         // Let ChatSessionInitializer's onLoadingChange handle the loading overlay
         // It will show overlay until the new session is fully loaded
       } else {
-        console.log(`[xclaw][Chat] ${loadedCount} messages < threshold, normal switch`);
+        console.log(
+          `[xclaw][Chat] ${loadedCount} messages < threshold, normal switch`,
+        );
       }
     }
-    
+
     previousChatIdRef.current = chatId;
   }, [chatId]);
 
@@ -828,7 +840,9 @@ export default function ChatPage() {
         // During remount, the library may call getSession with undefined/null
         // In this case, use the current chatId if available
         if (!id || id === "undefined" || id === "null") {
-          return chatId ? sessionApi.getSession(chatId) : sessionApi.getSession("");
+          return chatId
+            ? sessionApi.getSession(chatId)
+            : sessionApi.getSession("");
         }
         return sessionApi.getSession(id);
       },
@@ -836,49 +850,65 @@ export default function ChatPage() {
       removeSession: (s: any) => (sessionApi as any).removeSession(s),
       updateSession: (s: any) => (sessionApi as any).updateSession(s),
       getSessionMore: async (id: string) => {
-        console.log('[xclaw][runtimeSessionApi] getSessionMore called for:', id);
-        
+        console.log(
+          "[xclaw][runtimeSessionApi] getSessionMore called for:",
+          id,
+        );
+
         // CRITICAL: Save scroll position BEFORE loading more messages
         // This prevents the scroll position from jumping to top after new messages are inserted
-        const messageContainer = document.querySelector('[class*="messages-list"], [class*="message-list"], [class*="chat-messages"]') as HTMLElement;
+        const messageContainer = document.querySelector(
+          '[class*="messages-list"], [class*="message-list"], [class*="chat-messages"]',
+        ) as HTMLElement;
         let savedScrollHeight: number | null = null;
         let savedScrollTop: number | null = null;
-        
+
         if (messageContainer) {
           savedScrollHeight = messageContainer.scrollHeight;
           savedScrollTop = messageContainer.scrollTop;
-          console.log('[xclaw][runtimeSessionApi] saved scroll position:', { 
-            scrollHeight: savedScrollHeight, 
-            scrollTop: savedScrollTop 
+          console.log("[xclaw][runtimeSessionApi] saved scroll position:", {
+            scrollHeight: savedScrollHeight,
+            scrollTop: savedScrollTop,
           });
         }
-        
+
         const result = await (sessionApi as any).getSessionMore(id);
-        
-        console.log('[xclaw][runtimeSessionApi] getSessionMore result:', {
+
+        console.log("[xclaw][runtimeSessionApi] getSessionMore result:", {
           id,
           messageCount: result.messages?.length,
           noMore: result.noMore,
         });
-        
+
         // CRITICAL: Restore scroll position AFTER messages are inserted
         // Use MutationObserver to wait for DOM to actually update (library needs time to render new messages)
-        if (messageContainer && savedScrollHeight !== null && savedScrollTop !== null && result.messages?.length > 0) {
-          console.log('[xclaw][runtimeSessionApi] setting up MutationObserver to watch for DOM changes');
-          
+        if (
+          messageContainer &&
+          savedScrollHeight !== null &&
+          savedScrollTop !== null &&
+          result.messages?.length > 0
+        ) {
+          console.log(
+            "[xclaw][runtimeSessionApi] setting up MutationObserver to watch for DOM changes",
+          );
+
           // Create a promise that resolves when DOM changes are detected
           const waitForDomUpdate = new Promise<void>((resolve) => {
             let changeDetected = false;
             let timeoutId: NodeJS.Timeout;
-            
+
             const observer = new MutationObserver((mutations) => {
               // Check if new nodes were actually added
-              const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0);
-              
+              const hasAddedNodes = mutations.some(
+                (m) => m.addedNodes.length > 0,
+              );
+
               if (hasAddedNodes && !changeDetected) {
                 changeDetected = true;
-                console.log('[xclaw][runtimeSessionApi] DOM changes detected by MutationObserver');
-                
+                console.log(
+                  "[xclaw][runtimeSessionApi] DOM changes detected by MutationObserver",
+                );
+
                 // Wait one more frame to ensure layout is complete
                 requestAnimationFrame(() => {
                   observer.disconnect();
@@ -887,48 +917,57 @@ export default function ChatPage() {
                 });
               }
             });
-            
+
             // Observe the message container for child additions
             observer.observe(messageContainer, {
               childList: true,
               subtree: true,
             });
-            
+
             // Safety timeout: if no changes detected within 1000ms, proceed anyway
             // (the library may have already rendered, or rendering is delayed)
             timeoutId = setTimeout(() => {
               if (!changeDetected) {
-                console.log('[xclaw][runtimeSessionApi] proceeding after 1s timeout (no DOM mutation detected, but may already be rendered)');
+                console.log(
+                  "[xclaw][runtimeSessionApi] proceeding after 1s timeout (no DOM mutation detected, but may already be rendered)",
+                );
                 observer.disconnect();
                 resolve();
               }
             }, 1000);
           });
-          
+
           // Wait for DOM update, then adjust scroll position
           await waitForDomUpdate;
-          
+
           const newScrollHeight = messageContainer.scrollHeight;
           const scrollDelta = newScrollHeight - savedScrollHeight;
-          
+
           if (scrollDelta > 0) {
             // New content was added, adjust scroll position to keep user's view stable
             const newScrollTop = savedScrollTop + scrollDelta;
-            
-            console.log('[xclaw][runtimeSessionApi] adjusting scroll position:', {
-              oldScrollHeight: savedScrollHeight,
-              newScrollHeight,
-              scrollDelta,
-              oldScrollTop: savedScrollTop,
-              newScrollTop,
-            });
-            
+
+            console.log(
+              "[xclaw][runtimeSessionApi] adjusting scroll position:",
+              {
+                oldScrollHeight: savedScrollHeight,
+                newScrollHeight,
+                scrollDelta,
+                oldScrollTop: savedScrollTop,
+                newScrollTop,
+              },
+            );
+
             messageContainer.scrollTop = newScrollTop;
           } else {
-            console.log('[xclaw][runtimeSessionApi] no scroll adjustment needed (scrollDelta:', scrollDelta, ')');
+            console.log(
+              "[xclaw][runtimeSessionApi] no scroll adjustment needed (scrollDelta:",
+              scrollDelta,
+              ")",
+            );
           }
         }
-        
+
         return result;
       },
       getSessionFull: (id: string) => (sessionApi as any).getSessionFull(id),
@@ -996,7 +1035,9 @@ export default function ChatPage() {
         allowSpeech: true,
         prefix: (
           <>
-            <ChatSessionInitializer onLoadingChange={setSessionLoadingWithLog} />
+            <ChatSessionInitializer
+              onLoadingChange={setSessionLoadingWithLog}
+            />
             <ChatNewSessionBridge />
             <ChatSessionsRefreshListener />
             <RuntimeLoadingBridge bridgeRef={runtimeLoadingBridgeRef} />

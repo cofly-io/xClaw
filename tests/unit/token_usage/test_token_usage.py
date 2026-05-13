@@ -8,20 +8,20 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from qwenpaw.token_usage.buffer import (
+from xclaw.token_usage.buffer import (
     TokenUsageBuffer,
     _UsageEvent,
     _apply_event,
 )
-from qwenpaw.token_usage.manager import (
+from xclaw.token_usage.manager import (
     TokenUsageByModel,
     TokenUsageManager,
     TokenUsageRecord,
     TokenUsageStats,
     TokenUsageSummary,
 )
-from qwenpaw.token_usage.model_wrapper import TokenRecordingModelWrapper
-from qwenpaw.token_usage.storage import load_data, save_data_sync
+from xclaw.token_usage.model_wrapper import TokenRecordingModelWrapper
+from xclaw.token_usage.storage import load_data, save_data_sync
 
 
 # =============================================================================

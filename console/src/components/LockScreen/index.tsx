@@ -1,14 +1,23 @@
 import { useState } from "react";
 import { Input, Button, Modal, Form } from "antd";
-import { LockOutlined, UnlockOutlined, SettingOutlined } from "@ant-design/icons";
+import {
+  LockOutlined,
+  UnlockOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
 import styles from "./index.module.less";
 
 const LOCK_PWD_KEY = "xclaw_lock_pwd";
 
 // SHA-256 hash via Web Crypto API — plaintext never stored
 async function sha256(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const buf = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(text),
+  );
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 interface LockScreenProps {
@@ -45,7 +54,10 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
     }
   };
 
-  const handleChangePwd = async (values: { oldPwd: string; newPwd: string }) => {
+  const handleChangePwd = async (values: {
+    oldPwd: string;
+    newPwd: string;
+  }) => {
     const storedHash = getStoredHash();
     if (storedHash !== "") {
       const oldHash = await sha256(values.oldPwd);
@@ -69,12 +81,17 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
         </div>
         <div className={styles.title}>主人，早点回来哦！</div>
         <div className={styles.sub}>
-          {getStoredHash() === "" ? "当前未设置临时密码，直接点解锁" : "输入临时密码解锁"}
+          {getStoredHash() === ""
+            ? "当前未设置临时密码，直接点解锁"
+            : "输入临时密码解锁"}
         </div>
 
         <Input.Password
           value={pwd}
-          onChange={(e) => { setPwd(e.target.value); setErrorMsg(""); }}
+          onChange={(e) => {
+            setPwd(e.target.value);
+            setErrorMsg("");
+          }}
           onPressEnter={handleUnlock}
           placeholder="临时密码"
           size="large"
@@ -83,7 +100,14 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
           prefix={<LockOutlined style={{ color: "#7a9cc8" }} />}
         />
         {errorMsg && (
-          <div style={{ color: "#ff6b6b", fontSize: 12, marginTop: -8, alignSelf: "flex-start" }}>
+          <div
+            style={{
+              color: "#ff6b6b",
+              fontSize: 12,
+              marginTop: -8,
+              alignSelf: "flex-start",
+            }}
+          >
             {errorMsg}
           </div>
         )}
@@ -103,7 +127,10 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
           type="text"
           size="small"
           icon={<SettingOutlined />}
-          onClick={() => { form.resetFields(); setChangePwdOpen(true); }}
+          onClick={() => {
+            form.resetFields();
+            setChangePwdOpen(true);
+          }}
           className={styles.setPwdBtn}
         >
           {getStoredHash() === "" ? "设置临时密码" : "修改临时密码"}
@@ -123,9 +150,18 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
         footer={null}
         width={400}
       >
-        <Form form={form} layout="vertical" onFinish={handleChangePwd} style={{ marginTop: 16 }}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleChangePwd}
+          style={{ marginTop: 16 }}
+        >
           {getStoredHash() !== "" && (
-            <Form.Item name="oldPwd" label="原密码" rules={[{ required: true, message: "请输入原密码" }]}>
+            <Form.Item
+              name="oldPwd"
+              label="原密码"
+              rules={[{ required: true, message: "请输入原密码" }]}
+            >
               <Input.Password placeholder="原临时密码" autoComplete="off" />
             </Form.Item>
           )}
@@ -134,7 +170,11 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
               <Input type="hidden" />
             </Form.Item>
           )}
-          <Form.Item name="newPwd" label="新密码" rules={[{ required: true, message: "请输入新密码" }]}>
+          <Form.Item
+            name="newPwd"
+            label="新密码"
+            rules={[{ required: true, message: "请输入新密码" }]}
+          >
             <Input.Password placeholder="新临时密码（内容不限）" />
           </Form.Item>
           <Form.Item
@@ -144,7 +184,8 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
               { required: true, message: "请确认新密码" },
               ({ getFieldValue }) => ({
                 validator(_, value) {
-                  if (!value || getFieldValue("newPwd") === value) return Promise.resolve();
+                  if (!value || getFieldValue("newPwd") === value)
+                    return Promise.resolve();
                   return Promise.reject(new Error("两次密码不一致"));
                 },
               }),
@@ -153,8 +194,15 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
             <Input.Password placeholder="再次输入新密码" />
           </Form.Item>
           <Form.Item style={{ marginBottom: 0, textAlign: "right" }}>
-            <Button style={{ marginRight: 8 }} onClick={() => setChangePwdOpen(false)}>取消</Button>
-            <Button type="primary" htmlType="submit">保存</Button>
+            <Button
+              style={{ marginRight: 8 }}
+              onClick={() => setChangePwdOpen(false)}
+            >
+              取消
+            </Button>
+            <Button type="primary" htmlType="submit">
+              保存
+            </Button>
           </Form.Item>
         </Form>
       </Modal>

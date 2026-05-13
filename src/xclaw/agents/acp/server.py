@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """xClaw ACP Agent server.
 
 Exposes xClaw as an ACP-compliant agent that external clients

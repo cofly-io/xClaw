@@ -615,12 +615,12 @@ NapCat  ──反向 WS──▶  xClaw (:6199/ws)
 
 **企业微信专属字段说明：**
 
-| 字段                     | 类型   | 默认值             | 说明                                      |
-| ------------------------ | ------ | ------------------ | ----------------------------------------- |
-| `bot_id`                 | string | `""`（必填）       | 企业微信机器人 Bot ID                     |
-| `secret`                 | string | `""`（必填）       | 企业微信机器人 Secret                     |
+| 字段                     | 类型   | 默认值           | 说明                                      |
+| ------------------------ | ------ | ---------------- | ----------------------------------------- |
+| `bot_id`                 | string | `""`（必填）     | 企业微信机器人 Bot ID                     |
+| `secret`                 | string | `""`（必填）     | 企业微信机器人 Secret                     |
 | `media_dir`              | string | `~/.xclaw/media` | 媒体文件（图片、文件等）下载目录          |
-| `max_reconnect_attempts` | int    | `-1`               | WebSocket 最大重连次数（`-1` = 无限重连） |
+| `max_reconnect_attempts` | int    | `-1`             | WebSocket 最大重连次数（`-1` = 无限重连） |
 
 ### 在企业微信开始与机器人聊天
 
@@ -666,11 +666,11 @@ NapCat  ──反向 WS──▶  xClaw (:6199/ws)
 
 **微信个人专属字段说明：**
 
-| 字段             | 类型   | 默认值                        | 说明                                                |
-| ---------------- | ------ | ----------------------------- | --------------------------------------------------- |
-| `bot_token`      | string | `""`                          | 扫码登录后获取的 Bearer Token；留空则启动时引导扫码 |
+| 字段             | 类型   | 默认值                      | 说明                                                |
+| ---------------- | ------ | --------------------------- | --------------------------------------------------- |
+| `bot_token`      | string | `""`                        | 扫码登录后获取的 Bearer Token；留空则启动时引导扫码 |
 | `bot_token_file` | string | `~/.xclaw/weixin_bot_token` | Token 持久化路径，下次启动自动读取                  |
-| `base_url`       | string | 官方默认地址                  | iLink API 地址，一般留空使用默认值                  |
+| `base_url`       | string | 官方默认地址                | iLink API 地址，一般留空使用默认值                  |
 | `media_dir`      | string | `~/.xclaw/media`            | 接收到的图片、文件保存目录                          |
 
 ### 环境变量方式
@@ -1071,16 +1071,16 @@ cloudflared tunnel --url http://localhost:8088
 
 **Voice 频道专属字段说明：**
 
-| 字段                 | 类型   | 默认值                                       | 说明                               |
-| -------------------- | ------ | -------------------------------------------- | ---------------------------------- |
-| `twilio_account_sid` | string | `""`（必填）                                 | Twilio Account SID                 |
-| `twilio_auth_token`  | string | `""`（必填）                                 | Twilio Auth Token                  |
-| `phone_number`       | string | `""`（必填）                                 | 购买的电话号码（如 `+1234567890`） |
-| `phone_number_sid`   | string | `""`（必填）                                 | 电话号码的 SID                     |
-| `tts_provider`       | string | `"google"`                                   | 文本转语音提供商                   |
-| `tts_voice`          | string | `"en-US-Journey-D"`                          | TTS 语音模型                       |
-| `stt_provider`       | string | `"deepgram"`                                 | 语音转文本提供商                   |
-| `language`           | string | `"en-US"`                                    | 语言代码                           |
+| 字段                 | 类型   | 默认值                                     | 说明                               |
+| -------------------- | ------ | ------------------------------------------ | ---------------------------------- |
+| `twilio_account_sid` | string | `""`（必填）                               | Twilio Account SID                 |
+| `twilio_auth_token`  | string | `""`（必填）                               | Twilio Auth Token                  |
+| `phone_number`       | string | `""`（必填）                               | 购买的电话号码（如 `+1234567890`） |
+| `phone_number_sid`   | string | `""`（必填）                               | 电话号码的 SID                     |
+| `tts_provider`       | string | `"google"`                                 | 文本转语音提供商                   |
+| `tts_voice`          | string | `"en-US-Journey-D"`                        | TTS 语音模型                       |
+| `stt_provider`       | string | `"deepgram"`                               | 语音转文本提供商                   |
+| `language`           | string | `"en-US"`                                  | 语言代码                           |
 | `welcome_greeting`   | string | `"Hi! This is xClaw. How can I help you?"` | 欢迎语（接通电话后的第一句话）     |
 
 > **注意**：Voice 频道需要持续的网络连接和内网穿透工具运行。建议在生产环境使用稳定的内网穿透方案（如 Cloudflare Tunnel、ngrok 付费版等）。

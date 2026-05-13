@@ -12,7 +12,10 @@ export default function ChatSessionsRefreshListener() {
 
   useEffect(() => {
     const onRefresh = () => {
-      void sessionApi.getSessionList().then(setSessions).catch(() => {});
+      void sessionApi
+        .getSessionList()
+        .then(setSessions)
+        .catch(() => {});
     };
     window.addEventListener(XCLAW_REFRESH_SESSIONS_EVENT, onRefresh);
     return () =>

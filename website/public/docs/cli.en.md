@@ -48,7 +48,7 @@ xclaw app --log-level debug           # Verbose logging
 | `--port`      | `8088`      | Bind port                                                     |
 | `--reload`    | off         | Auto-reload on file changes (dev only)                        |
 | `--log-level` | `info`      | `critical` / `error` / `warning` / `info` / `debug` / `trace` |
-| `--workers`   | —           | **[DEPRECATED]** Ignored. xClaw always uses 1 worker        |
+| `--workers`   | —           | **[DEPRECATED]** Ignored. xClaw always uses 1 worker          |
 
 > **Note:** The `--workers` option is deprecated for stability reasons. xClaw is designed to run with a single worker process. Multi-worker mode can cause issues with in-memory state management and WebSocket connections. This option will be removed in a future version.
 
@@ -71,13 +71,13 @@ Inspect status, version, and recent logs without starting a conversation. Same
 behavior as sending `/daemon status` etc. in chat (CLI can show local info when
 the app is not running).
 
-| Command                        | Description                                                                               |
-| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| Command                      | Description                                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------------- |
 | `xclaw daemon status`        | Status (config, working dir, memory manager)                                              |
 | `xclaw daemon restart`       | Print instructions (in-chat /daemon restart does in-process reload)                       |
 | `xclaw daemon reload-config` | Re-read and validate config (channel/MCP changes need /daemon restart or process restart) |
 | `xclaw daemon version`       | Version and paths                                                                         |
-| `xclaw daemon logs [-n N]`   | Last N lines of log (default 100; from `xclaw.log` in working dir)                      |
+| `xclaw daemon logs [-n N]`   | Last N lines of log (default 100; from `xclaw.log` in working dir)                        |
 
 **Multi-Agent Support:** All commands support the `--agent-id` parameter (defaults to `default`).
 
@@ -180,8 +180,8 @@ variables power many built-in tools (e.g. web search).
 
 Manage LLM providers and the active model.
 
-| Command                                  | What it does                                         |
-| ---------------------------------------- | ---------------------------------------------------- |
+| Command                                | What it does                                         |
+| -------------------------------------- | ---------------------------------------------------- |
 | `xclaw models list`                    | Show all providers, API key status, and active model |
 | `xclaw models config`                  | Full interactive setup: API keys → active model      |
 | `xclaw models config-key [provider]`   | Configure a single provider's API key                |
@@ -259,8 +259,8 @@ xclaw models set-llm          # Switch to a different Ollama model
 
 Manage environment variables used by tools and skills at runtime.
 
-| Command                     | What it does                  |
-| --------------------------- | ----------------------------- |
+| Command                   | What it does                  |
+| ------------------------- | ----------------------------- |
 | `xclaw env list`          | List all configured variables |
 | `xclaw env set KEY VALUE` | Set or update a variable      |
 | `xclaw env delete KEY`    | Delete a variable             |
@@ -290,8 +290,8 @@ subcommand); use `remove` to uninstall custom channels (no `uninstall`).
 
 **Alias:** You can use `xclaw channel` (singular) as a shorthand for `xclaw channels`.
 
-| Command                          | What it does                                                                                                      |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Command                        | What it does                                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
 | `xclaw channels list`          | Show all channels and their status (secrets masked)                                                               |
 | `xclaw channels send`          | Send a one-way message to a user/session via a channel (requires all 5 parameters)                                |
 | `xclaw channels install <key>` | Install a channel into `custom_channels/`: create stub or use `--path`/`--url`                                    |
@@ -387,8 +387,8 @@ When agents have the **multi_agent_collaboration** skill enabled, they can autom
 
 **Alias:** You can use `xclaw agent` (singular) as a shorthand for `xclaw agents`.
 
-| Command               | What it does                                                                 |
-| --------------------- | ---------------------------------------------------------------------------- |
+| Command             | What it does                                                                 |
+| ------------------- | ---------------------------------------------------------------------------- |
 | `xclaw agents list` | List all configured agents with their IDs, names, descriptions, workspaces   |
 | `xclaw agents chat` | Communicate with another agent (bidirectional, supports multi-turn dialogue) |
 
@@ -486,8 +486,8 @@ ask xClaw and send the reply". **Requires `xclaw app` to be running.**
 
 ### xclaw cron
 
-| Command                        | What it does                                  |
-| ------------------------------ | --------------------------------------------- |
+| Command                      | What it does                                  |
+| ---------------------------- | --------------------------------------------- |
 | `xclaw cron list`            | List all jobs                                 |
 | `xclaw cron get <job_id>`    | Show a job's spec                             |
 | `xclaw cron state <job_id>`  | Show runtime state (next run, last run, etc.) |
@@ -573,8 +573,8 @@ Manage chat sessions via the API. **Requires `xclaw app` to be running.**
 
 **Alias:** You can use `xclaw chat` (singular) as a shorthand for `xclaw chats`.
 
-| Command                                  | What it does                                                  |
-| ---------------------------------------- | ------------------------------------------------------------- |
+| Command                                | What it does                                                  |
+| -------------------------------------- | ------------------------------------------------------------- |
 | `xclaw chats list`                     | List all sessions (supports `--user-id`, `--channel` filters) |
 | `xclaw chats get <id>`                 | View a session's details and message history                  |
 | `xclaw chats create ...`               | Create a new session                                          |
@@ -602,13 +602,13 @@ Extend xClaw's capabilities with skills (PDF reading, web search, etc.).
 
 ### xclaw skills
 
-| Command                 | What it does                                      |
-| ----------------------- | ------------------------------------------------- |
-| `xclaw skills install` | Install a skill from a supported URL source       |
+| Command                  | What it does                                        |
+| ------------------------ | --------------------------------------------------- |
+| `xclaw skills install`   | Install a skill from a supported URL source         |
 | `xclaw skills uninstall` | Remove a skill from the skill pool or one workspace |
-| `xclaw skills list`   | Show all skills and their enabled/disabled status |
-| `xclaw skills config` | Interactively enable/disable skills (checkbox UI) |
-| `xclaw skills info`   | Show local details for one workspace skill        |
+| `xclaw skills list`      | Show all skills and their enabled/disabled status   |
+| `xclaw skills config`    | Interactively enable/disable skills (checkbox UI)   |
+| `xclaw skills info`      | Show local details for one workspace skill          |
 
 **Multi-Agent Support:** All commands support the `--agent-id` parameter (defaults to `default`).
 
@@ -650,11 +650,11 @@ xclaw clean --dry-run   # Only list what would be removed
 
 Every `xclaw` subcommand inherits:
 
-| Option          | Default     | Description                                      |
-| --------------- | ----------- | ------------------------------------------------ |
+| Option          | Default     | Description                                    |
+| --------------- | ----------- | ---------------------------------------------- |
 | `--host`        | `127.0.0.1` | API host (auto-detected from last `xclaw app`) |
 | `--port`        | `8088`      | API port (auto-detected from last `xclaw app`) |
-| `-h` / `--help` |             | Show help message                                |
+| `-h` / `--help` |             | Show help message                              |
 
 If the server runs on a non-default address, pass these globally:
 
@@ -694,8 +694,8 @@ See [Config & Working Directory](./config) and [Multi-Agent](./multi-agent) for 
 
 ## Command overview
 
-| Command            | Subcommands                                                                          | Requires server? |
-| ------------------ | ------------------------------------------------------------------------------------ | :--------------: |
+| Command          | Subcommands                                                                          | Requires server? |
+| ---------------- | ------------------------------------------------------------------------------------ | :--------------: |
 | `xclaw init`     | —                                                                                    |        No        |
 | `xclaw app`      | —                                                                                    |  — (starts it)   |
 | `xclaw models`   | `list` · `config` · `config-key` · `set-llm` · `download` · `local` · `remove-local` |        No        |

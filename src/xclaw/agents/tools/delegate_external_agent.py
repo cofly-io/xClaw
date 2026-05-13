@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Built-in tool for delegating tasks to external agent runners.
 
 Uses the ACP protocol.

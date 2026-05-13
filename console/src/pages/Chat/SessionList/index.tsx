@@ -2,7 +2,12 @@ import { useContext, useMemo, useState, useEffect } from "react";
 import { Button } from "antd";
 import { Conversations, useProviderContext } from "@agentscope-ai/chat";
 import { useChatAnywhereInput } from "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Context/ChatAnywhereInputContext";
-import { SparkPlusLine, SparkDeleteLine, SparkOperateLeftLine, SparkOperateRightLine } from "@agentscope-ai/icons";
+import {
+  SparkPlusLine,
+  SparkDeleteLine,
+  SparkOperateLeftLine,
+  SparkOperateRightLine,
+} from "@agentscope-ai/icons";
 import { useChatAnywhereSessions } from "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Context/ChatAnywhereSessionsContext";
 import { ChatAnyWhereLayoutContext } from "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Context/ChatAnywhereLayoutContext";
 import { useTranslation } from "react-i18next";
@@ -26,8 +31,12 @@ export default function SessionList() {
 
   const { collapsed, toggleCollapsed } = useContext(ChatAnyWhereLayoutContext);
   const { loading } = useChatAnywhereInput((v) => ({ loading: v.loading }));
-  const { createSession, removeSession, changeCurrentSessionId, getCurrentSessionId } =
-    useChatAnywhereSessions();
+  const {
+    createSession,
+    removeSession,
+    changeCurrentSessionId,
+    getCurrentSessionId,
+  } = useChatAnywhereSessions();
 
   // Subscribe to sessionApi changes for reactive re-render
   const [tick, setTick] = useState(0);
@@ -55,12 +64,17 @@ export default function SessionList() {
         </div>
         <Button
           type="text"
-          icon={collapsed ? <SparkOperateRightLine /> : <SparkOperateLeftLine />}
+          icon={
+            collapsed ? <SparkOperateRightLine /> : <SparkOperateLeftLine />
+          }
           onClick={toggleCollapsed}
         />
       </div>
 
-      <div className={`${prefixCls}-content`} style={{ display: collapsed ? "none" : "flex" }}>
+      <div
+        className={`${prefixCls}-content`}
+        style={{ display: collapsed ? "none" : "flex" }}
+      >
         <div className={`${prefixCls}-adder`}>
           <Button
             block

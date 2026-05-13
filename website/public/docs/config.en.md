@@ -87,15 +87,15 @@ You can customize paths and behavior via environment variables:
 
 **Path-related:**
 
-| Variable                   | Default             | Description                                                                                                 |
-| -------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `QWENPAW_WORKING_DIR`      | `~/.xclaw`        | Working directory root path                                                                                 |
-| `QWENPAW_SECRET_DIR`       | `~/.xclaw.secret` | Sensitive data directory (stores `providers.json` and `envs.json`). Docker default is `/app/working.secret` |
-| `QWENPAW_CONFIG_FILE`      | `config.json`       | Config file name (relative to `QWENPAW_WORKING_DIR`)                                                        |
-| `QWENPAW_HEARTBEAT_FILE`   | `HEARTBEAT.md`      | Heartbeat file name (relative to agent workspace)                                                           |
-| `QWENPAW_JOBS_FILE`        | `jobs.json`         | Cron jobs file name (relative to agent workspace)                                                           |
-| `QWENPAW_CHATS_FILE`       | `chats.json`        | Conversation history file name (relative to agent workspace)                                                |
-| `QWENPAW_TOKEN_USAGE_FILE` | `token_usage.json`  | Token usage record file name (relative to agent workspace)                                                  |
+| Variable                   | Default            | Description                                                                                                 |
+| -------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `QWENPAW_WORKING_DIR`      | `~/.xclaw`         | Working directory root path                                                                                 |
+| `QWENPAW_SECRET_DIR`       | `~/.xclaw.secret`  | Sensitive data directory (stores `providers.json` and `envs.json`). Docker default is `/app/working.secret` |
+| `QWENPAW_CONFIG_FILE`      | `config.json`      | Config file name (relative to `QWENPAW_WORKING_DIR`)                                                        |
+| `QWENPAW_HEARTBEAT_FILE`   | `HEARTBEAT.md`     | Heartbeat file name (relative to agent workspace)                                                           |
+| `QWENPAW_JOBS_FILE`        | `jobs.json`        | Cron jobs file name (relative to agent workspace)                                                           |
+| `QWENPAW_CHATS_FILE`       | `chats.json`       | Conversation history file name (relative to agent workspace)                                                |
+| `QWENPAW_TOKEN_USAGE_FILE` | `token_usage.json` | Token usage record file name (relative to agent workspace)                                                  |
 
 **Other configuration:**
 
@@ -180,8 +180,8 @@ Stores globally shared configuration:
 | --------------------- | -------------- | ------------------- | ----------------------------------------------------------------- |
 | `agents.active_agent` | string         | `"default"`         | Currently active agent ID                                         |
 | `agents.profiles`     | object         | `{}`                | Agent profile references (key is agent_id)                        |
-| `last_api.host`       | string \| null | `null`              | Host address from last `xclaw app` start                        |
-| `last_api.port`       | int \| null    | `null`              | Port from last `xclaw app` start                                |
+| `last_api.host`       | string \| null | `null`              | Host address from last `xclaw app` start                          |
+| `last_api.port`       | int \| null    | `null`              | Port from last `xclaw app` start                                  |
 | `show_tool_details`   | bool           | `true`              | Whether to show tool call/return details in channel messages      |
 | `user_timezone`       | string         | _(system timezone)_ | IANA timezone name (e.g., `"Asia/Shanghai"`)                      |
 | `last_dispatch`       | object \| null | `null`              | Last message dispatch target (used for heartbeat `target="last"`) |
@@ -534,7 +534,7 @@ xClaw needs an LLM provider to work. You can set it up in three ways:
 
 | Provider                     | ID                      | Default Base URL                                    | API Key Prefix |
 | ---------------------------- | ----------------------- | --------------------------------------------------- | -------------- |
-| xClaw Local                | `xclaw-local`         | _(local)_                                           | _(none)_       |
+| xClaw Local                  | `xclaw-local`           | _(local)_                                           | _(none)_       |
 | Ollama                       | `ollama`                | `http://localhost:11434`                            | _(none)_       |
 | LM Studio                    | `lmstudio`              | `http://localhost:1234/v1`                          | _(none)_       |
 | ModelScope                   | `modelscope`            | `https://api-inference.modelscope.cn/v1`            | `ms`           |
@@ -601,8 +601,8 @@ can read them via `os.environ`.
 
 Skills extend the agent's capabilities. Skill files are distributed across two locations:
 
-| Directory                                  | Purpose                                           |
-| ------------------------------------------ | ------------------------------------------------- |
+| Directory                                | Purpose                                           |
+| ---------------------------------------- | ------------------------------------------------- |
 | `~/.xclaw/skill_pool/`                   | Local shared pool for built-ins and shared skills |
 | `~/.xclaw/workspaces/{agent_id}/skills/` | Skills present in a specific agent's workspace    |
 
@@ -626,8 +626,8 @@ xClaw has persistent cross-conversation memory: it automatically compresses cont
 
 Memory files are stored in the agent workspace:
 
-| File / Directory                                        | Purpose                                                               |
-| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| File / Directory                                      | Purpose                                                               |
+| ----------------------------------------------------- | --------------------------------------------------------------------- |
 | `~/.xclaw/workspaces/{agent_id}/MEMORY.md`            | Long-lived key information (decisions, preferences, persistent facts) |
 | `~/.xclaw/workspaces/{agent_id}/memory/YYYY-MM-DD.md` | Daily logs (notes, runtime context, auto-generated summaries)         |
 

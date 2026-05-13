@@ -36,8 +36,6 @@ from ...agents.skill_system import (
 )
 from ...agents.skill_system.models import SkillInfo
 from ...agents.skill_system.registry import (
-    _BUILTIN_SKILL_LANGUAGES,
-    get_pool_builtin_update_notice,
     get_pool_builtin_sync_status,
     import_builtin_skills,
     list_builtin_import_candidates,

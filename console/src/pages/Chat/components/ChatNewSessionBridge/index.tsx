@@ -35,8 +35,7 @@ export default function ChatNewSessionBridge() {
       /* ignore */
     }
 
-    return () =>
-      window.removeEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, run);
+    return () => window.removeEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, run);
   }, [createSession]);
 
   return null;

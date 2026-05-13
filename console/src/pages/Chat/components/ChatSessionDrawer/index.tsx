@@ -424,10 +424,7 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
                       }
                       onClick={() => handleSessionClick(session.id!)}
                       onEdit={() =>
-                        handleEditStart(
-                          session.id!,
-                          session.name || "New Chat",
-                        )
+                        handleEditStart(session.id!, session.name || "New Chat")
                       }
                       onDelete={() => void handleDelete(session.id!)}
                       onPin={() => void handlePinToggle(session.id!)}

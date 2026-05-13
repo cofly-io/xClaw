@@ -10,8 +10,8 @@
 
 A backup is a single zip file (stored at `~/.xclaw.backups/<backup_id>.zip`) that may contain up to four kinds of content:
 
-| Module               | Path                                | Actual content                                                                                                                                                                        |
-| -------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module               | Path                              | Actual content                                                                                                                                                                        |
+| -------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Agent workspaces** | `~/.xclaw/workspaces/<agent_id>/` | Every file inside each agent's workspace, e.g. persona files, memory, skills, chat history, and channel configs (including channel credentials such as `bot_token` and `app_secret`). |
 | **Global settings**  | `~/.xclaw/config.json`            | Runtime parameters, security rules, and other global settings.                                                                                                                        |
 | **Skill pool**       | `~/.xclaw/skill_pool/`            | The globally shared skill repository.                                                                                                                                                 |
@@ -158,7 +158,7 @@ Steps:
 
 | Item             | Path / Default                 |
 | ---------------- | ------------------------------ |
-| Backup directory | `~/.xclaw.backups/`          |
+| Backup directory | `~/.xclaw.backups/`            |
 | Single backup    | `<backup-dir>/<backup_id>.zip` |
 
 ---

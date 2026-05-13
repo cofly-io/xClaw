@@ -411,40 +411,34 @@ def _remove_tool_plugin_from_agents(manifest: dict):
 
     click.echo(f"🔄 Removing tool '{tool_name}' from all agents...")
 
-    from ..config.utils import get_agent_dirs
+    from ..config.utils import load_config
+    from ..config.config import load_agent_config, save_agent_config
 
-    agent_dirs = get_agent_dirs()
-    if not agent_dirs:
+    config = load_config()
+
+    if not config.agents or not config.agents.profiles:
         click.echo("   No agents found, skipping cleanup")
         return
 
-    from ..config.config import load_agent_config, save_agent_config
-
     removed_count = 0
-    for agent_dir in agent_dirs:
-        agent_json_path = agent_dir / "agent.json"
-        if not agent_json_path.exists():
-            continue
-
+    for agent_id in config.agents.profiles.keys():
         try:
-            # Load agent config using Pydantic model
-            config = load_agent_config(str(agent_dir))
+            agent_cfg = load_agent_config(agent_id)
 
-            # Check if tool exists
-            if tool_name not in config.tools.builtin_tools:
+            if tool_name not in agent_cfg.tools.builtin_tools:
                 continue
 
-            # Remove tool
-            del config.tools.builtin_tools[tool_name]
+            del agent_cfg.tools.builtin_tools[tool_name]
 
-            # Save using config system
-            save_agent_config(str(agent_dir), config)
+            save_agent_config(agent_id, agent_cfg)
 
             removed_count += 1
 
         except Exception as e:
             logger.warning(
-                f"Failed to remove tool from {agent_dir.name}: {e}",
+                "Failed to remove tool from %s: %s",
+                agent_id,
+                e,
             )
 
     if removed_count > 0:

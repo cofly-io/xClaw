@@ -6,7 +6,8 @@
 
 export const XCLAW_NEW_CHAT_SESSION_EVENT = "xclaw:new-chat-session";
 
-export const XCLAW_PENDING_NEW_CHAT_SESSION_KEY = "xclaw:pending-new-chat-session";
+export const XCLAW_PENDING_NEW_CHAT_SESSION_KEY =
+  "xclaw:pending-new-chat-session";
 
 /** Sidebar / shell: ask the Chat runtime to reload sessions from the API into context. */
 export const XCLAW_REFRESH_SESSIONS_EVENT = "xclaw:refresh-sessions";

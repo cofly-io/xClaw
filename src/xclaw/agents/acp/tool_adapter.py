@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """ACP to ToolResponse adapter helpers for delegate_external_agent."""
 
 from pathlib import Path

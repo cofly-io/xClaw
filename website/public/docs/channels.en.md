@@ -614,12 +614,12 @@ Find `wecom` and fill in the corresponding information, for example:
 
 **WeCom-specific fields:**
 
-| Field                    | Type   | Default            | Description                                          |
-| ------------------------ | ------ | ------------------ | ---------------------------------------------------- |
-| `bot_id`                 | string | `""` (required)    | WeCom bot ID                                         |
-| `secret`                 | string | `""` (required)    | WeCom bot secret                                     |
+| Field                    | Type   | Default          | Description                                          |
+| ------------------------ | ------ | ---------------- | ---------------------------------------------------- |
+| `bot_id`                 | string | `""` (required)  | WeCom bot ID                                         |
+| `secret`                 | string | `""` (required)  | WeCom bot secret                                     |
 | `media_dir`              | string | `~/.xclaw/media` | Media files (images, files, etc.) download directory |
-| `max_reconnect_attempts` | int    | `-1`               | WebSocket max reconnect attempts (`-1` = unlimited)  |
+| `max_reconnect_attempts` | int    | `-1`             | WebSocket max reconnect attempts (`-1` = unlimited)  |
 
 ### Start chatting with the bot in WeCom
 
@@ -664,11 +664,11 @@ You can also configure directly in the agent workspace `agent.json` (e.g., `~/.x
 
 **WeChat Personal-specific fields:**
 
-| Field            | Type   | Default                       | Description                                                                           |
-| ---------------- | ------ | ----------------------------- | ------------------------------------------------------------------------------------- |
-| `bot_token`      | string | `""`                          | Bearer token obtained after QR code login; leave empty to trigger QR login on startup |
+| Field            | Type   | Default                     | Description                                                                           |
+| ---------------- | ------ | --------------------------- | ------------------------------------------------------------------------------------- |
+| `bot_token`      | string | `""`                        | Bearer token obtained after QR code login; leave empty to trigger QR login on startup |
 | `bot_token_file` | string | `~/.xclaw/weixin_bot_token` | Path to persist the token for future runs                                             |
-| `base_url`       | string | official default              | iLink API base URL; leave empty to use the official default                           |
+| `base_url`       | string | official default            | iLink API base URL; leave empty to use the official default                           |
 | `media_dir`      | string | `~/.xclaw/media`            | Directory to save received images and files                                           |
 
 ### Configure via environment variables
@@ -1042,16 +1042,16 @@ After configuration, simply call your Twilio phone number to have a voice conver
 
 **Voice channel-specific fields:**
 
-| Field                | Type   | Default                                      | Description                                  |
-| -------------------- | ------ | -------------------------------------------- | -------------------------------------------- |
-| `twilio_account_sid` | string | `""` (required)                              | Twilio Account SID                           |
-| `twilio_auth_token`  | string | `""` (required)                              | Twilio Auth Token                            |
-| `phone_number`       | string | `""` (required)                              | Purchased phone number (e.g., `+1234567890`) |
-| `phone_number_sid`   | string | `""` (required)                              | Phone number SID                             |
-| `tts_provider`       | string | `"google"`                                   | Text-to-speech provider                      |
-| `tts_voice`          | string | `"en-US-Journey-D"`                          | TTS voice model                              |
-| `stt_provider`       | string | `"deepgram"`                                 | Speech-to-text provider                      |
-| `language`           | string | `"en-US"`                                    | Language code                                |
+| Field                | Type   | Default                                    | Description                                  |
+| -------------------- | ------ | ------------------------------------------ | -------------------------------------------- |
+| `twilio_account_sid` | string | `""` (required)                            | Twilio Account SID                           |
+| `twilio_auth_token`  | string | `""` (required)                            | Twilio Auth Token                            |
+| `phone_number`       | string | `""` (required)                            | Purchased phone number (e.g., `+1234567890`) |
+| `phone_number_sid`   | string | `""` (required)                            | Phone number SID                             |
+| `tts_provider`       | string | `"google"`                                 | Text-to-speech provider                      |
+| `tts_voice`          | string | `"en-US-Journey-D"`                        | TTS voice model                              |
+| `stt_provider`       | string | `"deepgram"`                               | Speech-to-text provider                      |
+| `language`           | string | `"en-US"`                                  | Language code                                |
 | `welcome_greeting`   | string | `"Hi! This is xClaw. How can I help you?"` | Welcome message when call connects           |
 
 > **Note**: The Voice channel requires a continuous network connection and a running tunnel solution. For production use, consider stable tunneling options (like Cloudflare Tunnel, ngrok paid plans, etc.).

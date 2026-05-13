@@ -206,13 +206,13 @@ ACP 智能体按以下优先级解析配置：
 
 ## ACP Server vs ACP Tool
 
-| 维度           | xClaw as ACP Server            | xClaw using ACP as Tool           |
-| -------------- | -------------------------------- | ----------------------------------- |
-| xClaw 的角色 | Server / 被连接的智能体          | Client / 编排者                     |
-| 连接方向       | 外部客户端连接 xClaw           | xClaw 连接外部 runner             |
-| 主要目的       | 让编辑器或外部客户端驱动 xClaw | 让 xClaw 把工作委托给另一个 agent |
-| 典型入口       | `xClaw acp`                    | delegation tool + ACP runner 配置   |
-| 适用场景       | 编辑器集成、程序化控制           | 多智能体协作、外部专用 runner       |
+| 维度         | xClaw as ACP Server            | xClaw using ACP as Tool           |
+| ------------ | ------------------------------ | --------------------------------- |
+| xClaw 的角色 | Server / 被连接的智能体        | Client / 编排者                   |
+| 连接方向     | 外部客户端连接 xClaw           | xClaw 连接外部 runner             |
+| 主要目的     | 让编辑器或外部客户端驱动 xClaw | 让 xClaw 把工作委托给另一个 agent |
+| 典型入口     | `xClaw acp`                    | delegation tool + ACP runner 配置 |
+| 适用场景     | 编辑器集成、程序化控制         | 多智能体协作、外部专用 runner     |
 
 ---
 

@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #FDFAF3 !important;
+  background: #fdfaf3 !important;
   // background: linear-gradient(120deg, #FDFAF3 0%, #faeef0 35%, #ffeded 65%, #f0efff 100%);
   border: none !important;
   box-shadow: 0 1px 4px rgba(24, 100, 255, 0.06);
@@ -88,7 +88,7 @@
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 .sider {
   // background: linear-gradient(180deg, #FDFAF3 0%, #FFF5F7 35%, #ffeded 65%, #f0efff 100%) !important;
-  background: #FDFAF3 !important;
+  background: #fdfaf3 !important;
   border-right: 1px solid #e6eeff;
   padding-top: 0px !important;
   overflow: hidden !important;
@@ -108,60 +108,60 @@
     padding: 8px;
   }
 
-.collapsedNav {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0 8px;
-}
-
-.collapsedNavItem {
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 14px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.42) 0%,
-    rgba(255, 255, 255, 0.22) 100%
-  );
-  box-shadow:
-    0 8px 20px rgba(24, 100, 255, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #3e5879;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  svg {
-    width: 20px !important;
-    height: 20px !important;
-    stroke-width: 2 !important;
+  .collapsedNav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0 8px;
   }
 
-  &:hover {
+  .collapsedNavItem {
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 14px;
     background: linear-gradient(
       135deg,
-      rgba(24, 100, 255, 0.32) 0%,
-      rgba(24, 100, 255, 0.18) 100%
+      rgba(255, 255, 255, 0.42) 0%,
+      rgba(255, 255, 255, 0.22) 100%
     );
-    border-color: rgba(24, 100, 255, 0.35);
-    color: #1864ff;
     box-shadow:
-      0 10px 22px rgba(24, 100, 255, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    transform: translateY(-1px) scale(1.02);
-  }
+      0 8px 20px rgba(24, 100, 255, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #3e5879;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-  &:active {
-    transform: translateY(0);
+    svg {
+      width: 20px !important;
+      height: 20px !important;
+      stroke-width: 2 !important;
+    }
+
+    &:hover {
+      background: linear-gradient(
+        135deg,
+        rgba(24, 100, 255, 0.32) 0%,
+        rgba(24, 100, 255, 0.18) 100%
+      );
+      border-color: rgba(24, 100, 255, 0.35);
+      color: #1864ff;
+      box-shadow:
+        0 10px 22px rgba(24, 100, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px) scale(1.02);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
-}
 
   :global {
     .xclaw-layout-sider-children {
@@ -263,7 +263,7 @@
 
     /* Always expand submenus */
     .xclaw-menu-submenu {
-      >.xclaw-menu {
+      > .xclaw-menu {
         display: block !important;
       }
     }
@@ -430,7 +430,9 @@
   font-family: "PingFang SC", "Microsoft YaHei", SimSun, sans-serif;
   line-height: 18px;
   font-weight: 500;
-  transition: background-color 0.16s, color 0.16s;
+  transition:
+    background-color 0.16s,
+    color 0.16s;
 
   &:hover {
     background: rgba(0, 0, 0, 0.06);
@@ -489,7 +491,6 @@
   }
 }
 
-
 .siderTop {
   min-height: 42px;
   display: flex;
@@ -527,7 +528,7 @@
 }
 
 .agentSelectorContainer {
-  width: 100%;     
+  width: 100%;
   padding-top: 25px !important;
 
   :global {
@@ -535,11 +536,10 @@
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
-
     }
 
     .xclaw-select-selection-item {
-      background: transparent !important;     
+      background: transparent !important;
       padding-left: 19px !important;
       padding-top: 8px !important;
     }
@@ -657,7 +657,7 @@
   justify-content: center;
 }
 
-.authBtn+.authBtn {
+.authBtn + .authBtn {
   margin-top: 4px;
 }
 
@@ -684,7 +684,7 @@
   justify-content: center;
 }
 
-.authBtn+.authBtn {
+.authBtn + .authBtn {
   margin-top: 4px;
 }
 
@@ -890,7 +890,9 @@
   cursor: pointer;
   z-index: 200;
   border-radius: 0 4px 4px 0;
-  transition: background 0.2s, left 0.2s;
+  transition:
+    background 0.2s,
+    left 0.2s;
 
   &:hover {
     background: rgba(24, 100, 255, 0.08);

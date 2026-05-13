@@ -1,12 +1,4 @@
-import {
-  Layout,
-  Button,
-  Modal,
-  Input,
-  Form,
-  message,
-  Tooltip,
-} from "antd";
+import { Layout, Button, Modal, Input, Form, message, Tooltip } from "antd";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -180,7 +172,9 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
     <>
       {/* Dot grip — fixed on sidebar right edge */}
       <div
-        className={`${styles.dotGrip} ${collapsed ? styles.dotGripCollapsed : ""}`}
+        className={`${styles.dotGrip} ${
+          collapsed ? styles.dotGripCollapsed : ""
+        }`}
         onClick={() => setCollapsed(!collapsed)}
       >
         {[0, 1, 2, 3, 4, 5].map((col) => (
@@ -199,7 +193,10 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
       >
         <div className={styles.sidebarMain}>
           {!collapsed && (
-            <div className={styles.logoWrapper} onClick={() => navigate("/chat")}>
+            <div
+              className={styles.logoWrapper}
+              onClick={() => navigate("/chat")}
+            >
               <img
                 src={
                   isDark
@@ -309,7 +306,9 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
                 {suposUsername && (
                   <span className={styles.settingsUserMeta}>
                     <div className={styles.settingsUserAvatar} />
-                    <span className={styles.settingsUsername}>{suposUsername}</span>
+                    <span className={styles.settingsUsername}>
+                      {suposUsername}
+                    </span>
                   </span>
                 )}
                 <span className={styles.settingsLabelWithIcon}>
@@ -338,7 +337,10 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
               name="currentPassword"
               label={t("account.currentPassword")}
               rules={[
-                { required: true, message: t("account.currentPasswordRequired") },
+                {
+                  required: true,
+                  message: t("account.currentPasswordRequired"),
+                },
               ]}
             >
               <Input.Password />
@@ -347,7 +349,9 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
               <Input placeholder={t("account.newUsernamePlaceholder")} />
             </Form.Item>
             <Form.Item name="newPassword" label={t("account.newPassword")}>
-              <Input.Password placeholder={t("account.newPasswordPlaceholder")} />
+              <Input.Password
+                placeholder={t("account.newPasswordPlaceholder")}
+              />
             </Form.Item>
             <Form.Item
               name="confirmPassword"

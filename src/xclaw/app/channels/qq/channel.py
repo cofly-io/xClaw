@@ -23,9 +23,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-if TYPE_CHECKING:
-    import concurrent.futures
-
 import aiohttp
 
 from agentscope_runtime.engine.schemas.agent_schemas import (
@@ -48,6 +45,9 @@ from ..base import (
     ProcessHandler,
 )
 from ..utils import split_text
+
+if TYPE_CHECKING:
+    import concurrent.futures
 
 logger = logging.getLogger(__name__)
 

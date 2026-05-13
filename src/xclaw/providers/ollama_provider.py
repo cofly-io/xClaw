@@ -7,7 +7,6 @@ from typing import Any
 from agentscope.model import ChatModelBase
 from openai import AsyncOpenAI
 
-from xclaw.providers.provider import ModelInfo
 from xclaw.providers.openai_provider import OpenAIProvider
 
 

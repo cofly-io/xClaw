@@ -1,11 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-  memo,
-} from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import { Dropdown, Spin, Tooltip } from "antd";
 import { useAppMessage } from "../../../hooks/useAppMessage";
 import {
@@ -304,43 +297,40 @@ export default function ModelSelector() {
     [selectedAgent],
   );
 
-  const handleSelect = useCallback(async (providerId: string, modelId: string) => {
-    if (savingRef.current) return;
-    if (providerId === activeProviderId && modelId === activeModelId) {
+  const handleSelect = useCallback(
+    async (providerId: string, modelId: string) => {
+      if (savingRef.current) return;
+      if (providerId === activeProviderId && modelId === activeModelId) {
+        setOpen(false);
+        return;
+      }
+
       setOpen(false);
-      return;
-    }
 
-    setOpen(false);
-
-    savingRef.current = true;
-    setSaving(true);
-    try {
-      await providerApi.setActiveLlm({
-        provider_id: providerId,
-        model: modelId,
-        scope: "agent",
-        agent_id: selectedAgent,
-      });
-      setActiveModels({
-        active_llm: { provider_id: providerId, model: modelId },
-      });
-      window.dispatchEvent(new CustomEvent("model-switched"));
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : t("modelSelector.switchFailed");
-      message.error(msg);
-    } finally {
-      setSaving(false);
-      savingRef.current = false;
-    }
-  }, [
-    activeProviderId,
-    activeModelId,
-    message,
-    selectedAgent,
-    t,
-  ]);
+      savingRef.current = true;
+      setSaving(true);
+      try {
+        await providerApi.setActiveLlm({
+          provider_id: providerId,
+          model: modelId,
+          scope: "agent",
+          agent_id: selectedAgent,
+        });
+        setActiveModels({
+          active_llm: { provider_id: providerId, model: modelId },
+        });
+        window.dispatchEvent(new CustomEvent("model-switched"));
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : t("modelSelector.switchFailed");
+        message.error(msg);
+      } finally {
+        setSaving(false);
+        savingRef.current = false;
+      }
+    },
+    [activeProviderId, activeModelId, message, selectedAgent, t],
+  );
 
   const dropdownRender = useCallback(
     () => (

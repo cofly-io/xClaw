@@ -65,43 +65,53 @@ const INPUT_SPAN_REPL = `          children: [item.title && /*#__PURE__*/_jsx("s
             key: "desc"
           })]`;
 
-patchFile("@agentscope-ai/chat/lib/ChatAnywhere/Input/index.js", "chat-anywhere-upload-prefix", (s) => {
-  let t = s;
-  if (t.includes(INPUT_PREFIX_NEEDLE)) t = t.replace(INPUT_PREFIX_NEEDLE, INPUT_PREFIX_REPL);
-  if (t.includes(INPUT_SPAN_NEEDLE)) t = t.replace(INPUT_SPAN_NEEDLE, INPUT_SPAN_REPL);
-  return t;
-});
+patchFile(
+  "@agentscope-ai/chat/lib/ChatAnywhere/Input/index.js",
+  "chat-anywhere-upload-prefix",
+  (s) => {
+    let t = s;
+    if (t.includes(INPUT_PREFIX_NEEDLE))
+      t = t.replace(INPUT_PREFIX_NEEDLE, INPUT_PREFIX_REPL);
+    if (t.includes(INPUT_SPAN_NEEDLE))
+      t = t.replace(INPUT_SPAN_NEEDLE, INPUT_SPAN_REPL);
+    return t;
+  },
+);
 
-patchFile("@agentscope-ai/chat/lib/Sender/components/ActionButton.js", "ANTD_ACTION_BUTTON_HOTFIX", (s) => {
-  let t = s;
-  // Step 1: fix forwardRef signature if still old.
-  if (t.includes("export function ActionButton(props)")) {
-    t = t
-      .replace(
-        "export function ActionButton(props) {",
-        "function ActionButtonInner(props, ref) {",
-      )
-      .replace(
-        "  }, restProps), {}, {\n    disabled: mergedDisabled,",
-        "  }, restProps), {}, {\n    ref: ref,\n    disabled: mergedDisabled,",
-      )
-      .replace(
-        "export default /*#__PURE__*/React.forwardRef(ActionButton);",
-        "export var ActionButton = /*#__PURE__*/React.forwardRef(ActionButtonInner);\nexport default ActionButton;",
-      );
-  }
+patchFile(
+  "@agentscope-ai/chat/lib/Sender/components/ActionButton.js",
+  "ANTD_ACTION_BUTTON_HOTFIX",
+  (s) => {
+    let t = s;
+    // Step 1: fix forwardRef signature if still old.
+    if (t.includes("export function ActionButton(props)")) {
+      t = t
+        .replace(
+          "export function ActionButton(props) {",
+          "function ActionButtonInner(props, ref) {",
+        )
+        .replace(
+          "  }, restProps), {}, {\n    disabled: mergedDisabled,",
+          "  }, restProps), {}, {\n    ref: ref,\n    disabled: mergedDisabled,",
+        )
+        .replace(
+          "export default /*#__PURE__*/React.forwardRef(ActionButton);",
+          "export var ActionButton = /*#__PURE__*/React.forwardRef(ActionButtonInner);\nexport default ActionButton;",
+        );
+    }
 
-  // Step 2: replace design IconButton path to avoid Tooltip deprecation chain.
-  t = t.replace(
-    /import \{ IconButton \} from '@agentscope-ai\/design';/,
-    "import { Button as AntdButton } from 'antd';",
-  );
-  t = t.replace(
-    /return \/\*#\__PURE__\*\/_jsx\(IconButton, _objectSpread\(_objectSpread\(\{\s*bordered: false\s*\}, restProps\), \{\}, \{/,
-    "return /*#__PURE__*/_jsx(AntdButton, _objectSpread(_objectSpread({\n    // ANTD_ACTION_BUTTON_HOTFIX: bypass design IconButton/Tooltip wrapper.\n    type: 'text',\n    icon: restProps.icon\n  }, restProps), {}, {",
-  );
-  return t;
-});
+    // Step 2: replace design IconButton path to avoid Tooltip deprecation chain.
+    t = t.replace(
+      /import \{ IconButton \} from '@agentscope-ai\/design';/,
+      "import { Button as AntdButton } from 'antd';",
+    );
+    t = t.replace(
+      /return \/\*#\__PURE__\*\/_jsx\(IconButton, _objectSpread\(_objectSpread\(\{\s*bordered: false\s*\}, restProps\), \{\}, \{/,
+      "return /*#__PURE__*/_jsx(AntdButton, _objectSpread(_objectSpread({\n    // ANTD_ACTION_BUTTON_HOTFIX: bypass design IconButton/Tooltip wrapper.\n    type: 'text',\n    icon: restProps.icon\n  }, restProps), {}, {",
+    );
+    return t;
+  },
+);
 
 const TOOLTIP_RETURN_NEEDLE = `    antPrefix = _getCommonConfig.antPrefix;
   return /*#__PURE__*/_jsxs(_Fragment, {`;
@@ -121,24 +131,27 @@ patchFile(
   "userClassNames = restProps.classNames",
   (s) => {
     let t = s;
-    if (t.includes(TOOLTIP_RETURN_NEEDLE)) t = t.replace(TOOLTIP_RETURN_NEEDLE, TOOLTIP_RETURN_REPL);
-    if (t.includes(TOOLTIP_OVERLAY_NEEDLE)) t = t.replace(TOOLTIP_OVERLAY_NEEDLE, TOOLTIP_CLASSNAMES_REPL);
+    if (t.includes(TOOLTIP_RETURN_NEEDLE))
+      t = t.replace(TOOLTIP_RETURN_NEEDLE, TOOLTIP_RETURN_REPL);
+    if (t.includes(TOOLTIP_OVERLAY_NEEDLE))
+      t = t.replace(TOOLTIP_OVERLAY_NEEDLE, TOOLTIP_CLASSNAMES_REPL);
     return t;
   },
 );
 
-patchFile("@agentscope-ai/chat/lib/ChatAnywhere/Chat/index.js", "FLUSHSYNC_HOTFIX", (s) => {
-  if (!s.includes("flushSync(function () {")) return s;
-  return s
-    .replace(
-      "      setTimeout(function () {\n        flushSync(function () {\n          return setDisplayCount(function (prev) {\n            return prev + PAGE_SIZE;\n          });\n        });\n        resolve();\n      }, 300);",
-      "      setTimeout(function () {\n        // FLUSHSYNC_HOTFIX: avoid flushSync during lifecycle render paths.\n        setDisplayCount(function (prev) {\n          return prev + PAGE_SIZE;\n        });\n        resolve();\n      }, 300);",
-    )
-    .replace(
-      "import { flushSync } from 'react-dom';\n",
-      "",
-    );
-});
+patchFile(
+  "@agentscope-ai/chat/lib/ChatAnywhere/Chat/index.js",
+  "FLUSHSYNC_HOTFIX",
+  (s) => {
+    if (!s.includes("flushSync(function () {")) return s;
+    return s
+      .replace(
+        "      setTimeout(function () {\n        flushSync(function () {\n          return setDisplayCount(function (prev) {\n            return prev + PAGE_SIZE;\n          });\n        });\n        resolve();\n      }, 300);",
+        "      setTimeout(function () {\n        // FLUSHSYNC_HOTFIX: avoid flushSync during lifecycle render paths.\n        setDisplayCount(function (prev) {\n          return prev + PAGE_SIZE;\n        });\n        resolve();\n      }, 300);",
+      )
+      .replace("import { flushSync } from 'react-dom';\n", "");
+  },
+);
 
 // Patch Markdown Link to avoid leaking non-DOM props onto <a>
 // (e.g. domNode / streamStatus from markdown pipeline).
@@ -159,7 +172,10 @@ const MARKDOWN_LINK_REPL = `export default function Link(props) {
 patchFile(
   "@agentscope-ai/chat/lib/Markdown/core/components/Link.js",
   "LINK_PROP_FILTER",
-  (s) => (s.includes(MARKDOWN_LINK_NEEDLE) ? s.replace(MARKDOWN_LINK_NEEDLE, MARKDOWN_LINK_REPL) : s),
+  (s) =>
+    s.includes(MARKDOWN_LINK_NEEDLE)
+      ? s.replace(MARKDOWN_LINK_NEEDLE, MARKDOWN_LINK_REPL)
+      : s,
 );
 
 // Patch Tool.js to show Chinese tool names in the chat UI.
@@ -180,7 +196,10 @@ var title = "".concat(serverLabel).concat(TOOL_LABELS_ZH[toolName] || toolName);
 patchFile(
   "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/AgentScopeRuntime/Response/Tool.js",
   "TOOL_LABELS_ZH",
-  (s) => s.includes(TOOL_TITLE_NEEDLE) ? s.replace(TOOL_TITLE_NEEDLE, TOOL_TITLE_REPL) : s,
+  (s) =>
+    s.includes(TOOL_TITLE_NEEDLE)
+      ? s.replace(TOOL_TITLE_NEEDLE, TOOL_TITLE_REPL)
+      : s,
 );
 
 /**
@@ -288,7 +307,11 @@ patchFile(
   "FLUSHSYNC_SESSIONS_HOTFIX",
   (s) => {
     let t = s;
-    if (t.includes("ReactDOM.flushSync(function () {\n            setMessages([]);\n          });")) {
+    if (
+      t.includes(
+        "ReactDOM.flushSync(function () {\n            setMessages([]);\n          });",
+      )
+    ) {
       t = t.replace(
         "ReactDOM.flushSync(function () {\n            setMessages([]);\n          });",
         "// FLUSHSYNC_SESSIONS_HOTFIX: avoid flushSync during lifecycle rendering.\n          setMessages([]);",
@@ -302,16 +325,25 @@ patchFile(
 patchFile("@agentscope-ai/chat/lib/Bubble/BubbleList.js", "doLoadRef", (s) => {
   let t = s;
   if (t.includes(BUBBLE_LIST_LOADMORE_RAF_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_LOADMORE_RAF_NEEDLE, BUBBLE_LIST_LOADMORE_RAF_REPL);
+    t = t.replace(
+      BUBBLE_LIST_LOADMORE_RAF_NEEDLE,
+      BUBBLE_LIST_LOADMORE_RAF_REPL,
+    );
   }
   if (t.includes(BUBBLE_LIST_IMPERATIVE_NEEDLE)) {
     t = t.replace(BUBBLE_LIST_IMPERATIVE_NEEDLE, BUBBLE_LIST_IMPERATIVE_REPL);
   }
   if (t.includes(BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE, BUBBLE_LIST_OVERFLOW_ANCHOR_REPL);
+    t = t.replace(
+      BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE,
+      BUBBLE_LIST_OVERFLOW_ANCHOR_REPL,
+    );
   }
   if (t.includes(BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE, BUBBLE_LIST_DOLOAD_USEEFFECT_REPL);
+    t = t.replace(
+      BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE,
+      BUBBLE_LIST_DOLOAD_USEEFFECT_REPL,
+    );
   }
   return t;
 });
@@ -320,7 +352,8 @@ patchFile("@agentscope-ai/chat/lib/Bubble/BubbleList.js", "doLoadRef", (s) => {
 // scroll-anchor fix (remove useLayoutEffect) and doLoadRef fix (BubbleList)
 // interact with many internal details. Sentinel: XCLAW_MESSAGE_LIST_V3
 function writeMessageList() {
-  const rel = "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Chat/MessageList/index.js";
+  const rel =
+    "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/Chat/MessageList/index.js";
   const file = path.join(root, "node_modules", ...rel.split("/"));
   if (!fs.existsSync(file)) return;
   const s = fs.readFileSync(file, "utf8");

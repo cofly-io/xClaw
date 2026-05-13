@@ -477,7 +477,9 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
   }
 
   /** Resolve backend UUID for API calls (null if not yet available). */
-  private async resolveBackendChatId(sessionId: string): Promise<string | null> {
+  private async resolveBackendChatId(
+    sessionId: string,
+  ): Promise<string | null> {
     if (!sessionId || sessionId === "undefined" || sessionId === "null") {
       return null;
     }
@@ -528,16 +530,24 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
    * Call this when switching away from a chat to prevent stale operations.
    */
   cancelPendingLoads(sessionId: string): void {
-    const backendId = this.sessionList.find((s) => s.id === sessionId) as ExtendedSession | undefined;
+    const backendId = this.sessionList.find((s) => s.id === sessionId) as
+      | ExtendedSession
+      | undefined;
     const realBackendId = backendId?.realId ?? sessionId;
-    
+
     const controller = this.sessionMoreAbortControllers.get(realBackendId);
     if (controller) {
-      console.log('[xclaw][sessionApi] cancelling pending loads for', realBackendId);
+      console.log(
+        "[xclaw][sessionApi] cancelling pending loads for",
+        realBackendId,
+      );
       controller.abort();
       this.sessionMoreAbortControllers.delete(realBackendId);
     } else {
-      console.log('[xclaw][sessionApi] no pending loads to cancel for', realBackendId);
+      console.log(
+        "[xclaw][sessionApi] no pending loads to cancel for",
+        realBackendId,
+      );
     }
   }
 
@@ -546,21 +556,34 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
    * Call this when switching away from a session with many loaded messages.
    */
   clearSessionCache(sessionId: string): void {
-    const session = this.sessionList.find((s) => s.id === sessionId) as ExtendedSession | undefined;
+    const session = this.sessionList.find((s) => s.id === sessionId) as
+      | ExtendedSession
+      | undefined;
     const realBackendId = session?.realId ?? sessionId;
-    
+
     const messageCount = session?.messages?.length ?? 0;
-    console.log('[xclaw][sessionApi] clearing cache for', sessionId, 'realId:', realBackendId, 'messages:', messageCount);
-    
+    console.log(
+      "[xclaw][sessionApi] clearing cache for",
+      sessionId,
+      "realId:",
+      realBackendId,
+      "messages:",
+      messageCount,
+    );
+
     this.loadedTailCount.delete(sessionId);
     this.loadedTailCount.delete(realBackendId);
     this.sessionRequests.delete(sessionId);
     this.sessionMoreInFlight.delete(realBackendId);
-    
+
     if (session && session.messages) {
       // Clear messages array to free memory
       session.messages = [];
-      console.log('[xclaw][sessionApi] cleared', messageCount, 'messages from memory');
+      console.log(
+        "[xclaw][sessionApi] cleared",
+        messageCount,
+        "messages from memory",
+      );
       // Notify subscribers (React components) to update with cleared messages
       this.notifySubscribers();
     }
@@ -749,27 +772,46 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
   async getSessionMore(
     sessionId: string,
   ): Promise<{ messages: IAgentScopeRuntimeWebUIMessage[]; noMore: boolean }> {
-    const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    console.log(`[xclaw][getSessionMore][${requestId}] START for session:`, sessionId);
-    
+    const requestId = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+    console.log(
+      `[xclaw][getSessionMore][${requestId}] START for session:`,
+      sessionId,
+    );
+
     try {
       const backendId = await this.resolveBackendChatId(sessionId);
       if (!backendId) {
-        console.warn(`[xclaw][getSessionMore][${requestId}] no backend id for session:`, sessionId);
+        console.warn(
+          `[xclaw][getSessionMore][${requestId}] no backend id for session:`,
+          sessionId,
+        );
         return { messages: [], noMore: true };
       }
 
       const existing = this.sessionMoreInFlight.get(backendId);
       if (existing) {
-        console.log(`[xclaw][getSessionMore][${requestId}] returning existing request for:`, backendId);
+        console.log(
+          `[xclaw][getSessionMore][${requestId}] returning existing request for:`,
+          backendId,
+        );
         return existing;
       }
 
-      console.log(`[xclaw][getSessionMore][${requestId}] creating new request for:`, backendId);
+      console.log(
+        `[xclaw][getSessionMore][${requestId}] creating new request for:`,
+        backendId,
+      );
       const abortController = new AbortController();
       this.sessionMoreAbortControllers.set(backendId, abortController);
 
-      const p = this.loadSessionMoreOnce(sessionId, backendId, abortController.signal, requestId)
+      const p = this.loadSessionMoreOnce(
+        sessionId,
+        backendId,
+        abortController.signal,
+        requestId,
+      )
         .then((result) => {
           console.log(`[xclaw][getSessionMore][${requestId}] COMPLETED`, {
             sessionId,
@@ -788,11 +830,14 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
           this.sessionMoreInFlight.delete(backendId);
           this.sessionMoreAbortControllers.delete(backendId);
         });
-      
+
       this.sessionMoreInFlight.set(backendId, p);
       return p;
     } catch (error) {
-      console.error(`[xclaw][getSessionMore][${requestId}] UNEXPECTED ERROR:`, error);
+      console.error(
+        `[xclaw][getSessionMore][${requestId}] UNEXPECTED ERROR:`,
+        error,
+      );
       return { messages: [], noMore: true };
     }
   }
@@ -804,47 +849,50 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     requestId?: string,
   ): Promise<{ messages: IAgentScopeRuntimeWebUIMessage[]; noMore: boolean }> {
     const logPrefix = `[xclaw][loadSessionMore][${requestId}]`;
-    
+
     const loaded =
       this.loadedTailCount.get(backendId) ??
       this.loadedTailCount.get(sessionId) ??
       PREVIEW_LAST_N;
-    
+
     // Prevent loading too many messages to avoid memory issues
     if (loaded >= MAX_MESSAGES_IN_MEMORY) {
-      console.warn(`${logPrefix} reached message limit`, { 
-        sessionId, 
-        backendId, 
-        loaded, 
-        limit: MAX_MESSAGES_IN_MEMORY 
+      console.warn(`${logPrefix} reached message limit`, {
+        sessionId,
+        backendId,
+        loaded,
+        limit: MAX_MESSAGES_IN_MEMORY,
       });
       return { messages: [], noMore: true };
     }
-    
-    console.log(`${logPrefix} fetching`, { sessionId, backendId, skip_last_n: loaded, last_n: HISTORY_PAGE_SIZE });
-    
+
+    console.log(`${logPrefix} fetching`, {
+      sessionId,
+      backendId,
+      skip_last_n: loaded,
+      last_n: HISTORY_PAGE_SIZE,
+    });
+
     if (signal?.aborted) {
       console.warn(`${logPrefix} aborted before fetch`);
       return { messages: [], noMore: true };
     }
-    
-    const chatHistory = await api.getChat(
-      backendId,
-      HISTORY_PAGE_SIZE,
-      loaded,
-    );
-    
+
+    const chatHistory = await api.getChat(backendId, HISTORY_PAGE_SIZE, loaded);
+
     if (signal?.aborted) {
       console.warn(`${logPrefix} aborted after fetch`);
       return { messages: [], noMore: true };
     }
-    
+
     const olderMessages = convertMessages(chatHistory.messages || []);
     const fetchedCount = chatHistory.messages?.length || 0;
     this.setLoadedTailCount(backendId, sessionId, loaded + fetchedCount);
-    
-    console.log(`${logPrefix} converted ${fetchedCount} messages to ${olderMessages.length} cards`);
-    
+
+    console.log(
+      `${logPrefix} converted ${fetchedCount} messages to ${olderMessages.length} cards`,
+    );
+
     return {
       messages: olderMessages,
       noMore: fetchedCount < HISTORY_PAGE_SIZE,
@@ -908,7 +956,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
       // Return an empty session for now - the correct session will be loaded shortly
       return this.createEmptySession(Date.now().toString());
     }
-    
+
     const existingRequest = this.sessionRequests.get(sessionId);
     if (existingRequest) {
       return existingRequest;
@@ -928,7 +976,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
       }
       return session;
     } catch (error) {
-      console.error('[xclaw][sessionApi] getSession failed:', sessionId, error);
+      console.error("[xclaw][sessionApi] getSession failed:", sessionId, error);
       throw error;
     } finally {
       this.sessionRequests.delete(sessionId);
