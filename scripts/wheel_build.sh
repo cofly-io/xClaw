@@ -10,8 +10,13 @@ CONSOLE_DIR="$REPO_ROOT/console"
 CONSOLE_DEST="$REPO_ROOT/src/xclaw/console"
 
 echo "[wheel_build] Building console frontend..."
-(cd "$CONSOLE_DIR" && npm ci)
-(cd "$CONSOLE_DIR" && npm run build)
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[wheel_build] ERROR: pnpm is required (console uses pnpm-lock.yaml)." >&2
+  echo "  Install: https://pnpm.io/installation  or: corepack enable && corepack prepare pnpm@9 --activate" >&2
+  exit 1
+fi
+(cd "$CONSOLE_DIR" && pnpm install --frozen-lockfile)
+(cd "$CONSOLE_DIR" && pnpm run build)
 
 echo "[wheel_build] Copying console/dist/* -> src/xclaw/console/..."
 rm -rf "$CONSOLE_DEST"/*

@@ -9,12 +9,15 @@ $ConsoleDir = Join-Path $RepoRoot "console"
 $ConsoleDest = Join-Path $RepoRoot "src\xclaw\console"
 
 Write-Host "[wheel_build] Building console frontend..."
+if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
+  throw "pnpm is required (console uses pnpm-lock.yaml). Install: https://pnpm.io/installation"
+}
 Push-Location $ConsoleDir
 try {
-  npm ci
-  if ($LASTEXITCODE -ne 0) { throw "npm ci failed with exit code $LASTEXITCODE" }
-  npm run build
-  if ($LASTEXITCODE -ne 0) { throw "npm run build failed with exit code $LASTEXITCODE" }
+  pnpm install --frozen-lockfile
+  if ($LASTEXITCODE -ne 0) { throw "pnpm install failed with exit code $LASTEXITCODE" }
+  pnpm run build
+  if ($LASTEXITCODE -ne 0) { throw "pnpm run build failed with exit code $LASTEXITCODE" }
 } finally {
   Pop-Location
 }

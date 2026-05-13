@@ -9,6 +9,9 @@ name: Desktop (macOS ARM64)
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
 
@@ -28,12 +31,17 @@ jobs:
         id: version
         run: echo "version=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' src/xclaw/__version__.py)" >> $GITHUB_OUTPUT
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: console/package-lock.json
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: console/pnpm-lock.yaml
 
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v3
