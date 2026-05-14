@@ -42,6 +42,7 @@ from .browser_snapshot import build_role_snapshot_from_aria
 logger = logging.getLogger(__name__)
 
 _MAX_DIRECT_URL_DOWNLOAD_BYTES = 10 * 1024 * 1024
+_CDP_CONNECT_TIMEOUT_SECONDS = 30.0
 
 
 # Keywords used to validate executable_path — the binary filename must
@@ -410,6 +411,16 @@ def _ensure_playwright_sync():
         ) from exc
 
 
+async def _stop_playwright_instance(pw: Any) -> None:
+    """Best-effort stop for a locally-started Playwright driver."""
+    if pw is None:
+        return
+    try:
+        await pw.stop()
+    except Exception:
+        pass
+
+
 def _sync_browser_launch(
     state: dict,
     cdp_port: int = 0,
@@ -565,6 +576,7 @@ async def _start_managed_cdp_browser(
         cdp_port=chosen_cdp_port,
         browser_args=browser_args,
     )
+    pw = None
     try:
         await _wait_for_cdp_ready(chosen_cdp_port)
         async_playwright = _ensure_playwright_async()
@@ -602,6 +614,7 @@ async def _start_managed_cdp_browser(
                 _register_page(state, page, page_id)
                 state["current_page_id"] = page_id
     except Exception:
+        await _stop_playwright_instance(pw)
         try:
             if proc.poll() is None:
                 proc.kill()
@@ -3935,10 +3948,14 @@ async def _action_connect_cdp(state: dict, cdp_url: str) -> ToolResponse:
             ),
         )
 
+    pw = None
     try:
         async_playwright = _ensure_playwright_async()
         pw = await async_playwright().start()
-        browser = await pw.chromium.connect_over_cdp(cdp_url)
+        browser = await asyncio.wait_for(
+            pw.chromium.connect_over_cdp(cdp_url),
+            timeout=_CDP_CONNECT_TIMEOUT_SECONDS,
+        )
         contexts = browser.contexts
         if contexts:
             context = contexts[0]
@@ -3979,7 +3996,23 @@ async def _action_connect_cdp(state: dict, cdp_url: str) -> ToolResponse:
                 indent=2,
             ),
         )
+    except asyncio.TimeoutError:
+        await _stop_playwright_instance(pw)
+        return _tool_response(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": (
+                        "CDP connect timed out after "
+                        f"{_CDP_CONNECT_TIMEOUT_SECONDS:g}s: {cdp_url}"
+                    ),
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+        )
     except Exception as e:
+        await _stop_playwright_instance(pw)
         return _tool_response(
             json.dumps(
                 {"ok": False, "error": f"CDP connect failed: {e!s}"},
