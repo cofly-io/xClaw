@@ -27,6 +27,9 @@ src/xclaw/console/
 # Legacy PyInstaller path (synced from console/dist by desktop/build.py)
 src/copaw/console/
 
+# Docs bundled at build time (copied from website/public/docs/)
+src/qwenpaw/docs/
+
 # frontend (website)
 website/node_modules/
 website/.vite/
