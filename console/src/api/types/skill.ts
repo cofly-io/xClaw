@@ -13,6 +13,9 @@ export interface SkillSpec {
   source: string;
   enabled?: boolean;
   channels?: string[];
+  tags?: string[];
+  /** Optional display emoji (workspace skills). */
+  emoji?: string;
   config?: Record<string, unknown>;
   last_updated?: string;
 }
@@ -31,6 +34,9 @@ export interface PoolSkillSpec {
   last_updated?: string;
   emoji?: string;
   tags?: string[];
+  /** Pool builtin language selection (upstream skill pool UI). */
+  available_builtin_languages?: string[];
+  builtin_language?: string;
 }
 
 export interface BuiltinLanguageSpec {

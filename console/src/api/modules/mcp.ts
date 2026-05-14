@@ -5,6 +5,25 @@ import type {
   MCPClientUpdateRequest,
 } from "../types";
 
+export type MCPOAuthStartBody = {
+  url: string;
+  scope?: string;
+  client_id?: string;
+  auth_endpoint?: string;
+  token_endpoint?: string;
+};
+
+export type MCPOAuthStartResponse = {
+  auth_url: string;
+  session_id: string;
+};
+
+export type MCPOAuthStatusResponse = {
+  authorized: boolean;
+  expires_at: number;
+  scope: string;
+};
+
 export const mcpApi = {
   /**
    * List all MCP clients
@@ -50,4 +69,26 @@ export const mcpApi = {
     request<{ message: string }>(`/mcp/${encodeURIComponent(clientKey)}`, {
       method: "DELETE",
     }),
+
+  getOAuthStatus: (clientKey: string) =>
+    request<MCPOAuthStatusResponse>(
+      `/mcp/${encodeURIComponent(clientKey)}/oauth/status`,
+    ),
+
+  startOAuth: (clientKey: string, body: MCPOAuthStartBody) =>
+    request<MCPOAuthStartResponse>(
+      `/mcp/${encodeURIComponent(clientKey)}/oauth/start`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
+  revokeOAuth: (clientKey: string) =>
+    request<{ message: string }>(
+      `/mcp/${encodeURIComponent(clientKey)}/oauth`,
+      {
+        method: "DELETE",
+      },
+    ),
 };

@@ -413,35 +413,6 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
   }
 
   /**
-   * Pending resolvers waiting for a specific session's realId.
-   * Used to replace setTimeout-based busy-wait with event-driven notification.
-   */
-  private realIdResolvers: Map<string, Array<() => void>> = new Map();
-
-  /** Notify any pending waiters that a session's realId has been resolved. */
-  private notifyRealIdResolved(sessionId: string): void {
-    const resolvers = this.realIdResolvers.get(sessionId);
-    if (resolvers) {
-      this.realIdResolvers.delete(sessionId);
-      for (const resolve of resolvers) resolve();
-    }
-  }
-
-  /** Wait until a session's realId is available (set by updateSession). */
-  private waitForRealId(sessionId: string): Promise<void> {
-    const session = this.sessionList.find((x) => x.id === sessionId) as
-      | ExtendedSession
-      | undefined;
-    if (session?.realId) return Promise.resolve();
-
-    return new Promise<void>((resolve) => {
-      const existing = this.realIdResolvers.get(sessionId) || [];
-      existing.push(resolve);
-      this.realIdResolvers.set(sessionId, existing);
-    });
-  }
-
-  /**
    * When set, getSessionList will move the matching session to the front on the first call,
    * so the library's useMount auto-selects it instead of always defaulting to sessions[0].
    * Cleared after first use.

@@ -16,7 +16,7 @@ interface FreeModelWarningProvider {
 }
 
 interface FreeModelWarningModel {
-  is_free?: boolean;
+  is_free?: boolean | null;
 }
 
 interface ConfirmFreeModelSwitchOptions {

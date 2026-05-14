@@ -6,11 +6,7 @@ import {
   ReactAgentCard,
   LlmRetryCard,
   LlmRateLimiterCard,
-  ContextCompactCard,
-  ToolResultCompactCard,
-  MemorySummaryCard,
-  EmbeddingConfigCard,
-  ADBPGConfigCard,
+  ToolExecutionLevelCard,
 } from "./components";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -132,7 +128,6 @@ function AgentConfigPage() {
       });
     }
 
-    // Add Tool Execution Level tab
     baseTabs.push({
       key: "toolExecutionLevel",
       label: (
@@ -170,7 +165,7 @@ function AgentConfigPage() {
   ]);
 
   useEffect(() => {
-    const tabKeys = dynamicTabs.map((t) => t.key);
+    const tabKeys = dynamicTabs.map((tab) => tab.key);
     if (!tabKeys.includes(activeTab)) {
       setActiveTab(tabKeys[0] ?? "reactAgent");
     }
@@ -209,119 +204,8 @@ function AgentConfigPage() {
             className={styles.mainTabs}
             activeKey={activeTab}
             onChange={setActiveTab}
-            items={[
-              {
-                key: "reactAgent",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.reactAgentTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <ReactAgentCard
-                      language={language}
-                      savingLang={savingLang}
-                      onLanguageChange={handleLanguageChange}
-                      timezone={timezone}
-                      savingTimezone={savingTimezone}
-                      onTimezoneChange={handleTimezoneChange}
-                    />
-                  </div>
-                ),
-              },
-              {
-                key: "llmRetry",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.llmRetryTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <LlmRetryCard llmRetryEnabled={llmRetryEnabled} />
-                  </div>
-                ),
-              },
-              {
-                key: "llmRateLimiter",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.llmRateLimiterTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <LlmRateLimiterCard />
-                  </div>
-                ),
-              },
-              {
-                key: "contextCompact",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.contextCompactTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <ContextCompactCard maxInputLength={maxInputLength} />
-                  </div>
-                ),
-              },
-              {
-                key: "toolResultCompact",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.toolResultCompactTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <ToolResultCompactCard />
-                  </div>
-                ),
-              },
-              {
-                key: "memorySummary",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.memorySummaryTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <MemorySummaryCard />
-                  </div>
-                ),
-              },
-              {
-                key: "embeddingConfig",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.embeddingConfigTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <EmbeddingConfigCard />
-                  </div>
-                ),
-              },
-              {
-                key: "adbpgMemory",
-                label: (
-                  <span className={styles.tabLabel}>
-                    {t("agentConfig.adbpgMemoryTitle")}
-                  </span>
-                ),
-                children: (
-                  <div className={styles.tabContent}>
-                    <ADBPGConfigCard />
-                  </div>
-                ),
-              },
-            ]}
+            items={dynamicTabs}
+            destroyInactiveTabPane={false}
           />
         </Form>
       </div>
@@ -330,7 +214,7 @@ function AgentConfigPage() {
         <Button
           onClick={fetchConfig}
           disabled={saving}
-          style={{ marginRight: 8 }}
+          style={{ marginRight: 12 }}
         >
           {t("common.reset")}
         </Button>

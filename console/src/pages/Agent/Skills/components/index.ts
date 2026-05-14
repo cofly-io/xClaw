@@ -13,6 +13,9 @@ export {
 export { useConflictRenameModal } from "./useConflictRenameModal";
 export { ImportHubModal } from "./ImportHubModal";
 export { PoolTransferModal } from "./PoolTransferModal";
+export { HeaderActions } from "./HeaderActions";
+export { SkillsToolbar } from "./SkillsToolbar";
+export { SkillListItem } from "./SkillListItem";
 
 /** Match backend `skills` router limits for skill tags. */
 export const MAX_TAGS = 8;

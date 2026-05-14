@@ -534,34 +534,40 @@ def load_config(  # pylint: disable=too-many-return-statements
     if data is None:
         return Config()
 
-    legacy = channels.pop("weixin")
-    if "wechat" not in channels:
-        channels["wechat"] = legacy
+    if isinstance(data, dict):
+        channels = data.get("channels")
+        if isinstance(channels, dict) and "weixin" in channels:
+            legacy = channels.pop("weixin")
+            if "wechat" not in channels:
+                channels["wechat"] = legacy
+            try:
+                backup_path = config_path.with_suffix(
+                    f".{uuid.uuid4().hex[:8]}.weixin-migrate.bak",
+                )
+                shutil.copy2(config_path, backup_path)
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                logger.warning(
+                    "Migrated legacy 'channels.weixin' -> 'channels.wechat' "
+                    "in %s (backup: %s)",
+                    config_path,
+                    backup_path,
+                )
+                current_mtime = config_path.stat().st_mtime
+            except OSError as exc:
+                logger.error(
+                    "Failed to migrate legacy 'weixin' key in %s: %s",
+                    config_path,
+                    exc,
+                )
 
-    try:
-        backup_path = config_path.with_suffix(
-            f".{uuid.uuid4().hex[:8]}.weixin-migrate.bak",
-        )
-        shutil.copy2(config_path, backup_path)
-        with open(config_path, "w", encoding="utf-8") as file:
-            json.dump(raw_data, file, indent=2, ensure_ascii=False)
-        logger.warning(
-            "Migrated legacy 'channels.weixin' -> 'channels.wechat' in %s "
-            "(backup: %s)",
-            config_path,
-            backup_path,
-        )
-    except OSError as exc:
-        logger.error(
-            "Failed to migrate legacy 'weixin' key in %s: %s",
-            config_path,
-            exc,
-        )
+    return _load_and_validate_config(config_path, data, current_mtime)
 
 
 def _load_and_validate_config(
     config_path: Path,
     data: dict,
+    current_mtime: float,
 ) -> Config:
     """Load and validate config data, handling validation errors."""
     data = _normalize_working_dir_bound_paths(data)
@@ -575,9 +581,7 @@ def _load_and_validate_config(
 
     try:
         config = Config.model_validate(data)
-        _config_cache = config
-        _config_cache_mtime = current_mtime
-        _config_cache_path = config_path
+        _update_config_cache(config_path, config, current_mtime)
         return config
     except ValidationError as exc:
         fixed_any = False
@@ -596,45 +600,20 @@ def _load_and_validate_config(
                 "validation error after field removal",
             )
             return Config()
-
-    try:
-        config = Config.model_validate(data)
-        _config_cache = config
-        _config_cache_mtime = current_mtime
-        _config_cache_path = config_path
+        _update_config_cache(config_path, config, current_mtime)
         return config
-    except ValidationError:
-        _backup_config_file(
-            config_path,
-            "validation error after field removal",
-        )
-        return Config()
 
-    # Check mtime to see if we can use cached config
-    try:
-        current_mtime = config_path.stat().st_mtime
-    except OSError:
-        return Config()
 
-    with _config_lock:
-        # Return cached config if mtime hasn't changed
-        if (
-            _config_cache is not None
-            and _config_mtime is not None
-            and _config_mtime == current_mtime
-        ):
-            return _config_cache
-
-        # Need to reload config from disk
-        data = _read_config_data(config_path)
-        if data is None:
-            config = Config()
-        else:
-            config = _load_and_validate_config(config_path, data)
-
-        _config_cache = config
-        _config_mtime = current_mtime
-        return config
+def _update_config_cache(
+    config_path: Path,
+    config: Config,
+    current_mtime: float,
+) -> None:
+    """Assign global config cache after a successful load."""
+    global _config_cache, _config_cache_mtime, _config_cache_path
+    _config_cache = config
+    _config_cache_mtime = current_mtime
+    _config_cache_path = config_path
 
 
 def strict_validate_config_file(

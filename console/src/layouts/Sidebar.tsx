@@ -1,16 +1,16 @@
 import { Layout, Button, Modal, Input, Form, message, Tooltip } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Ellipsis, MessageSquarePlus, SquarePlus } from "lucide-react";
 import {
   SparkExitFullscreenLine,
   SparkSearchUserLine,
+  SparkDebugLine,
 } from "@agentscope-ai/icons";
 import { Package } from "lucide-react";
 import { clearAuthToken } from "../api/config";
 import { authApi } from "../api/modules/auth";
-import api from "../api";
 import { usePlugins } from "../plugins/PluginContext";
 import styles from "./index.module.less";
 import { useTheme } from "../contexts/ThemeContext";
@@ -19,17 +19,6 @@ import { requestNewChatSessionFromShell } from "../pages/Chat/chatNewSessionBrid
 import SidebarSessionList from "../pages/Chat/components/SidebarSessionList";
 
 const { Sider } = Layout;
-const MOBILE_SIDEBAR_QUERY = "(max-width: 768px)";
-
-function isMobileSidebarViewport() {
-  return (
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia(MOBILE_SIDEBAR_QUERY).matches
-  );
-}
-const INBOX_BADGE_POLLING_MS = 6000;
-
 const MOBILE_SIDEBAR_QUERY = "(max-width: 768px)";
 
 function isMobileSidebarViewport() {
@@ -169,7 +158,13 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
     }
   };
 
-  const collapsedNavItems = [
+  const collapsedNavItems: Array<{
+    key: string;
+    icon: ReactNode;
+    label: string;
+    action?: () => void;
+    path?: string;
+  }> = [
     {
       key: "new-chat",
       icon: <MessageSquarePlus {...navIconProps} />,
@@ -200,8 +195,6 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
   ];
 
   const siderWidth = collapsed ? (isMobile ? 56 : 72) : 255;
-
-  const siderWidth = collapsed ? (isMobile ? 56 : 72) : 240;
 
   return (
     <>
@@ -262,7 +255,14 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
                 >
                   <button
                     className={styles.collapsedNavItem}
-                    onClick={item.action}
+                    type="button"
+                    onClick={() => {
+                      if (item.action) {
+                        item.action();
+                      } else if (item.path) {
+                        navigate(item.path);
+                      }
+                    }}
                   >
                     {item.icon}
                   </button>

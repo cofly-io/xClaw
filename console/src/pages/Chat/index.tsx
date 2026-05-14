@@ -1,4 +1,4 @@
-﻿import {
+import {
   AgentScopeRuntimeWebUI,
   IAgentScopeRuntimeWebUIOptions,
   type IAgentScopeRuntimeWebUIRef,
@@ -22,14 +22,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import sessionApi from "./sessionApi";
 import defaultConfig, { getDefaultConfig } from "./OptionsPanel/defaultConfig";
 import { chatApi } from "../../api/modules/chat";
-import { agentApi } from "../../api/modules/agent";
 import { getApiUrl } from "../../api/config";
 import { buildAuthHeaders } from "../../api/authHeaders";
 import { providerApi } from "../../api/modules/provider";
+import { commandsApi } from "../../api/modules/commands";
 import type { ProviderInfo, ModelInfo } from "../../api/types";
 import ModelSelector from "./ModelSelector";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAgentStore } from "../../stores/agentStore";
+import { useApprovalContext } from "../../contexts/ApprovalContext";
 import { useChatAnywhereInput } from "@agentscope-ai/chat";
 import styles from "./index.module.less";
 import { IconButton } from "@agentscope-ai/design";
@@ -38,6 +39,7 @@ import ChatNewSessionBridge from "./components/ChatNewSessionBridge";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
 import ChatSessionsRefreshListener from "./components/ChatSessionsRefreshListener";
 import ChatLoadingOverlay from "./components/ChatLoadingOverlay";
+import { ApprovalCard } from "../../components/ApprovalCard/ApprovalCard";
 import {
   toDisplayUrl,
   copyText,
@@ -302,10 +304,6 @@ function useMessageHistoryNavigation(
   const userMessagesCacheRef = useRef<string[]>([]);
   const cachedMessageCountRef = useRef<number>(0);
 
-  /** Cached user messages to avoid re-computing on every keydown */
-  const userMessagesCacheRef = useRef<string[]>([]);
-  const cachedMessageCountRef = useRef<number>(0);
-
   const getUserMessagesWithText = useCallback((): string[] => {
     if (!chatRef.current?.messages?.getMessages) return [];
 
@@ -515,6 +513,25 @@ export default function ChatPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
   const { message } = useAppMessage();
+  const { approvals, setApprovals } = useApprovalContext();
+
+  type ApprovalCardModel = {
+    requestId: string;
+    sessionId: string;
+    rootSessionId: string;
+    agentId: string;
+    toolName: string;
+    severity: string;
+    findingsCount: number;
+    findingsSummary: string;
+    toolParams: Record<string, unknown>;
+    createdAt: number;
+    timeoutSeconds: number;
+  };
+
+  const [approvalRequests, setApprovalRequests] = useState<
+    Map<string, ApprovalCardModel>
+  >(() => new Map());
   const isChatActiveRef = useRef(false);
   isChatActiveRef.current =
     location.pathname === "/" || location.pathname.startsWith("/chat");
@@ -553,7 +570,7 @@ export default function ChatPage() {
     if (approvalKey === prevApprovalKeyRef.current) return;
     prevApprovalKeyRef.current = approvalKey;
 
-    const newMap = new Map<string, ApprovalMessageData>();
+    const newMap = new Map<string, ApprovalCardModel>();
     for (const approval of sessionApprovals) {
       newMap.set(approval.request_id, {
         requestId: approval.request_id,
@@ -1115,6 +1132,7 @@ export default function ChatPage() {
   }, [chatId]);
 
   const options = useMemo(() => {
+    const planEnabled = false;
     const i18nConfig = getDefaultConfig(t);
     const commandSuggestions: CommandSuggestion[] = [
       {
@@ -1323,7 +1341,7 @@ export default function ChatPage() {
       </div>
 
       {/* Render approval cards as overlays */}
-      {Array.from(approvalRequests.values()).map((request) => (
+      {Array.from(approvalRequests.values()).map((request: ApprovalCardModel) => (
         <div
           key={request.requestId}
           data-approval-id={request.requestId}

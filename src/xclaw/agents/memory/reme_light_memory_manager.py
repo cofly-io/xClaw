@@ -8,12 +8,16 @@ import shutil
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from agentscope.agent import ReActAgent
 from agentscope.message import Msg, TextBlock, ToolResultBlock, ToolUseBlock
 from agentscope.tool import Toolkit, ToolResponse
 
-from xclaw.agents.memory.base_memory_manager import BaseMemoryManager
+from xclaw.agents.memory.base_memory_manager import (
+    BaseMemoryManager,
+    memory_registry,
+)
 from xclaw.agents.model_factory import create_model_and_formatter
 from xclaw.agents.tools import read_file, write_file, edit_file
 from xclaw.agents.utils import get_token_counter
@@ -138,12 +142,6 @@ class ReMeLightMemoryManager(BaseMemoryManager):
         )
 
         self.summary_toolkit = Toolkit()
-        from qwenpaw.agents.tools import (
-            read_file,
-            write_file,
-            edit_file,
-        )  # noqa: PLC0415
-
         self.summary_toolkit.register_tool_function(read_file)
         self.summary_toolkit.register_tool_function(write_file)
         self.summary_toolkit.register_tool_function(edit_file)

@@ -12,6 +12,7 @@ from openai import APIError, AsyncOpenAI
 from xclaw.providers.provider import (
     ExtendedModelInfo,
     ModelInfo,
+    Provider,
 )
 
 

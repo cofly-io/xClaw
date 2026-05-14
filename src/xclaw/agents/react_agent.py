@@ -211,6 +211,8 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
         # Register hooks
         self._register_hooks()
 
+        self.plan_notebook = plan_notebook
+
     def _create_toolkit(
         self,
         namesake_strategy: NamesakeStrategy = "skip",

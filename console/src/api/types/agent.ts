@@ -13,6 +13,25 @@ export interface ContextCompactConfig {
   compact_with_thinking_block: boolean;
 }
 
+/** Tool result compaction on `AgentsRunningConfig` (backend field names). */
+export interface ToolResultCompactConfig {
+  enabled?: boolean;
+  recent_n?: number;
+  old_max_bytes?: number;
+  recent_max_bytes?: number;
+  retention_days?: number;
+  [key: string]: unknown;
+}
+
+/** Memory summary / distillation block on `AgentsRunningConfig`. */
+export interface MemorySummaryConfig {
+  memory_summary_enabled?: boolean;
+  distill_enabled?: boolean;
+  distill_lookback_days?: number;
+  distill_max_experiences?: number;
+  [key: string]: unknown;
+}
+
 export interface ToolResultPruningConfig {
   enabled: boolean;
   pruning_recent_n: number;
@@ -53,6 +72,9 @@ export interface AutoTitleConfig {
   enabled: boolean;
   timeout_seconds: number;
 }
+
+/** Running-config embedding block (mirrors `EmbeddingModelConfig`). */
+export type EmbeddingConfig = EmbeddingModelConfig;
 
 export interface ADBPGMemoryConfig {
   host: string;

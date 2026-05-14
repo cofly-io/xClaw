@@ -18,6 +18,11 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from agentscope.message import Msg
 
+from ..constant import (
+    TOOL_GUARD_APPROVAL_HEARTBEAT_INTERVAL,
+    TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS,
+)
+from ..security.tool_guard.execution_level import ToolExecutionLevel
 from ..security.tool_guard.i18n import _TOOL_GUARD_I18N
 from ..security.tool_guard.models import (
     TOOL_GUARD_DENIED_MARK,
@@ -127,13 +132,6 @@ class ToolGuardMixin:
             level_str = getattr(agent_config, "approval_level", "AUTO")
 
         return ToolExecutionLevel.from_config(level_str)
-
-    def _tool_guard_ui_lang(self) -> str:
-        """Locale for tool-guard alerts from agent language."""
-        raw = getattr(self, "_language", None)
-        if isinstance(raw, str) and raw.strip():
-            return _normalize_tool_guard_ui_lang(raw)
-        return "en"
 
     # ------------------------------------------------------------------
     # _acting override

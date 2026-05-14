@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { Dropdown, Input, Tooltip } from "antd";
 import type { MenuProps } from "antd";
 import type { LucideIcon } from "lucide-react";
@@ -25,8 +25,6 @@ interface ChatSessionItemProps {
   sessionId: string;
   /** Session display name */
   name: string;
-  /** Stable session id (drawer / virtual list; used with shared context menu) */
-  sessionId?: string;
   /** Optional subtitle time string (drawer) */
   time?: string;
   /** Session lifecycle status (drawer) */
@@ -85,6 +83,7 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const contextMenu = useContextMenu();
+  const isComposingRef = useRef(false);
 
   const contextMenuItems: ContextMenuItem[] = useMemo(() => {
     const items: ContextMenuItem[] = [
@@ -124,41 +123,6 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
     props.onDelete,
     props.pinned,
   ]);
-
-  const handleClick = useCallback(() => {
-    props.onClick?.(props.sessionId);
-  }, [props.onClick, props.sessionId]);
-
-  const handleEdit = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      props.onEdit?.(props.sessionId, props.name);
-    },
-    [props.onEdit, props.sessionId, props.name],
-  );
-
-  const handleDelete = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      props.onDelete?.(props.sessionId);
-    },
-    [props.onDelete, props.sessionId],
-  );
-
-  const handlePin = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      props.onPin?.(props.sessionId);
-    },
-    [props.onPin, props.sessionId],
-  );
-
-  const handleContextMenu = useCallback(
-    (event: React.MouseEvent) => {
-      props.onContextMenu?.(props.sessionId, event);
-    },
-    [props.onContextMenu, props.sessionId],
-  );
 
   const className = [
     styles.chatSessionItem,

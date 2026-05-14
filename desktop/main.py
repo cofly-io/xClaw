@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-"""supOS X 个人助手 - 桌面入口
-
-使用 PyWebView 作为桌面壳，内嵌 xClaw 后端。
-"""
+"""xClaw 桌面入口：PyWebView 壳 + 内嵌本地后端。"""
 import multiprocessing
 import os
 import socket
@@ -88,39 +85,83 @@ else:
 # 加载页 HTML — 后端就绪前显示，避免黑屏
 # ---------------------------------------------------------------------------
 LOADING_HTML = """<!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
-    height: 100vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #0d1117;
-    font-family: -apple-system, 'Segoe UI', sans-serif;
-    color: #c9d1d9;
+    font-family: system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #334155;
+    background: linear-gradient(165deg, #eef4ff 0%, #f8fafc 42%, #e8f4fc 100%);
   }
-  .logo { font-size: 32px; font-weight: 700; color: #1864ff; letter-spacing: 2px; margin-bottom: 8px; }
-  .sub  { font-size: 13px; color: #8b949e; margin-bottom: 40px; }
-  .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid #21262d;
-    border-top-color: #1864ff;
+  .wrap {
+    text-align: center;
+    padding: 48px 56px;
+    max-width: 420px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 12px 40px rgba(37, 99, 235, 0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+  .brand {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: linear-gradient(120deg, #1d4ed8 0%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 12px;
+  }
+  .slogan {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #64748b;
+    margin-bottom: 32px;
+  }
+  .loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .loader span {
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    background: #3b82f6;
+    opacity: 0.35;
+    animation: bounce 1.1s ease-in-out infinite;
   }
-  .tip { margin-top: 20px; font-size: 12px; color: #484f58; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader span:nth-child(2) { animation-delay: 0.15s; }
+  .loader span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+    40% { transform: translateY(-10px); opacity: 1; }
+  }
+  .status {
+    font-size: 0.8125rem;
+    color: #94a3b8;
+  }
 </style>
 </head>
 <body>
-  <div class="logo">supOS X</div>
-  <div class="sub">个人助手</div>
-  <div class="spinner"></div>
-  <div class="tip">正在启动服务，请稍候…</div>
+  <div class="wrap">
+    <div class="brand">xClaw</div>
+    <p class="slogan">智在本地，与现场同频</p>
+    <div class="loader"><span></span><span></span><span></span></div>
+    <p class="status">正在启动本地服务，请稍候…</p>
+  </div>
 </body>
 </html>"""
 
@@ -234,7 +275,7 @@ def _start_tray() -> None:
         pystray.MenuItem("打开主窗口", on_show, default=True),
         pystray.MenuItem("退出 xClaw", on_quit),
     )
-    tray = pystray.Icon("xclaw_desktop", image, "supOS X 个人助手", menu)
+    tray = pystray.Icon("xclaw_desktop", image, "xClaw", menu)
     _RUNTIME["tray_icon"] = tray
     threading.Thread(target=tray.run, daemon=True).start()
 
@@ -263,7 +304,7 @@ def main() -> None:
 
     # ── 3. 立即显示加载页，用户不会看到黑屏 ──
     window = webview.create_window(
-        title="supOS X 个人助手",
+        title="xClaw",
         html=LOADING_HTML,  # 先显示本地加载页
         width=1280,
         height=800,
@@ -308,8 +349,14 @@ def main() -> None:
             window.load_url(f"http://127.0.0.1:{port}")
         else:
             window.load_html(
-                "<h2 style='text-align:center;margin-top:40vh;font-family:sans-serif;color:#c00'>"
-                "后端启动失败，请检查日志</h2>",
+                "<!DOCTYPE html><html lang='zh-CN'><head><meta charset='utf-8'>"
+                "<meta name='color-scheme' content='light'>"
+                "<style>body{margin:0;min-height:100vh;display:flex;align-items:center;"
+                "justify-content:center;font-family:system-ui,'Segoe UI','Microsoft YaHei',sans-serif;"
+                "background:linear-gradient(165deg,#eef4ff,#f8fafc);color:#b91c1c;}"
+                ".box{text-align:center;padding:2rem;max-width:360px;}"
+                "h2{font-size:1.1rem;font-weight:600;margin:0;}</style></head><body>"
+                "<div class='box'><h2>后端启动失败，请检查日志后重试</h2></div></body></html>"
             )
 
     # ── 4. 用独立线程等待后端，不阻塞 GUI ──

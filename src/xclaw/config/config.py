@@ -3,11 +3,7 @@ from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
-from typing import Optional, Union, Dict, List, Literal, Any, Set
-
-import json
-import re
+import threading
 from pathlib import Path
 from typing import Optional, Union, Dict, List, Literal, Any, Set
 
@@ -904,6 +900,70 @@ class AutoTitleConfig(BaseModel):
             "placeholder name in place."
         ),
     )
+
+
+class ToolResultCompactConfig(BaseModel):
+    """Byte budgets for tool-result compaction in context (running config)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = Field(
+        default=True,
+        description="Whether to compact tool results when trimming context",
+    )
+    recent_n: int = Field(
+        default=2,
+        ge=1,
+        le=10,
+        description="How many recent tool results keep full recent_max_bytes",
+    )
+    old_max_bytes: int = Field(
+        default=3000,
+        ge=100,
+        description="Byte cap for older tool results after compaction",
+    )
+    recent_max_bytes: int = Field(
+        default=50000,
+        ge=1000,
+        description="Byte cap for recent tool results",
+    )
+    retention_days: int = Field(
+        default=5,
+        ge=1,
+        le=30,
+        description="Retention window (days) for tool result offload data",
+    )
+
+
+class MemorySummaryConfig(BaseModel):
+    """Memory summarisation / distillation toggles on running config."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    memory_summary_enabled: bool = Field(
+        default=True,
+        description="Whether to queue async memory summary after compaction",
+    )
+    distill_enabled: bool = Field(
+        default=True,
+        description="Whether experience distillation runs on schedule",
+    )
+    distill_lookback_days: int = Field(
+        default=7,
+        ge=1,
+        le=30,
+        description="Days of session history to consider for distillation",
+    )
+    distill_max_experiences: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Max distilled experiences to keep in hot knowledge",
+    )
+
+
+class EmbeddingConfig(EmbeddingModelConfig):
+    """Running-level embedding defaults (same shape as EmbeddingModelConfig)."""
 
 
 class AgentsRunningConfig(BaseModel):
@@ -1908,6 +1968,9 @@ ChannelConfigUnion = Union[
 
 # Agent configuration utility functions
 
+_agent_config_lock = threading.Lock()
+_agent_config_cache: dict[str, tuple[AgentProfileConfig, float]] = {}
+
 
 def build_fallback_agent_profile_config(
     agent_id: str,
@@ -1979,11 +2042,7 @@ def load_agent_config(agent_id: str) -> AgentProfileConfig:
     Raises:
         ValueError: If agent ID not found in root config
     """
-    from .utils import (
-        load_config,
-        _agent_config_cache,
-        _agent_config_lock,
-    )
+    from .utils import load_config
 
     config = load_config()
 
@@ -2088,11 +2147,7 @@ def save_agent_config(
     Raises:
         ValueError: If agent ID not found in root config
     """
-    from .utils import (
-        load_config,
-        _agent_config_cache,
-        _agent_config_lock,
-    )
+    from .utils import load_config
 
     config = load_config()
 

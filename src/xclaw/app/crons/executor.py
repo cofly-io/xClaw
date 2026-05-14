@@ -83,8 +83,9 @@ class CronExecutor:
                 else f"cron:{job.id}"
             )
 
+        delivery_error: str | None = None
+
         async def _run() -> None:
-            nonlocal delivery_error
             async for event in self._runner.stream_query(req):
                 await self._channel_manager.send_event(
                     channel=target_channel,

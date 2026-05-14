@@ -225,6 +225,7 @@ export default function SidebarSessionList({
                 return (
                   <ChatSessionItem
                     key={session.id}
+                    sessionId={session.id}
                     name={session.name || "New Chat"}
                     channelKey={channelKey || undefined}
                     channelLabel={channelLabel}
@@ -266,6 +267,7 @@ export default function SidebarSessionList({
                   return (
                     <ChatSessionItem
                       key={session.id}
+                      sessionId={session.id}
                       name={session.name || "New Chat"}
                       channelKey={channelKey || undefined}
                       channelLabel={channelLabel}

@@ -298,6 +298,7 @@ function MCPPage() {
               isHovered={hoverKey === client.key}
               onMouseEnter={() => setHoverKey(client.key)}
               onMouseLeave={() => setHoverKey(null)}
+              onRefresh={refreshClients}
             />
           ))}
         </div>

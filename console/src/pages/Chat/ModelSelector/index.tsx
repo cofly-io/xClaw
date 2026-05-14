@@ -13,8 +13,7 @@ import { useTranslation } from "react-i18next";
 import { providerApi } from "../../../api/modules/provider";
 import type { ProviderInfo, ActiveModelsInfo } from "../../../api/types";
 import { useAgentStore } from "../../../stores/agentStore";
-import { confirmFreeModelSwitch } from "@/utils/freeModelSwitchWarning";
-import { ProviderIcon } from "../../Settings/Models/components/ProviderIconComponent";
+import { providerIcon } from "../../Settings/Models/components/providerIcon";
 import styles from "./index.module.less";
 
 function ProviderAvatar({
@@ -197,9 +196,7 @@ export default function ModelSelector() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const savingRef = useRef(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
   const { selectedAgent } = useAgentStore();
   const { message } = useAppMessage();
@@ -264,32 +261,6 @@ export default function ModelSelector() {
         models: [...(p.models ?? []), ...(p.extra_models ?? [])],
       }));
   }, [providers]);
-
-  // Filter providers/models by search query
-  const trimmedSearch = searchQuery.trim();
-  const filteredProviders = (() => {
-    if (!trimmedSearch) return eligibleProviders;
-    const query = trimmedSearch.toLowerCase();
-    return eligibleProviders
-      .map((p) => ({
-        ...p,
-        models: p.models.filter(
-          (m) =>
-            (m.name || m.id).toLowerCase().includes(query) ||
-            p.name.toLowerCase().includes(query),
-        ),
-      }))
-      .filter((p) => p.models.length > 0);
-  })();
-
-  // Focus search input when dropdown opens; clear query when closes
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => searchInputRef.current?.focus(), 50);
-    } else {
-      setSearchQuery("");
-    }
-  }, [open]);
 
   const activeProviderId = activeModels?.active_llm?.provider_id;
   const activeModelId = activeModels?.active_llm?.model;

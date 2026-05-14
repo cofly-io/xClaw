@@ -7,7 +7,6 @@ export interface ModelInfo {
   supports_image: boolean | null;
   supports_video: boolean | null;
   probe_source?: string | null;
-  is_free?: boolean;
   generate_kwargs: Record<string, unknown>;
 }
 
@@ -191,6 +190,7 @@ export interface ExtendedModelInfo {
   id: string;
   name: string;
   provider?: string;
+  is_free?: boolean | null;
   input_modalities?: string[];
   output_modalities?: string[];
   pricing?: {

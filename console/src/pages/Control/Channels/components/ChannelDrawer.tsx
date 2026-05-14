@@ -16,6 +16,7 @@ import { getChannelLabel, type ChannelKey } from "./constants";
 import { QrcodeAuthBlock } from "./QrcodeAuthBlock";
 import styles from "../index.module.less";
 import { useAgentStore } from "../../../../stores/agentStore";
+import { openExternalLink } from "../../../../utils/openExternalLink";
 
 const CHANNELS_WITH_ACCESS_CONTROL: ChannelKey[] = [
   "telegram",

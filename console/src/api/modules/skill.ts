@@ -341,7 +341,10 @@ export const skillApi = {
   },
 
   importSelectedPoolBuiltins: (payload: {
-    imports: Array<{ skill_name: string; language: string }>;
+    /** Preferred: explicit skill + language selections. */
+    imports?: Array<{ skill_name: string; language: string }>;
+    /** Legacy: names only (backend maps to default language). */
+    skill_names?: string[];
     overwrite_conflicts?: boolean;
   }) =>
     request<{
@@ -424,6 +427,15 @@ export const skillApi = {
       {
         method: "PUT",
         body: JSON.stringify(channels),
+      },
+    ),
+
+  updateSkillTags: (skillName: string, tags: string[]) =>
+    request<{ updated: boolean; tags: string[] }>(
+      `/skills/${encodeURIComponent(skillName)}/tags`,
+      {
+        method: "PUT",
+        body: JSON.stringify(tags),
       },
     ),
 

@@ -89,7 +89,7 @@ export function PoolSkillDrawer({
                   {t("skillPool.builtinLanguage")}
                 </div>
                 <div className={styles.languageToggle}>
-                  {activeSkill.available_builtin_languages?.map((lang) => (
+                  {activeSkill.available_builtin_languages?.map((lang: string) => (
                     <Button
                       key={lang}
                       size="small"

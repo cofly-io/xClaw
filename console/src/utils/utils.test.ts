@@ -15,6 +15,12 @@ describe("getAgentDisplayName", () => {
     ).toBe("agent.defaultDisplayName");
   });
 
+  it('returns i18n key when id is "default" and name is "Default" (API fallback)', () => {
+    expect(
+      getAgentDisplayName({ id: "default", name: "Default" }, t as any),
+    ).toBe("agent.defaultDisplayName");
+  });
+
   it('returns custom name when id is "default" but name is customized', () => {
     expect(
       getAgentDisplayName({ id: "default", name: "anything" }, t as any),

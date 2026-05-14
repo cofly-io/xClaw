@@ -2,9 +2,11 @@ import { Card, Button, Modal, Tooltip, Input } from "@agentscope-ai/design";
 import type { MCPClientInfo } from "../../../../api/types";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import { useTheme } from "../../../../contexts/ThemeContext";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import styles from "../index.module.less";
+import { MCPOAuthSection } from "./MCPOAuthSection";
 
 interface MCPClientUpdate {
   name?: string;
@@ -27,6 +29,8 @@ interface MCPClientCardProps {
   isHovered: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  /** Refresh client list after OAuth authorize / revoke */
+  onRefresh?: () => void | Promise<void>;
 }
 
 export function MCPClientCard({
@@ -37,6 +41,7 @@ export function MCPClientCard({
   isHovered,
   onMouseEnter,
   onMouseLeave,
+  onRefresh,
 }: MCPClientCardProps) {
   const { t } = useTranslation();
   const { isDark } = useTheme();

@@ -14,32 +14,6 @@ interface ImportHubModalProps {
   hint?: string;
 }
 
-type ValidationResult =
-  | { ok: true; source: string }
-  | { ok: false; messageKey: string };
-
-function validateUrl(url: string): ValidationResult {
-  const trimmed = url.trim();
-  if (!trimmed) {
-    return { ok: false, messageKey: "" };
-  }
-
-  try {
-    new URL(trimmed);
-  } catch {
-    return { ok: false, messageKey: "skills.invalidUrl" };
-  }
-
-  const source = skillMarkets.find((m) =>
-    trimmed.toLowerCase().startsWith(m.urlPrefix.toLowerCase()),
-  );
-  if (!source) {
-    return { ok: false, messageKey: "skills.invalidSkillUrlSource" };
-  }
-
-  return { ok: true, source: source.name };
-}
-
 export function ImportHubModal({
   open,
   importing,

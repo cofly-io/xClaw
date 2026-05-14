@@ -12,8 +12,8 @@ interface ModelsSectionProps {
   providers: Array<{
     id: string;
     name: string;
-    models?: Array<{ id: string; name: string; is_free?: boolean }>;
-    extra_models?: Array<{ id: string; name: string; is_free?: boolean }>;
+    models?: Array<{ id: string; name: string; is_free?: boolean | null }>;
+    extra_models?: Array<{ id: string; name: string; is_free?: boolean | null }>;
     base_url?: string;
     api_key?: string;
     is_custom: boolean;

@@ -1,12 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  Button,
-  Form,
-  Input,
-  Modal,
-  Tag,
-  Checkbox,
-} from "@agentscope-ai/design";
+import { Button, Form, Input, Modal, Tag } from "@agentscope-ai/design";
 import { AutoComplete, Tooltip } from "antd";
 import {
   DeleteOutlined,
@@ -28,6 +21,7 @@ import type {
   ProviderInfo,
   SeriesResponse,
   ModelInfo,
+  ExtendedModelInfo,
 } from "../../../../../api/types";
 
 import api from "../../../../../api";
@@ -720,202 +714,36 @@ export function RemoteModelManageModal({
       </div>
 
       {isOpenRouter && (
-        <div style={{ marginTop: 16, marginBottom: 16 }}>
-          <Button
-            type={showFilters ? "primary" : "default"}
-            icon={<FilterOutlined />}
-            onClick={() => setShowFilters(!showFilters)}
-            style={{ width: "100%", marginBottom: showFilters ? 8 : 0 }}
-          >
-            {t("models.filterModels") || "Filter Models"}
-          </Button>
-
-          {showFilters && (
-            <div
-              style={{
-                padding: 12,
-                background: "#f5f5f5",
-                borderRadius: 8,
-              }}
-            >
-              {/* Provider/Series Filter */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ marginBottom: 4, fontWeight: 500 }}>
-                  {t("models.filterByProvider") || "Provider:"}
-                </div>
-                <Checkbox.Group
-                  options={availableSeries.map((s) => ({
-                    label: s,
-                    value: s,
-                  }))}
-                  value={selectedSeries}
-                  onChange={(vals) => setSelectedSeries(vals as string[])}
-                  style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
-                />
-              </div>
-
-              {/* Input Modality Filter */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ marginBottom: 4, fontWeight: 500 }}>
-                  {t("models.filterByModality") || "Input Modality:"}
-                </div>
-                <Checkbox.Group
-                  options={[
-                    {
-                      label: (
-                        <>
-                          <SparkImageuploadLine /> {t("models.modalityVision")}
-                        </>
-                      ),
-                      value: "image",
-                    },
-                    {
-                      label: (
-                        <>
-                          <SparkAudiouploadLine /> {t("models.modalityAudio")}
-                        </>
-                      ),
-                      value: "audio",
-                    },
-                    {
-                      label: (
-                        <>
-                          <SparkVideouploadLine /> {t("models.modalityVideo")}
-                        </>
-                      ),
-                      value: "video",
-                    },
-                    {
-                      label: (
-                        <>
-                          <SparkFilePdfLine /> {t("models.modalityFile")}
-                        </>
-                      ),
-                      value: "file",
-                    },
-                    {
-                      label: (
-                        <>
-                          <SparkTextLine /> {t("models.modalityText")}
-                        </>
-                      ),
-                      value: "text",
-                    },
-                  ]}
-                  value={selectedInputModality ? [selectedInputModality] : []}
-                  onChange={(vals) =>
-                    setSelectedInputModality(
-                      vals.length > 0 ? (vals[0] as string) : null,
-                    )
-                  }
-                  style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
-                />
-              </div>
-
-              {/* Fetch Button */}
-              <Button
-                type="primary"
-                onClick={handleFetchModels}
-                loading={loadingFilters}
-                style={{ width: "100%" }}
-              >
-                {t("models.getModels") || "Get Models"}
-              </Button>
-
-              {/* Discovered Models List */}
-              {discoveredModels.length > 0 && (
-                <div
-                  style={{
-                    marginTop: 12,
-                    maxHeight: 200,
-                    overflowY: "auto",
-                  }}
-                >
-                  <div style={{ fontWeight: 500, marginBottom: 4 }}>
-                    {t("models.discovered") || "Available Models:"}
-                  </div>
-                  {discoveredModels.map((model: any) => (
-                    <div
-                      key={model.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "4px 8px",
-                        background: "white",
-                        marginBottom: 4,
-                        borderRadius: 4,
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 500 }}>{model.name}</div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "#666",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <span>{model.provider}</span>
-                          {model.input_modalities?.includes("text") && (
-                            <SparkTextLine style={{ fontSize: 12 }} />
-                          )}
-                          {model.input_modalities?.includes("image") && (
-                            <SparkImageuploadLine style={{ fontSize: 12 }} />
-                          )}
-                          {model.input_modalities?.includes("audio") && (
-                            <SparkAudiouploadLine style={{ fontSize: 12 }} />
-                          )}
-                          {model.input_modalities?.includes("video") && (
-                            <SparkVideouploadLine style={{ fontSize: 12 }} />
-                          )}
-                          {model.input_modalities?.includes("file") && (
-                            <SparkFilePdfLine style={{ fontSize: 12 }} />
-                          )}
-                          {model.output_modalities?.includes("image") && (
-                            <SparkTextImageLine
-                              style={{ fontSize: 12, color: "purple" }}
-                            />
-                          )}
-                          {model.pricing?.prompt && (
-                            <span style={{ color: "green", marginLeft: 4 }}>
-                              $
-                              {(
-                                parseFloat(model.pricing.prompt) * 1_000_000
-                              ).toFixed(2)}
-                              {t("models.perMillionIn")}
-                              {model.pricing?.completion && (
-                                <span>
-                                  {" "}
-                                  · $
-                                  {(
-                                    parseFloat(model.pricing.completion) *
-                                    1_000_000
-                                  ).toFixed(2)}
-                                  {t("models.perMillionOut")}
-                                </span>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        size="small"
-                        type="primary"
-                        onClick={() => handleAddFilteredModel(model)}
-                        disabled={saving}
-                      >
-                        {t("models.add") || "Add"}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <OpenRouterFilterSection
+          showFilters={showFilters}
+          availableSeries={availableSeries}
+          selectedSeries={selectedSeries}
+          selectedInputModalities={selectedInputModalities}
+          showFreeOnly={showFreeOnly}
+          loadingFilters={loadingFilters}
+          discoveredModels={discoveredModels as ExtendedModelInfo[]}
+          saving={saving}
+          isDark={isDark}
+          freeTagStyle={
+            isDark
+              ? {
+                  background: "rgba(82, 196, 26, 0.15)",
+                  color: "#95de64",
+                  borderColor: "rgba(82, 196, 26, 0.35)",
+                }
+              : {
+                  background: "#f6ffed",
+                  color: "#389e0d",
+                  borderColor: "#b7eb8f",
+                }
+          }
+          onToggleFilters={() => setShowFilters(!showFilters)}
+          onSelectedSeriesChange={setSelectedSeries}
+          onSelectedInputModalitiesChange={setSelectedInputModalities}
+          onShowFreeOnlyChange={setShowFreeOnly}
+          onFetchModels={() => void handleFetchModels()}
+          onAddModel={(model) => void handleAddFilteredModel(model)}
+        />
       )}
 
       {/* Add model section */}

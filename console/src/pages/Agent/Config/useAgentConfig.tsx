@@ -5,13 +5,7 @@ import api from "../../../api";
 import type { AgentsRunningConfig } from "../../../api/types";
 import { useAppMessage } from "../../../hooks/useAppMessage";
 import { useAgentStore } from "../../../stores/agentStore";
-import {
-  CONTEXT_MANAGER_BACKEND_MAPPINGS,
-  MEMORY_MANAGER_BACKEND_MAPPINGS,
-} from "../../../constants/backendMappings";
 import type { ToolExecutionLevel } from "./components/ToolExecutionLevelCard";
-
-type ToolExecutionLevel = "STRICT" | "SMART" | "AUTO" | "OFF";
 
 export function useAgentConfig() {
   const { t } = useTranslation();

@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec for supOS X 个人助手
+"""PyInstaller spec for xClaw desktop (PyWebView).
 
 构建命令（在项目根目录执行）：
   python desktop/build.py

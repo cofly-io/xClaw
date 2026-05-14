@@ -40,13 +40,41 @@ from ...agents.utils.file_handling import (
     read_text_file_with_encoding_fallback,
 )
 from ...config.config import load_agent_config
-from ...constant import WORKING_DIR
+from ...constant import TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS, WORKING_DIR
+from ...security.tool_guard.approval import ApprovalDecision
 
 if TYPE_CHECKING:
     from ...agents.memory import BaseMemoryManager
     from ...agents.context import BaseContextManager
 
 logger = logging.getLogger(__name__)
+
+_APPROVE_EXACT = frozenset(
+    {
+        "approve",
+        "/approve",
+        "/daemon approve",
+    },
+)
+
+
+def _is_approval(text: str) -> bool:
+    """Return True when *text* is a user approval for the pending tool guard.
+
+    Matches plain ``approve``, ``/approve``, ``/daemon approve``, and
+    ``/approval approve`` / ``/approve <request_id>`` forms (case-insensitive,
+    normalized whitespace).  Anything else is treated as denial for the
+    pending approval handshake.
+    """
+    normalized = " ".join(text.split()).lower()
+    if normalized in _APPROVE_EXACT:
+        return True
+    parts = normalized.split()
+    if len(parts) >= 2 and parts[0] == "/approval" and parts[1] == "approve":
+        return True
+    if len(parts) >= 1 and parts[0] == "/approve":
+        return True
+    return False
 
 
 _PRINT_END_SIGNAL = "[END]"
@@ -108,6 +136,8 @@ async def _stream_printing_messages_interruptible(
 
 
 class AgentRunner(Runner):
+    _APPROVAL_TIMEOUT_SECONDS = TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS
+
     def __init__(
         self,
         agent_id: str = "default",
@@ -302,6 +332,105 @@ class AgentRunner(Runner):
         elif isinstance(content, str):
             last.content = new_text
 
+    async def _resolve_pending_approval(
+        self,
+        session_id: str,
+        query: str | None,
+    ) -> tuple[Msg | None, bool, dict[str, Any] | None]:
+        """Check for a pending tool-guard approval for *session_id*.
+
+        Returns ``(response_msg, was_consumed, approved_tool_call)``:
+
+        - ``(None, False, None)`` — no pending approval, continue normally.
+        - ``(Msg, True, None)`` — denied or timeout; yield the Msg and stop.
+        - ``(None, True, dict)`` — approved with stored tool call for replay.
+
+        Approvals are resolved FIFO per session (oldest pending first).
+        """
+        if not session_id:
+            return None, False, None
+
+        from ..approvals import get_approval_service
+
+        svc = get_approval_service()
+        pending = await svc.get_pending_by_session(session_id)
+        if pending is None:
+            return None, False, None
+
+        elapsed = time.time() - pending.created_at
+        if elapsed > self._APPROVAL_TIMEOUT_SECONDS:
+            await svc.resolve_request(
+                pending.request_id,
+                ApprovalDecision.TIMEOUT,
+            )
+            return (
+                Msg(
+                    name=self.agent_name,
+                    role="assistant",
+                    content=[
+                        TextBlock(
+                            type="text",
+                            text=(
+                                f"Tool `{pending.tool_name}` approval timed out "
+                                f"({int(elapsed)}s) — denied.\n\n"
+                                f"工具 `{pending.tool_name}` 审批已超时"
+                                f"（{int(elapsed)} 秒），已拒绝执行。"
+                            ),
+                        ),
+                    ],
+                ),
+                True,
+                None,
+            )
+
+        normalized = (query or "").strip().lower()
+        if _is_approval(normalized):
+            resolved = await svc.resolve_request(
+                pending.request_id,
+                ApprovalDecision.APPROVED,
+            )
+            approved_tool_call: dict[str, Any] | None = None
+            record = resolved or pending
+            if isinstance(record.extra, dict):
+                candidate = record.extra.get("tool_call")
+                if isinstance(candidate, dict):
+                    approved_tool_call = dict(candidate)
+                    siblings = record.extra.get("sibling_tool_calls")
+                    if isinstance(siblings, list):
+                        approved_tool_call["_sibling_tool_calls"] = siblings
+                    remaining = record.extra.get("remaining_queue")
+                    if isinstance(remaining, list):
+                        approved_tool_call["_remaining_queue"] = remaining
+                    thinking_blocks = record.extra.get("thinking_blocks")
+                    if isinstance(thinking_blocks, list):
+                        approved_tool_call["_thinking_blocks"] = thinking_blocks
+            return None, True, approved_tool_call
+
+        if _is_command(query):
+            return None, False, None
+
+        await svc.resolve_request(
+            pending.request_id,
+            ApprovalDecision.DENIED,
+        )
+        return (
+            Msg(
+                name=self.agent_name,
+                role="assistant",
+                content=[
+                    TextBlock(
+                        type="text",
+                        text=(
+                            f"Tool `{pending.tool_name}` denied.\n\n"
+                            f"工具 `{pending.tool_name}` 已拒绝执行。"
+                        ),
+                    ),
+                ],
+            ),
+            True,
+            None,
+        )
+
     async def query_handler(
         self,
         msgs,
@@ -483,7 +612,7 @@ class AgentRunner(Runner):
                 request_context=base_request_context,
                 workspace_dir=self.workspace_dir,
                 task_tracker=self._task_tracker,
-                plan_notebook=plan_notebook,
+                plan_notebook=None,
             )
             await agent.register_mcp_clients()
             agent.set_console_output_enabled(enabled=False)

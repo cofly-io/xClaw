@@ -12,7 +12,8 @@ import { DatePicker, TimePicker } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { FormInstance } from "antd";
-import type { CronJobSpecOutput } from "../../../../api/types";
+import { Form as AntForm } from "antd";
+import type { CronJobSpecOutput, CronDispatchTargetItem } from "../../../../api/types";
 import { TIMEZONE_OPTIONS, DEFAULT_FORM_VALUES } from "./constants";
 import styles from "../index.module.less";
 
@@ -45,6 +46,16 @@ export function JobDrawer({
   onSubmit,
 }: JobDrawerProps) {
   const { t } = useTranslation();
+
+  const selectedChannel = AntForm.useWatch(["dispatch", "channel"], form);
+  const selectedTargetUserId = AntForm.useWatch(
+    ["dispatch", "target", "user_id"],
+    form,
+  );
+  const [saveInboxTouched, setSaveInboxTouched] = useState(false);
+  const [channelSearch, setChannelSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [sessionSearch, setSessionSearch] = useState("");
 
   const isEdit = !!editingJob;
 

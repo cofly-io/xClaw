@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Idempotent hotfixes for vendor packages (React keys, antd deprecations).
  */
 import fs from "node:fs";
@@ -11,10 +11,14 @@ const root = path.resolve(__dirname, "..");
 function patchFile(rel, sentinel, apply) {
   const file = path.join(root, "node_modules", ...rel.split("/"));
   if (!fs.existsSync(file)) return;
-  let s = fs.readFileSync(file, "utf8");
+  let s = fs.readFileSync(file, { encoding: "utf8" });
   if (sentinel && s.includes(sentinel)) return;
   const next = apply(s);
-  if (next !== s) fs.writeFileSync(file, next, "utf8");
+  if (next !== s) {
+    // Write with explicit UTF-8 encoding, no BOM
+    const buffer = Buffer.from(next, "utf8");
+    fs.writeFileSync(file, buffer);
+  }
 }
 
 const SENDER_NEEDLE = `              children: [allowSpeech && /*#__PURE__*/_jsx(ActionButtonContext.Provider, {
@@ -179,8 +183,7 @@ patchFile(
 );
 
 // Patch Tool.js to show Chinese tool names in the chat UI.
-const TOOL_TITLE_NEEDLE = `var title = "".concat(serverLabel).concat(toolName);`;
-const TOOL_TITLE_REPL = `var TOOL_LABELS_ZH = {
+const TOOL_LABELS_ZH_DEF = `var TOOL_LABELS_ZH = {
   read_file: '读取文件', write_file: '写入文件', edit_file: '编辑文件', append_file: '追加文件',
   execute_shell_command: '执行命令', grep_search: '搜索内容', glob_search: '搜索文件',
   desktop_screenshot: '截取屏幕', browser_use: '操控浏览器',
@@ -190,16 +193,26 @@ const TOOL_TITLE_REPL = `var TOOL_LABELS_ZH = {
   send_file_to_user: '发送文件给用户', get_token_usage: '获取用量',
   supos_api_call: 'SupOS API 调用', memory_search: '搜索记忆',
   list_directory: '列出目录'
-};
-var title = "".concat(serverLabel).concat(TOOL_LABELS_ZH[toolName] || toolName);`;
+};`;
 
 patchFile(
   "@agentscope-ai/chat/lib/AgentScopeRuntimeWebUI/core/AgentScopeRuntime/Response/Tool.js",
-  "TOOL_LABELS_ZH",
-  (s) =>
-    s.includes(TOOL_TITLE_NEEDLE)
-      ? s.replace(TOOL_TITLE_NEEDLE, TOOL_TITLE_REPL)
-      : s,
+  "TOOL_LABELS_ZH_V2_FIXED",
+  (s) => {
+    // Pattern 1: Original unpatch code
+    const originalPattern = /var title = ""\.concat\(serverLabel\)\.concat\(toolName\);/;
+    // Pattern 2: Previously patched (possibly corrupted) code
+    const patchedPattern = /var TOOL_LABELS_ZH = \{[\s\S]*?\};[\s\n]*var title = ""\.concat\(serverLabel\)\.concat\(TOOL_LABELS_ZH\[toolName\] \|\| toolName\);/;
+    
+    if (patchedPattern.test(s)) {
+      // Replace corrupted patch with fixed version
+      return s.replace(patchedPattern, TOOL_LABELS_ZH_DEF + '\n  var title = "".concat(serverLabel).concat(TOOL_LABELS_ZH[toolName] || toolName);');
+    } else if (originalPattern.test(s)) {
+      // Apply patch to original code
+      return s.replace(originalPattern, TOOL_LABELS_ZH_DEF + '\n  var title = "".concat(serverLabel).concat(TOOL_LABELS_ZH[toolName] || toolName);');
+    }
+    return s;
+  },
 );
 
 /**
