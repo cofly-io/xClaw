@@ -6,25 +6,64 @@ LLM 的上下文窗口就像一个**有限容量的背包** 🎒。每次对话�
 
 **上下文管理**就是一套帮你"管理背包"的机制，确保 AI 能够持续、高效地工作。
 
+> 上下文管理机制设计受 [OpenClaw](https://github.com/openclaw/openclaw) 启发，由 [ReMe](https://github.com/agentscope-ai/ReMe) 的 **ReMeLight** 实现。
+
+### 工作原理 — 总结
+
+xClaw 上下文管理分为两条并行的 Offload 路径，共同解决上下文窗口有限的问题：
+
+| 机制                 | 触发时机              | Offload 目标              | 保留在上下文的内容                   |
+| -------------------- | --------------------- | ------------------------- | ------------------------------------ |
+| **工具结果 Offload** | 工具输出字节超出阈值  | `tool_result/{uuid}.txt`  | 片段 + 文件路径引用                  |
+| **对话压缩 + 归档**  | 上下文 Token 超出阈值 | `dialog/YYYY-MM-DD.jsonl` | `compact_summary`（摘要 + 路径引导） |
+
+**每轮推理前**，`MemoryCompactionHook` 按顺序执行：
+
 ```mermaid
-graph TB
-    A[上下文管理] --> B[结构划分]
-    A --> C[Token 监控]
-    A --> D[压缩机制]
-
-    B --> B1[系统提示]
-    B --> B2[可压缩区]
-    B --> B3[保留区]
-
-    D --> D1[工具结果压缩]
-    D --> D2[对话压缩]
+flowchart LR
+    A[每轮推理前] --> B[1 工具结果 Offload]
+    B --> C[2 Token 超限检查]
+    C -->|未超限| D[正常推理]
+    C -->|超限| E[3 压缩旧消息\n生成 compact_summary]
+    E --> F[4 归档原始消息\n写入 dialog/]
+    F --> D
 ```
 
-> 上下文管理机制设计受 [OpenClaw](https://github.com/openclaw/openclaw) 启发，并由 [ReMe](https://github.com/agentscope-ai/ReMe) 实现。
+- **不丢失信息**：被压缩的原始对话保存在 `dialog/`，工具输出保存在 `tool_result/`，Agent 随时可通过 `read_file` 工具回溯
+- **保持连贯**：`compact_summary` 保留结构化摘要 + 对话路径引导，确保 Agent 不失去上下文
+- **自动触发**：无需手动干预，也可用 `/compact` 主动触发
 
 ## 上下文结构
 
-CoPaw 将上下文划分为三个区域：
+### 内存中的数据结构
+
+xClaw 的上下文由两部分组成：
+
+```mermaid
+flowchart TD
+    A[Context] --> B[compact_summary 可选]
+    B --> C[对话路径引导<br>dialog/YYYY-MM-DD.jsonl 共 N 行]
+    B --> D[结构化历史摘要<br>Goal / Constraints / Progress<br>KeyDecisions / NextSteps]
+    A --> E[messages 当前完整消息列表]
+```
+
+| 组件                | 说明                                                     |
+| ------------------- | -------------------------------------------------------- |
+| **compact_summary** | 压缩后生成，包含两部分（见下方）                         |
+| ↳ 对话路径引导      | 指向 `dialog/YYYY-MM-DD.jsonl` 中原始对话数据的读取引导  |
+| ↳ 结构化历史摘要    | Goal / Constraints / Progress / KeyDecisions / NextSteps |
+| **messages**        | 当前对话上下文（完整消息列表）                           |
+
+### 文件系统缓存
+
+超出上下文的数据会 Offload 到文件系统，保持可追溯性：
+
+| 路径                      | 内容                                      |
+| ------------------------- | ----------------------------------------- |
+| `dialog/YYYY-MM-DD.jsonl` | 被压缩的原始对话消息，按时间顺序追加写入  |
+| `tool_result/{uuid}.txt`  | 超长工具调用结果原文，保留 N 天后自动清理 |
+
+### 消息区域划分
 
 ```mermaid
 graph LR
@@ -45,8 +84,10 @@ graph LR
 │ System Prompt (固定)                     │  ← 始终保留
 │ "你是一个 AI 助手..."                     │
 ├─────────────────────────────────────────┤
-│ 压缩摘要 (可选)                           │  ← 压缩后生成
-│ "之前帮用户完成了登录功能..."              │
+│ compact_summary (可选)                   │  ← 压缩后生成
+│  - [对话路径引导] dialog/2025-01-15.jsonl│
+│  - Goal: 构建用户登录系统                 │
+│  - Progress: 登录接口已完成...            │
 ├─────────────────────────────────────────┤
 │ 可压缩区                                 │  ← 超限时会被压缩
 │ [消息1] 用户: 帮我写个登录功能             │
@@ -75,52 +116,59 @@ graph LR
 
 ### 相关代码
 
-- [MemoryCompactionHook](https://github.com/agentscope-ai/CoPaw/blob/main/src/copaw/agents/hooks/memory_compaction.py)
-- [compact_tool_result](https://github.com/agentscope-ai/ReMe/blob/v0.3.0.6b2/reme/memory/file_based/components/tool_result_compactor.py)
-- [check_context](https://github.com/agentscope-ai/ReMe/blob/v0.3.0.6b2/reme/memory/file_based/components/context_checker.py)
-- [compact_memory](https://github.com/agentscope-ai/ReMe/blob/v0.3.0.6b2/reme/memory/file_based/components/compactor.py)
+- [MemoryCompactionHook](https://github.com/agentscope-ai/xClaw/blob/main/src/xclaw/agents/hooks/memory_compaction.py)
+- [compact_tool_result](https://github.com/agentscope-ai/ReMe/blob/v0.3.1.6/reme/memory/file_based/components/tool_result_compactor.py)
+- [check_context](https://github.com/agentscope-ai/ReMe/blob/v0.3.1.6/reme/memory/file_based/components/context_checker.py)
+- [compact_memory](https://github.com/agentscope-ai/ReMe/blob/v0.3.1.6/reme/memory/file_based/components/compactor.py)
 
 ### 执行流程
 
 ```mermaid
-graph LR
-    M[messages] --> TC[compact_tool_result<br>压缩超长工具输出]
-    TC --> CC[check_context<br>计算剩余空间]
-    CC --> D{messages_to_compact<br>非空?}
-    D -->|否| K[返回原消息 + 原摘要]
-    D -->|是| V{is_valid?}
-    V -->|否| K
-    V -->|是| CM[compact_memory<br>生成摘要]
-    CM --> R[返回 messages_to_keep + 新摘要]
+flowchart LR
+    M[messages] --> TC[ToolCallResultCompact<br>Offload 超长工具输出]
+    TC --> CC[ContextChecker<br>Token 计数]
+    CC --> D{Token > 阈值?}
+    D -->|否| K[正常推理]
+    D -->|是| E[保留最近 X% tokens]
+    E --> CM[Compactor<br>压缩旧消息生成摘要]
+    CM --> SD[SaveDialog<br>Offload 被压缩消息到<br>dialog/YYYY-MM-DD.jsonl]
+    SD --> R[更新 compact_summary + 清空旧消息]
 ```
 
 **执行顺序**：
 
-1. `compact_tool_result` — 压缩超长工具输出（如果启用）
-2. `check_context` — 检查上下文是否超限
-3. `compact_memory` — 生成压缩摘要
+1. `ToolCallResultCompact` — 超长工具输出 Offload 到 `tool_result/`（如果启用）
+2. `ContextChecker` — 基于 Token 计数判断是否超限
+3. `Compactor` — 将旧消息压缩为结构化摘要（`compact_memory`）
+4. `SaveDialog` — 将被压缩的原始消息持久化到 `dialog/YYYY-MM-DD.jsonl`
 
 ## 压缩机制
 
-当上下文接近限制时，CoPaw 会自动触发压缩，将旧对话浓缩为结构化摘要。
+当上下文接近限制时，xClaw 会自动触发压缩，将旧对话浓缩为结构化摘要。
 
 ### 1. compact_tool_result — 工具结果压缩
 
-当 `enable_tool_result_compact` 开启时，自动压缩超长的工具输出：
+当 `tool_result_compact.enabled` 开启时（默认 `true`），对每条工具调用结果按新旧程度使用不同的字节阈值截断：
 
 ```mermaid
-graph LR
-    M[messages] --> L{遍历 tool_result<br>len > threshold?}
-    L -->|否| K[保留原样]
-    L -->|是| T[截断到 threshold]
-    T --> S[完整内容写入<br>tool_result/uuid.txt]
-    S --> R[消息追加文件路径引用]
-    R --> C[清理过期文件]
+flowchart LR
+    A[Tool Call Result] --> B{在 recent_n 内?}
+    B -->|是| C[低截断比例<br>recent_max_bytes<br>保存完整内容到 tool_result/uuid.txt<br>消息中保留片段 + 文件引用]
+    B -->|否| D[高截断比例<br>old_max_bytes<br>指向已有文件路径<br>更激进截断]
+    C --> E[Context]
+    D --> E
 ```
 
-- 完整内容保存到 `tool_result/` 目录
-- 消息中保留截断内容 + 文件路径引用
-- 过期文件自动清理
+| 消息类型           | 阈值               | 默认值  | 说明                           |
+| ------------------ | ------------------ | ------- | ------------------------------ |
+| 最近 `recent_n` 条 | `recent_max_bytes` | `50000` | 保留较多内容，同时写入完整文件 |
+| 更早的消息         | `old_max_bytes`    | `3000`  | 激进截断，已有文件路径继续引用 |
+
+**特殊工具说明：**
+
+- **Browser Use 类工具**：首次调用保存原始内容到 `tool_result/uuid.txt`，消息中保留片段 + 文件引用，并提示从第 N 行读取；超出 `recent_n` 后进行二次截断
+- **read_file 工具**：`recent_n` 内不截断也不保存（内容已是外部文件）；超出后截断并保存到 `tool_result/`
+- 超过 `retention_days` 天的文件自动清理
 
 ### 2. check_context — 上下文检查
 
@@ -160,6 +208,12 @@ graph LR
 /compact
 ```
 
+你也可以为这次手动压缩附加一条说明：
+
+```
+/compact 只保留需求和关键决策
+```
+
 执行后返回：
 
 ```
@@ -177,11 +231,17 @@ graph LR
 
 ## 压缩摘要结构
 
-压缩生成的摘要是一份**结构化上下文摘要**，包含继续工作所需的关键信息：
+`compact_summary` 由两部分组成：**对话路径引导** + **结构化历史摘要**。
+
+### 对话路径引导
+
+指向 `dialog/YYYY-MM-DD.jsonl` 中被压缩的原始对话数据（按时间顺序写入，建议从后往前读）。Agent 可通过 `read_file` 工具回顾历史细节，而无需将原始消息保留在上下文中。
+
+### 结构化历史摘要
 
 ```mermaid
 graph TB
-    A[压缩摘要] --> B[Goal]
+    A[结构化历史摘要] --> B[Goal]
     A --> C[Constraints]
     A --> D[Progress]
     A --> E[Key Decisions]
@@ -203,23 +263,37 @@ graph TB
 
 ## 配置
 
-配置文件位于 `~/.copaw/config.json` 中的 `agents.running` 部分：
+配置文件位于 `~/.xclaw/config.json` 中的 `agents.running` 部分：
 
-| 上下文管理参数         | 默认值   | 说明                                                             |
-| ---------------------- | -------- | ---------------------------------------------------------------- |
-| `max_input_length`     | `131072` | 模型上下文窗口大小（tokens），即"背包容量"                       |
-| `memory_compact_ratio` | `0.75`   | 触发压缩的阈值比例，达到 `max_input_length * ratio` 时压缩       |
-| `memory_reserve_ratio` | `0.1`    | 压缩时保留的最近消息比例，保留 `max_input_length * ratio` tokens |
+**`running` 直接字段：**
 
-| 工具压缩参数                 | 默认值  | 说明                          |
-| ---------------------------- | ------- | ----------------------------- |
-| `enable_tool_result_compact` | `false` | 是否压缩超长工具输出          |
-| `tool_result_compact_keep_n` | `5`     | 压缩工具结果时保留的最近 N 条 |
+| 参数               | 默认值   | 说明                         |
+| ------------------ | -------- | ---------------------------- |
+| `max_input_length` | `131072` | 模型上下文窗口大小（tokens） |
+
+**`running.context_compact` 字段：**
+
+| 参数                          | 默认值 | 说明                                                             |
+| ----------------------------- | ------ | ---------------------------------------------------------------- |
+| `context_compact_enabled`     | `true` | 是否启用自动上下文压缩                                           |
+| `memory_compact_ratio`        | `0.75` | 触发压缩的阈值比例，达到 `max_input_length * ratio` 时压缩       |
+| `memory_reserve_ratio`        | `0.1`  | 压缩时保留的最近消息比例，保留 `max_input_length * ratio` tokens |
+| `compact_with_thinking_block` | `true` | 压缩时是否包含 thinking block                                    |
+
+**`running.tool_result_compact` 字段：**
+
+| 参数               | 默认值  | 说明                                       |
+| ------------------ | ------- | ------------------------------------------ |
+| `enabled`          | `true`  | 是否压缩超长工具输出                       |
+| `recent_n`         | `2`     | 最近 N 条消息使用 `recent_max_bytes` 阈值  |
+| `old_max_bytes`    | `3000`  | 旧消息的工具输出字节阈值                   |
+| `recent_max_bytes` | `50000` | 最近 `recent_n` 条消息的工具输出字节阈值   |
+| `retention_days`   | `5`     | 工具输出缓存文件的保留天数（超期自动清理） |
 
 **计算关系：**
 
-- `memory_compact_threshold` = `max_input_length * memory_compact_ratio`（触发压缩的阈值）
-- `memory_compact_reserve` = `max_input_length * memory_reserve_ratio`（保留的最近消息 tokens）
+- `memory_compact_threshold` = `max_input_length × memory_compact_ratio`（触发压缩的阈值）
+- `memory_compact_reserve` = `max_input_length × memory_reserve_ratio`（保留的最近消息 tokens）
 
 **示例配置：**
 
@@ -228,10 +302,16 @@ graph TB
   "agents": {
     "running": {
       "max_input_length": 128000,
-      "memory_compact_ratio": 0.7,
-      "memory_reserve_ratio": 0.1,
-      "enable_tool_result_compact": true,
-      "tool_result_compact_keep_n": 3
+      "context_compact": {
+        "memory_compact_ratio": 0.7,
+        "memory_reserve_ratio": 0.1
+      },
+      "tool_result_compact": {
+        "enabled": true,
+        "recent_n": 3,
+        "old_max_bytes": 3000,
+        "recent_max_bytes": 50000
+      }
     }
   }
 }
