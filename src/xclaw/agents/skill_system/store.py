@@ -817,3 +817,17 @@ def _staged_skill_dir(skill_name: str) -> Iterator[Path]:
         yield stage_dir
     finally:
         shutil.rmtree(temp_root, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# Public aliases (QwenPaw-compatible names for routers / CLI)
+# ---------------------------------------------------------------------------
+
+copy_skill_dir = _copy_skill_dir
+mutate_json = _mutate_json
+default_workspace_manifest = _default_workspace_manifest
+default_pool_manifest = _default_pool_manifest
+get_skill_mtime = _get_skill_mtime
+normalize_skill_manifest_entry = _normalize_skill_manifest_entry
+read_skill_from_dir = _read_skill_from_dir
+validate_skill_content = _validate_skill_content

@@ -44,6 +44,7 @@ from .store import (
 logger = logging.getLogger(__name__)
 
 _BUILTIN_SKILL_LANGUAGES = ("en", "zh")
+BUILTIN_SKILL_LANGUAGES: tuple[str, ...] = _BUILTIN_SKILL_LANGUAGES
 _BUILTIN_SKILL_DIR_RE = re.compile(
     r"^(?P<name>.+)-(?P<language>en|zh)$",
 )

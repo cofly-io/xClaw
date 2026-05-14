@@ -36,7 +36,9 @@ from ...agents.skill_system import (
 )
 from ...agents.skill_system.models import SkillInfo
 from ...agents.skill_system.registry import (
+    BUILTIN_SKILL_LANGUAGES,
     get_pool_builtin_sync_status,
+    get_pool_builtin_update_notice,
     import_builtin_skills,
     list_builtin_import_candidates,
     list_workspaces,
@@ -45,18 +47,18 @@ from ...agents.skill_system.registry import (
     update_single_builtin,
 )
 from ...agents.skill_system.store import (
-    _default_pool_manifest,
-    _default_workspace_manifest,
-    _get_skill_mtime,
-    _mutate_json,
-    _normalize_skill_manifest_entry,
-    _read_skill_from_dir,
+    default_pool_manifest,
+    default_workspace_manifest,
     get_pool_skill_manifest_path,
+    get_skill_mtime,
     get_skill_pool_dir,
     get_workspace_skill_manifest_path,
     get_workspace_skills_dir,
-    read_skill_pool_manifest,
+    mutate_json,
+    normalize_skill_manifest_entry,
+    read_skill_from_dir,
     read_skill_manifest,
+    read_skill_pool_manifest,
     suggest_conflict_name,
 )
 from ...security.skill_scanner import SkillScanError
@@ -334,9 +336,9 @@ def _restore_workspace_skill(snapshot: dict[str, Any]) -> None:
             return
         payload["skills"][skill_name] = copy.deepcopy(entry)
 
-    _mutate_json(
+    mutate_json(
         get_workspace_skill_manifest_path(workspace_dir),
-        _default_workspace_manifest(),
+        default_workspace_manifest(),
         _restore,
     )
     reconcile_workspace_manifest(workspace_dir)
@@ -514,7 +516,7 @@ def _build_workspace_skill_specs(workspace_dir: Path) -> list[SkillSpec]:
     skill_root = get_workspace_skills_dir(workspace_dir)
     specs: list[SkillSpec] = []
     for skill_name, raw_entry in sorted(entries.items()):
-        entry = _normalize_skill_manifest_entry(raw_entry)
+        entry = normalize_skill_manifest_entry(raw_entry)
         if raw_entry not in (None, entry):
             logger.warning(
                 "Skipping malformed workspace skill entry '%s' in manifest",
@@ -523,7 +525,7 @@ def _build_workspace_skill_specs(workspace_dir: Path) -> list[SkillSpec]:
         try:
             source = entry.get("source", "customized")
             skill_dir = skill_root / skill_name
-            skill = _read_skill_from_dir(skill_dir, source)
+            skill = read_skill_from_dir(skill_dir, source)
             if skill is None:
                 continue
             dump = skill.model_dump()
@@ -534,7 +536,7 @@ def _build_workspace_skill_specs(workspace_dir: Path) -> list[SkillSpec]:
                     enabled=entry.get("enabled", False),
                     channels=entry.get("channels") or ["all"],
                     config=entry.get("config") or {},
-                    last_updated=_get_skill_mtime(skill_dir),
+                    last_updated=get_skill_mtime(skill_dir),
                 ),
             )
         except Exception:
@@ -553,7 +555,7 @@ def _build_pool_skill_specs() -> list[PoolSkillSpec]:
     sync_info = get_pool_builtin_sync_status(pool_skills=entries)
     specs: list[PoolSkillSpec] = []
     for skill_name, raw_entry in sorted(entries.items()):
-        entry = _normalize_skill_manifest_entry(raw_entry)
+        entry = normalize_skill_manifest_entry(raw_entry)
         if raw_entry not in (None, entry):
             logger.warning(
                 "Skipping malformed pool skill entry '%s' in manifest",
@@ -562,7 +564,7 @@ def _build_pool_skill_specs() -> list[PoolSkillSpec]:
         try:
             source = entry.get("source", "customized")
             skill_dir = pool_dir / skill_name
-            skill = _read_skill_from_dir(skill_dir, source)
+            skill = read_skill_from_dir(skill_dir, source)
             if skill is None:
                 continue
             info = sync_info.get(skill_name, {})
@@ -579,7 +581,7 @@ def _build_pool_skill_specs() -> list[PoolSkillSpec]:
                         info.get("latest_version_text", "") or "",
                     ),
                     config=entry.get("config") or {},
-                    last_updated=_get_skill_mtime(skill_dir),
+                    last_updated=get_skill_mtime(skill_dir),
                 ),
             )
         except Exception:
@@ -1127,11 +1129,11 @@ async def update_pool_builtin(
     body: UpdateBuiltinRequest | None = Body(default=None),
 ) -> dict[str, Any]:
     language = body.language if body is not None else ""
-    if language and language not in _BUILTIN_SKILL_LANGUAGES:
+    if language and language not in BUILTIN_SKILL_LANGUAGES:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid language '{language}', "
-            f"must be one of {_BUILTIN_SKILL_LANGUAGES}",
+            f"must be one of {BUILTIN_SKILL_LANGUAGES}",
         )
     try:
         return update_single_builtin(skill_name, language=language or None)
@@ -1173,7 +1175,7 @@ async def update_pool_skill_config(
         entry["config"] = dict(body.config)
         return True
 
-    updated = _mutate_json(manifest_path, _default_pool_manifest(), _update)
+    updated = mutate_json(manifest_path, default_pool_manifest(), _update)
     if not updated:
         raise HTTPException(status_code=404, detail="Pool skill not found")
     return {"updated": True}
@@ -1190,7 +1192,7 @@ async def delete_pool_skill_config(skill_name: str) -> dict[str, Any]:
         entry.pop("config", None)
         return True
 
-    updated = _mutate_json(manifest_path, _default_pool_manifest(), _update)
+    updated = mutate_json(manifest_path, default_pool_manifest(), _update)
     if not updated:
         raise HTTPException(status_code=404, detail="Pool skill not found")
     return {"cleared": True}
@@ -1494,9 +1496,9 @@ async def update_skill_config_endpoint(
         entry["config"] = dict(body.config)
         return True
 
-    updated = _mutate_json(
+    updated = mutate_json(
         manifest_path,
-        _default_workspace_manifest(),
+        default_workspace_manifest(),
         _update,
     )
     if not updated:
@@ -1519,9 +1521,9 @@ async def delete_skill_config_endpoint(
         entry.pop("config", None)
         return True
 
-    updated = _mutate_json(
+    updated = mutate_json(
         manifest_path,
-        _default_workspace_manifest(),
+        default_workspace_manifest(),
         _update,
     )
     if not updated:

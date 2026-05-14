@@ -344,7 +344,6 @@ def _do_migrate_legacy_skills() -> bool:
     from ..agents.skill_system import ensure_skill_pool_initialized
     from ..agents.skill_system.registry import reconcile_workspace_manifest
     from ..agents.skill_system.store import (
-        _build_signature,
         _copy_skill_dir,
         _default_workspace_manifest,
         _mutate_json,
