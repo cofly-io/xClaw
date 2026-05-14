@@ -4,12 +4,19 @@ import { useTranslation } from "react-i18next";
 import api from "../../../api";
 import type { AgentsRunningConfig } from "../../../api/types";
 import { useAppMessage } from "../../../hooks/useAppMessage";
+import { useAgentStore } from "../../../stores/agentStore";
+import {
+  CONTEXT_MANAGER_BACKEND_MAPPINGS,
+  MEMORY_MANAGER_BACKEND_MAPPINGS,
+} from "../../../constants/backendMappings";
+import type { ToolExecutionLevel } from "./components/ToolExecutionLevelCard";
 
 type ToolExecutionLevel = "STRICT" | "SMART" | "AUTO" | "OFF";
 
 export function useAgentConfig() {
   const { t } = useTranslation();
   const { message } = useAppMessage();
+  const { selectedAgent } = useAgentStore();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,7 +43,7 @@ export function useAgentConfig() {
       ).toUpperCase() as ToolExecutionLevel;
       setApprovalLevel(loadedLevel);
       form.setFieldsValue({
-        ...config,
+        max_iters: config.max_iters,
         auto_continue_on_text_only: config.auto_continue_on_text_only ?? false,
         shell_command_timeout: config.shell_command_timeout ?? 60.0,
         shell_command_executable: config.shell_command_executable ?? "",
@@ -58,7 +65,7 @@ export function useAgentConfig() {
     } finally {
       setLoading(false);
     }
-  }, [form, t]);
+  }, [form, t, selectedAgent]);
 
   useEffect(() => {
     fetchConfig();
@@ -89,7 +96,7 @@ export function useAgentConfig() {
     } finally {
       setSaving(false);
     }
-  }, [form, t]);
+  }, [form, t, selectedAgent, approvalLevel]);
 
   const handleLanguageChange = useCallback(
     (value: string): void => {
@@ -162,6 +169,8 @@ export function useAgentConfig() {
     savingLang,
     timezone,
     savingTimezone,
+    approvalLevel,
+    setApprovalLevel,
     fetchConfig,
     handleSave,
     handleLanguageChange,

@@ -7,7 +7,7 @@ metadata:
     emoji: "🤝"
 ---
 
-# Multi-Agent Collaboration（多智能体协作）
+# 多智能体协作
 
 ## 什么时候用
 

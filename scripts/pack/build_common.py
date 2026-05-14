@@ -9,12 +9,10 @@ from __future__ import annotations
 
 import argparse
 import os
-import platform
 import random
 import string
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -223,12 +221,6 @@ def main() -> int:
         # Scope CMAKE_ARGS to this specific command to avoid affecting other
         # CMake-based packages. Only set if we need to compile from source.
         install_env = {}
-        if needs_llama_compile:
-            print(
-                "Will compile llama-cpp-python from source with CMAKE_ARGS="
-                "-DGGML_METAL=off"
-            )
-            install_env = {"CMAKE_ARGS": "-DGGML_METAL=off"}
 
         _run(
             [
@@ -279,6 +271,23 @@ def main() -> int:
                     str(wheels_cache),
                 ],
             )
+        # pip may uninstall/reinstall files owned by conda while resolving
+        # qwenpaw[full]. Restore conda-managed packaging tools before packing.
+        _run(
+            [
+                conda,
+                "run",
+                "-n",
+                env_name,
+                conda,
+                "install",
+                "-y",
+                "--force-reinstall",
+                "pip",
+                "setuptools",
+                "wheel",
+            ],
+        )
         _run(
             [
                 conda,

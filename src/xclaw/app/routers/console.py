@@ -11,9 +11,11 @@ from pathlib import Path
 from typing import AsyncGenerator, Union
 
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
+from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 
 from agentscope_runtime.engine.schemas.agent_schemas import AgentRequest
+from ...utils.logging import LOG_FILE_PATH
 from ..agent_context import get_agent_for_request
 from ..runner.title_generator import generate_and_update_title
 
@@ -22,7 +24,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/console", tags=["console"])
 
+
+class MarkInboxReadRequest(BaseModel):
+    event_ids: list[str] = []
+    all: bool = False
+
+
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+MAX_DEBUG_LOG_LINES = 1000
 
 
 def _safe_filename(name: str) -> str:
@@ -94,6 +103,33 @@ def _extract_session_and_payload(request_data: Union[AgentRequest, dict]):
         },
     }
     return native_payload
+
+
+def _tail_text_file(
+    path: Path,
+    *,
+    lines: int = 200,
+    max_bytes: int = 512 * 1024,
+) -> str:
+    """Read the last N lines from a text file with bounded memory."""
+    path = Path(path)
+    if not path.exists() or not path.is_file():
+        return ""
+    try:
+        size = path.stat().st_size
+        if size == 0:
+            return ""
+        with open(path, "rb") as f:
+            if size <= max_bytes:
+                data = f.read()
+            else:
+                f.seek(max(size - max_bytes, 0))
+                data = f.read()
+        text = data.decode("utf-8", errors="replace")
+        return "\n".join(text.splitlines()[-lines:])
+    except Exception:
+        logger.exception("Failed to read backend debug log file")
+        return ""
 
 
 @router.post(
@@ -198,8 +234,42 @@ async def post_console_chat_stop(
     chat_id: str = Query(..., description="Chat id (ChatSpec.id) to stop"),
 ) -> dict:
     """Stop the running chat. Only stops when called."""
+    logger.debug("[STOP API] Received stop request for chat_id=%s", chat_id)
     workspace = await get_agent_for_request(request)
+
+    # Try to stop with the provided chat_id first
+    logger.debug(
+        "[STOP API] Got workspace, calling task_tracker.request_stop...",
+    )
     stopped = await workspace.task_tracker.request_stop(chat_id)
+
+    # If not found, the chat_id might be a session_id (timestamp)
+    # Try to resolve it to the actual chat UUID
+    if not stopped:
+        logger.debug(
+            "[STOP API] chat_id not found in tracker, trying to resolve "
+            "from session_id...",
+        )
+        chat_manager = getattr(workspace.runner, "_chat_manager", None)
+        if chat_manager:
+            resolved_chat_id = await chat_manager.get_chat_id_by_session(
+                session_id=chat_id,
+                channel="console",
+            )
+            if resolved_chat_id:
+                logger.debug(
+                    "[STOP API] Resolved session_id=%s to chat_id=%s",
+                    chat_id[:12] if len(chat_id) >= 12 else chat_id,
+                    resolved_chat_id,
+                )
+                stopped = await workspace.task_tracker.request_stop(
+                    resolved_chat_id,
+                )
+
+    logger.debug(
+        "[STOP API] task_tracker.request_stop returned: stopped=%s",
+        stopped,
+    )
     return {"stopped": stopped}
 
 
@@ -238,18 +308,151 @@ async def post_console_upload(
     }
 
 
+@router.get(
+    "/debug/backend-logs",
+    response_model=dict,
+    summary="Read backend daemon logs for debug page",
+)
+async def get_backend_debug_logs(
+    lines: int = Query(
+        200,
+        ge=20,
+        le=MAX_DEBUG_LOG_LINES,
+        description="Number of trailing log lines to return",
+    ),
+) -> dict:
+    """Return the tail of the project log file for the debug UI."""
+    log_path = LOG_FILE_PATH.resolve()
+    try:
+        st = log_path.stat()
+        return {
+            "path": str(log_path),
+            "exists": True,
+            "lines": lines,
+            "updated_at": st.st_mtime,
+            "size": st.st_size,
+            "content": _tail_text_file(log_path, lines=lines),
+        }
+    except FileNotFoundError:
+        return {
+            "path": str(log_path),
+            "exists": False,
+            "lines": lines,
+            "updated_at": None,
+            "size": 0,
+            "content": "",
+        }
+
+
 @router.get("/push-messages")
 async def get_push_messages(
     session_id: str | None = Query(None, description="Optional session id"),
 ):
     """
-    Return pending push messages. Without session_id: recent messages
-    (all sessions, last 60s), not consumed so every tab sees them.
+    Return pending push messages and ALL approval requests.
+
+    Messages:
+    - With session_id: consumed messages for that session
+    - Without session_id: recent messages (all sessions, last 60s)
+
+    Approvals:
+    - Always returns ALL pending approvals across all sessions
+    - Frontend filters by current session_id for display
+    - Includes session_id in each approval for filtering
     """
     from ..console_push_store import get_recent, take
+    from ..approvals import get_approval_service
 
+    # Get messages (session-specific or global)
     if session_id:
         messages = await take(session_id)
     else:
         messages = await get_recent()
-    return {"messages": messages}
+
+    # Get ALL pending approvals (not filtered by session)
+    approval_svc = get_approval_service()
+    # pylint: disable=protected-access
+    async with approval_svc._lock:
+        all_pending = list(approval_svc._pending.values())
+
+    # Serialize approval data with root_session_id for frontend filtering
+    approvals_data = [
+        {
+            "request_id": p.request_id,
+            "session_id": p.session_id,
+            "root_session_id": p.root_session_id,
+            "owner_agent_id": p.owner_agent_id,
+            "agent_id": p.agent_id,
+            "tool_name": p.tool_name,
+            "severity": p.severity,
+            "findings_count": p.findings_count,
+            "findings_summary": p.result_summary,
+            "tool_params": p.extra.get("tool_call", {}).get("input", {}),
+            "created_at": p.created_at,
+            "timeout_seconds": p.timeout_seconds,
+        }
+        for p in all_pending
+    ]
+
+    return {"messages": messages, "pending_approvals": approvals_data}
+
+
+@router.get("/inbox/events")
+async def get_inbox_events(
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    source_type: str | None = Query(None),
+    status: str | None = Query(None),
+    agent_id: str | None = Query(None),
+    unread_only: bool = Query(False),
+):
+    from ..inbox_store import list_events
+
+    events = await list_events(
+        limit=limit,
+        offset=offset,
+        source_type=source_type,
+        status=status,
+        agent_id=agent_id,
+        unread_only=unread_only,
+    )
+    return {"events": events}
+
+
+@router.post("/inbox/read")
+async def post_mark_inbox_read(payload: MarkInboxReadRequest):
+    from ..inbox_store import mark_all_read, mark_read
+
+    if payload.all:
+        updated = await mark_all_read()
+    else:
+        updated = await mark_read(payload.event_ids)
+    return {"updated": updated}
+
+
+@router.delete("/inbox/events/{event_id}")
+async def delete_inbox_event(event_id: str):
+    from ..inbox_store import delete_event
+    from ..inbox_trace_store import delete_trace
+
+    deleted, run_id, run_id_still_referenced = await delete_event(event_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="event not found")
+    trace_deleted = False
+    if run_id and not run_id_still_referenced:
+        trace_deleted = await delete_trace(run_id)
+    return {
+        "deleted": True,
+        "trace_deleted": trace_deleted,
+        "run_id": run_id,
+    }
+
+
+@router.get("/inbox/traces/{run_id}")
+async def get_inbox_trace(run_id: str):
+    from ..inbox_trace_store import get_trace
+
+    trace = await get_trace(run_id)
+    if trace is None:
+        raise HTTPException(status_code=404, detail="trace not found")
+    return trace

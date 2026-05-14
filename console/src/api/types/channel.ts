@@ -91,6 +91,7 @@ export interface WecomConfig extends BaseChannelConfig {
   welcome_text?: string;
   share_session_in_group?: boolean;
   max_reconnect_attempts?: number;
+  streaming_enabled?: boolean;
 }
 
 export type ConsoleConfig = BaseChannelConfig;
@@ -105,6 +106,30 @@ export interface VoiceChannelConfig extends BaseChannelConfig {
   stt_provider: string;
   language: string;
   welcome_greeting: string;
+}
+
+export interface SIPChannelConfig extends BaseChannelConfig {
+  sip_mode: string;
+  sip_host: string;
+  sip_port: number;
+  sip_username: string;
+  sip_password: string;
+  sip_server: string;
+  sip_transport: string;
+  rtp_port_low: number;
+  rtp_port_high: number;
+  dashscope_api_key: string;
+  tts_provider: string;
+  tts_voice: string;
+  stt_provider: string;
+  language: string;
+  welcome_greeting: string;
+  call_timeout: number;
+  livekit_url: string;
+  livekit_api_key: string;
+  livekit_api_secret: string;
+  livekit_sip_trunk_id: string;
+  livekit_room_name: string;
 }
 
 export interface XiaoYiConfig extends BaseChannelConfig {
@@ -144,6 +169,7 @@ export interface ChannelConfig {
   wecom: WecomConfig;
   console: ConsoleConfig;
   voice: VoiceChannelConfig;
+  sip: SIPChannelConfig;
   xiaoyi: XiaoYiConfig;
   weixin: WeixinConfig;
   onebot: OneBotConfig;
@@ -163,5 +189,6 @@ export type SingleChannelConfig =
   | WecomConfig
   | WeixinConfig
   | VoiceChannelConfig
+  | SIPChannelConfig
   | XiaoYiConfig
   | OneBotConfig;

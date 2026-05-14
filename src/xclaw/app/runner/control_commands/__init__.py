@@ -24,6 +24,11 @@ from .approval_handler import (
     DenyCommandHandler,
 )
 from .base import BaseControlCommandHandler, ControlContext
+from .approval_handler import (
+    ApprovalCommandHandler,
+    ApproveCommandHandler,
+    DenyCommandHandler,
+)
 from .model_handler import ModelCommandHandler
 from .skills_handler import SkillsCommandHandler
 from .stop_handler import StopCommandHandler

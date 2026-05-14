@@ -56,6 +56,14 @@ export const localModelApi = {
       method: "DELETE",
     }),
 
+  deleteLocalModel: (modelId: string) =>
+    request<LocalActionResponse>(
+      `/local-models/models/${encodeURIComponent(modelId)}`,
+      {
+        method: "DELETE",
+      },
+    ),
+
   startLocalServer: (body: StartLocalServerRequest) =>
     request<{ port: number; model_name: string }>("/local-models/server", {
       method: "POST",

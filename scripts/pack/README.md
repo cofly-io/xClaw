@@ -11,7 +11,7 @@ Dependencies follow `pyproject.toml`.
 ## System Requirements
 
 - **Windows**: Windows 10 or later
-- **macOS**: macOS 14 (Sonoma) or later, Apple Silicon (M1/M2/M3/M4) recommended for MLX support
+- **macOS**: macOS 14 (Sonoma) or later, Apple Silicon (M1/M2/M3/M4) recommended
 
 ## Prerequisites
 
@@ -53,7 +53,7 @@ APP_ENV="$(pwd)/dist/xClaw.app/Contents/Resources/env"
 PYTHONPATH= PYTHONHOME="$APP_ENV" "$APP_ENV/bin/python" -m xclaw desktop
 ```
 
-All stdout/stderr (including Python tracebacks) will appear in the terminal. Use this to debug startup errors or to run with `--log-level debug`.
+The `PYTHONNOUSERSITE=1` prevents Python from loading packages from `~/.local/lib/pythonX.Y/site-packages`, which can conflict with the packaged environment. All stdout/stderr (including Python tracebacks) will appear in the terminal. Use this to debug startup errors or to run with `--log-level debug`.
 
 When you **double-click** the .app and nothing appears, the launcher writes stderr/stdout to `~/.xclaw/desktop.log`. Inspect that file for errors.
 

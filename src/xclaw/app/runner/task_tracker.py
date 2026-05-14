@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """Task tracker for background runs: streaming, reconnect, multi-subscriber.
 
-run_key is ChatSpec.id (chat_id). Per run: task, queues, event buffer.
-Reconnects get buffer replay + new events. Cleanup when task completes.
+For internal streaming runs, ``run_key`` is typically ``ChatSpec.id``
+(chat_id). For externally-managed tasks (registered via
+:meth:`TaskTracker.register_external_task`), ``run_key`` is an opaque
+identifier chosen by the caller (e.g. a UUID prefixed with ``"ext-"``).
+Per run: task, queues, event buffer. Reconnects get buffer replay + new
+events. Cleanup when task completes.
 """
 from __future__ import annotations
 
@@ -218,11 +222,27 @@ class TaskTracker:
 
     async def request_stop(self, run_key: str) -> bool:
         """Cancel the run. Returns ``True`` if it was running."""
+        logger.debug("[STOP] request_stop called for run_key=%s", run_key)
         async with self._lock:
             state = self._runs.get(run_key)
+            logger.debug(
+                "[STOP] run_key=%s state=%s done=%s",
+                run_key,
+                "found" if state else "not_found",
+                state.task.done() if state else "N/A",
+            )
             if state is None or state.task.done():
+                logger.debug(
+                    "[STOP] Cannot stop run_key=%s (not running)",
+                    run_key,
+                )
                 return False
+            logger.debug(
+                "[STOP] Calling task.cancel() for run_key=%s",
+                run_key,
+            )
             state.task.cancel()
+            logger.debug("[STOP] task.cancel() called for run_key=%s", run_key)
             return True
 
     async def attach_or_start(

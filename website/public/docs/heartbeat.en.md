@@ -85,7 +85,7 @@ source of truth for new changes.
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **enabled**     | Heartbeat on/off. **Default false**; the schedule runs only when **true**.                                                                                                                                                                                                |
 | **every**       | How often: an interval string (`"30m"`, `"1h"`, `"2h30m"`, `"90s"`) **or** a space-separated **five-field cron** (minute hour day month weekday — same shape as cron jobs, e.g. daily 09:00: `"0 9 * * *"`). Cron is interpreted in the **process scheduler’s timezone**. |
-| **target**      | **main** — don’t send to a channel; **last** — send using **`last_dispatch`** for that agent.                                                                                                                                                                             |
+| **target**      | **main** — don’t send to a channel; **last** — send using **`last_dispatch`** for that agent; **inbox** — send to Inbox.                                                                                                                                                  |
 | **activeHours** | Optional daily window: `{ "start": "08:00", "end": "22:00" }`.                                                                                                                                                                                                            |
 
 If **every** is omitted, the built-in default applies (currently about **6
@@ -141,5 +141,6 @@ as implemented (some setups may need a restart — see what you actually run).
 - [Introduction](./intro) — What the project can do
 - [Console](./console) — Turn heartbeat on/off and change interval in the web UI
 - [Channels](./channels) — Connect channels first so target=last has somewhere to send
+- [Scheduled Tasks](./cron) — Manage multiple independent scheduled jobs
 - [CLI](./cli) — Heartbeat at init, cron jobs
 - [Config & working dir](./config) — config.json, agent.json, working directory

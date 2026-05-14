@@ -28,6 +28,9 @@ DASHSCOPE_BASE_URLS = (
     "https://dashscope-us.aliyuncs.com/compatible-mode/v1",
 )
 CODING_DASHSCOPE_BASE_URL = "https://coding.dashscope.aliyuncs.com/v1"
+TOKEN_PLAN_BASE_URL = (
+    "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+)
 
 
 class AnthropicProvider(Provider):
@@ -159,9 +162,29 @@ class AnthropicProvider(Provider):
                     ensure_ascii=False,
                 ),
             }
+        elif self.base_url == TOKEN_PLAN_BASE_URL:
+            client_kwargs["default_headers"] = {
+                "X-DashScope-Cdpl": json.dumps(
+                    {
+                        "agentType": "QwenPaw",
+                        "deployType": "UnKnown",
+                        "moduleCode": "model",
+                        "agentCode": "UnKnown",
+                    },
+                    ensure_ascii=False,
+                ),
+            }
+
+        self.generate_kwargs = self.get_effective_generate_kwargs(model_id)
+
+        if "max_tokens" in self.generate_kwargs:
+            max_tokens = self.generate_kwargs.pop("max_tokens")
+        else:
+            max_tokens = 16384
 
         return AnthropicChatModel(
             model_name=model_id,
+            max_tokens=max_tokens,
             stream=True,
             api_key=self.api_key,
             stream_tool_parsing=False,
@@ -172,7 +195,8 @@ class AnthropicProvider(Provider):
     async def probe_model_multimodal(
         self,
         model_id: str,
-        timeout: float = 10,
+        timeout: float = 60,
+        image_only: bool = False,  # pylint: disable=unused-argument
     ) -> ProbeResult:
         """Probe multimodal support using Anthropic messages API format.
 

@@ -33,6 +33,14 @@ export interface PoolSkillSpec {
   tags?: string[];
 }
 
+export interface BuiltinLanguageSpec {
+  language: string;
+  description?: string;
+  version_text?: string;
+  source_name?: string;
+  status?: "missing" | "current" | "outdated" | "conflict" | string;
+}
+
 export interface WorkspaceSkillSummary {
   agent_id: string;
   agent_name?: string;
@@ -46,7 +54,28 @@ export interface BuiltinImportSpec {
   version_text?: string;
   current_version_text?: string;
   current_source?: string;
-  status?: "missing" | "current" | "conflict" | string;
+  current_language?: string;
+  available_languages?: string[];
+  languages?: Record<string, BuiltinLanguageSpec>;
+  status?: "missing" | "current" | "outdated" | "conflict" | string;
+}
+
+export interface BuiltinRemovedSpec {
+  name: string;
+  description?: string;
+  current_version_text?: string;
+  current_source?: string;
+}
+
+export interface BuiltinUpdateNotice {
+  fingerprint: string;
+  has_updates: boolean;
+  total_changes: number;
+  actionable_skill_names: string[];
+  added: BuiltinImportSpec[];
+  missing: BuiltinImportSpec[];
+  updated: BuiltinImportSpec[];
+  removed: BuiltinRemovedSpec[];
 }
 
 export interface HubSkillSpec {

@@ -2214,7 +2214,7 @@ class DingTalkChannel(BaseChannel):
                 parts = self._message_to_content_parts(event)
                 body = self._parts_to_single_text(
                     parts,
-                    bot_prefix="",
+                    bot_prefix=bot_prefix,
                 )
                 if use_ai_card and card:
                     next_text = self._merge_ai_card_text(
@@ -2470,13 +2470,7 @@ class DingTalkChannel(BaseChannel):
                 to_handle=to_handle,
             )
             async for event in core_iter:
-                # SSE serialization
-                if hasattr(event, "model_dump_json"):
-                    data = event.model_dump_json()
-                elif hasattr(event, "json"):
-                    data = event.json()
-                else:
-                    data = json.dumps({"text": str(event)})
+                data = self._serialize_event_for_sse(event)
                 yield f"data: {data}\n\n"
 
                 obj = getattr(event, "object", None)
@@ -2659,6 +2653,31 @@ class DingTalkChannel(BaseChannel):
                 )
             except asyncio.TimeoutError:
                 pass
+
+    async def health_check(self) -> Dict[str, Any]:
+        """Check DingTalk stream client and HTTP session status."""
+        if not self.enabled:
+            return {
+                "channel": self.channel,
+                "status": "disabled",
+                "detail": "DingTalk channel is disabled.",
+            }
+        issues = []
+        if self._client is None:
+            issues.append("Stream client not initialized")
+        if self._http is None or self._http.closed:
+            issues.append("HTTP session not available")
+        if issues:
+            return {
+                "channel": self.channel,
+                "status": "unhealthy",
+                "detail": "; ".join(issues),
+            }
+        return {
+            "channel": self.channel,
+            "status": "healthy",
+            "detail": "DingTalk stream client and HTTP session are active.",
+        }
 
     async def start(self) -> None:
         if not self.enabled:

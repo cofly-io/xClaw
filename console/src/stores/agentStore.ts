@@ -65,6 +65,47 @@ function getInitialSelectedAgent(): string {
   return "default";
 }
 
+/**
+ * Determines the initial selectedAgent for this tab.
+ *
+ * Priority:
+ *  1. sessionStorage (returning to a tab that already picked an agent)
+ *  2. localStorage lastUsedAgent (new tab inherits the most recent choice)
+ *  3. "default"
+ */
+function getInitialSelectedAgent(): string {
+  // 1. sessionStorage: returning to a tab that already picked an agent
+  try {
+    const sessionValue = sessionStorage.getItem(STORAGE_KEY);
+    if (sessionValue) {
+      const parsed = JSON.parse(sessionValue);
+      const agent = parsed?.state?.selectedAgent;
+      if (agent) return agent;
+    }
+  } catch {
+    /* ignore */
+  }
+  // 2. Dedicated localStorage key (written by setSelectedAgent)
+  try {
+    const lastUsed = localStorage.getItem(LAST_USED_AGENT_KEY);
+    if (lastUsed) return lastUsed;
+  } catch {
+    /* ignore */
+  }
+  // 3. Shared localStorage state (written by persist middleware)
+  try {
+    const shared = localStorage.getItem(STORAGE_KEY);
+    if (shared) {
+      const parsed = JSON.parse(shared);
+      const agent = parsed?.state?.selectedAgent;
+      if (agent) return agent;
+    }
+  } catch {
+    /* ignore */
+  }
+  return "default";
+}
+
 export const useAgentStore = create<AgentStore>()(
   persist(
     (set, _get) => ({

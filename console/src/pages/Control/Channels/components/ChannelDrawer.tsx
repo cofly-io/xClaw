@@ -695,6 +695,164 @@ export function ChannelDrawer({
           </>
         );
 
+      case "sip":
+        return (
+          <>
+            <ConfigProvider prefixCls="ant">
+              <Alert
+                type="info"
+                showIcon
+                message={t("channels.sipSetupGuide")}
+                style={{ marginBottom: 16 }}
+              />
+            </ConfigProvider>
+            <Form.Item
+              name="sip_mode"
+              label={t("channels.sipMode")}
+              tooltip={t("channels.sipModeTooltip")}
+              initialValue="dev"
+            >
+              <Select
+                options={[
+                  { value: "dev", label: "Dev (pyVoIP)" },
+                  { value: "livekit", label: "Production (LiveKit)" },
+                ]}
+              />
+            </Form.Item>
+            <Form.Item
+              shouldUpdate={(
+                prev: Record<string, unknown>,
+                cur: Record<string, unknown>,
+              ) => prev.sip_mode !== cur.sip_mode}
+              noStyle
+            >
+              {({
+                getFieldValue,
+              }: {
+                getFieldValue: (name: string) => unknown;
+              }) => (
+                <Form.Item name="sip_server" label={t("channels.sipServer")}>
+                  <Input
+                    placeholder={
+                      getFieldValue("sip_mode") === "livekit"
+                        ? t("channels.sipServerPlaceholderLivekit")
+                        : t("channels.sipServerPlaceholder")
+                    }
+                  />
+                </Form.Item>
+              )}
+            </Form.Item>
+            <Form.Item name="sip_username" label={t("channels.sipUsername")}>
+              <Input placeholder="1001" />
+            </Form.Item>
+            <Form.Item name="sip_password" label={t("channels.sipPassword")}>
+              <Input.Password />
+            </Form.Item>
+            <Form.Item
+              name="sip_port"
+              label={t("channels.sipPort")}
+              rules={[
+                {
+                  type: "number",
+                  min: 1,
+                  max: 65535,
+                },
+              ]}
+            >
+              <InputNumber
+                min={1}
+                max={65535}
+                style={{ width: "100%" }}
+                placeholder="5061"
+              />
+            </Form.Item>
+            <Form.Item
+              name="sip_transport"
+              label={t("channels.sipTransport")}
+              initialValue="UDP"
+            >
+              <Select
+                options={[
+                  { value: "UDP", label: "UDP" },
+                  { value: "TCP", label: "TCP" },
+                  { value: "TLS", label: "TLS" },
+                ]}
+              />
+            </Form.Item>
+            <Form.Item
+              name="dashscope_api_key"
+              label={t("channels.sipDashscopeApiKey")}
+              tooltip={t("channels.sipDashscopeApiKeyTooltip")}
+            >
+              <Input.Password placeholder="sk-..." />
+            </Form.Item>
+            <Form.Item name="tts_provider" label={t("channels.ttsProvider")}>
+              <Input placeholder="aliyun" />
+            </Form.Item>
+            <Form.Item name="tts_voice" label={t("channels.ttsVoice")}>
+              <Input placeholder="longxiaochun" />
+            </Form.Item>
+            <Form.Item name="stt_provider" label={t("channels.sttProvider")}>
+              <Input placeholder="aliyun" />
+            </Form.Item>
+            <Form.Item name="language" label={t("channels.language")}>
+              <Input placeholder="zh-CN" />
+            </Form.Item>
+            <Form.Item
+              name="welcome_greeting"
+              label={t("channels.welcomeGreeting")}
+            >
+              <Input.TextArea rows={2} />
+            </Form.Item>
+            <Form.Item
+              noStyle
+              shouldUpdate={(prev, cur) => prev.sip_mode !== cur.sip_mode}
+            >
+              {({ getFieldValue }) => {
+                if (getFieldValue("sip_mode") !== "livekit") return null;
+                return (
+                  <>
+                    <Form.Item
+                      name="livekit_url"
+                      label={t("channels.livekitUrl")}
+                      rules={[{ required: true }]}
+                    >
+                      <Input placeholder="ws://localhost:7880" />
+                    </Form.Item>
+                    <Form.Item
+                      name="livekit_api_key"
+                      label={t("channels.livekitApiKey")}
+                      rules={[{ required: true }]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      name="livekit_api_secret"
+                      label={t("channels.livekitApiSecret")}
+                      rules={[{ required: true }]}
+                    >
+                      <Input.Password />
+                    </Form.Item>
+                    <Form.Item
+                      name="livekit_sip_trunk_id"
+                      label={t("channels.livekitSipTrunkId")}
+                    >
+                      <Input placeholder="ST_xxxx" />
+                    </Form.Item>
+                    <Form.Item
+                      name="livekit_room_name"
+                      label={t("channels.livekitRoomName")}
+                      tooltip={t("channels.livekitRoomNameTooltip")}
+                    >
+                      <Input placeholder="sip-inbound" />
+                    </Form.Item>
+                  </>
+                );
+              }}
+            </Form.Item>
+          </>
+        );
+
       case "wecom":
         return (
           <>
@@ -800,20 +958,20 @@ export function ChannelDrawer({
           </>
         );
 
-      case "weixin":
+      case "wechat":
         return (
           <>
             <ConfigProvider prefixCls="ant">
               <Alert
                 type="info"
                 showIcon
-                message={t("channels.weixinSetupGuide")}
+                message={t("channels.wechatSetupGuide")}
                 style={{ marginBottom: 16 }}
               />
               <Alert
                 type="warning"
                 showIcon
-                message={t("channels.weixinContextTokenLimit")}
+                message={t("channels.wechatContextTokenLimit")}
                 style={{ marginBottom: 16 }}
               />
             </ConfigProvider>
@@ -841,17 +999,17 @@ export function ChannelDrawer({
             />
             <Form.Item
               name="bot_token"
-              label={t("channels.weixinBotToken")}
-              tooltip={t("channels.weixinBotTokenTooltip")}
+              label={t("channels.wechatBotToken")}
+              tooltip={t("channels.wechatBotTokenTooltip")}
             >
               <Input.Password
-                placeholder={t("channels.weixinBotTokenPlaceholder")}
+                placeholder={t("channels.wechatBotTokenPlaceholder")}
               />
             </Form.Item>
             <Form.Item
               name="bot_token_file"
-              label={t("channels.weixinBotTokenFile")}
-              tooltip={t("channels.weixinBotTokenFileTooltip")}
+              label={t("channels.wechatBotTokenFile")}
+              tooltip={t("channels.wechatBotTokenFileTooltip")}
             >
               <Input placeholder="~/.xclaw/weixin_bot_token" />
             </Form.Item>
@@ -1025,7 +1183,7 @@ export function ChannelDrawer({
                 isCopawDoc && currentLang === "zh"
                   ? CHANNEL_DOC_ZH_URLS[activeKey]!
                   : CHANNEL_DOC_EN_URLS[activeKey]!;
-              window.open(finalUrl, "_blank");
+              openExternalLink(finalUrl);
             }}
             className={styles.dingtalkDocBtn}
             style={{ color: "#FF7F16" }}
@@ -1038,9 +1196,7 @@ export function ChannelDrawer({
           type="text"
           size="small"
           icon={<LinkOutlined />}
-          onClick={() =>
-            window.open(TWILIO_CONSOLE_URL, "_blank", "noopener,noreferrer")
-          }
+          onClick={() => openExternalLink(TWILIO_CONSOLE_URL)}
           className={styles.dingtalkDocBtn}
           style={{ color: "#FF7F16" }}
         >
@@ -1112,6 +1268,16 @@ export function ChannelDrawer({
                 <Switch />
               </Form.Item>
             </>
+          )}
+
+          {activeKey === "wecom" && (
+            <Form.Item
+              name="streaming_enabled"
+              label={t("channels.streamingEnabled")}
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
           )}
 
           {isBuiltin

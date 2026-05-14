@@ -10,7 +10,7 @@
 ## 系统要求
 
 - **Windows**: Windows 10 或更高版本
-- **macOS**: macOS 14 (Sonoma) 或更高版本，推荐 Apple Silicon (M1/M2/M3/M4) 以获得 MLX 支持
+- **macOS**: macOS 14 (Sonoma) 或更高版本，推荐 Apple Silicon (M1/M2/M3/M4)
 
 ## 前置
 
@@ -51,7 +51,7 @@ APP_ENV="$(pwd)/dist/xClaw.app/Contents/Resources/env"
 PYTHONPATH= PYTHONHOME="$APP_ENV" "$APP_ENV/bin/python" -m xclaw desktop
 ```
 
-所有标准输出和错误（包括 Python traceback）都会打在终端里；可加 `--log-level debug` 查看更详细日志。
+`PYTHONNOUSERSITE=1` 可防止 Python 加载 `~/.local/lib/pythonX.Y/site-packages` 中的包，避免与打包环境冲突。所有标准输出和错误（包括 Python traceback）都会打在终端里；可加 `--log-level debug` 查看更详细日志。
 
 若**双击** .app 没有任何窗口出现，启动器会把 stderr/stdout 写入 `~/.xclaw/desktop.log`，可打开该文件查看报错。
 

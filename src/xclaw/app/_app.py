@@ -6,6 +6,7 @@ import mimetypes
 import os
 import sys
 import time
+import uuid
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
@@ -14,7 +15,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from agentscope_runtime.engine.app import AgentApp
-
 from agentscope_runtime.engine.schemas.exception import (
     AppBaseException,
 )
@@ -39,6 +39,7 @@ from ..utils.system_info import summarize_python_environment
 from .auth import AuthMiddleware, auto_register_from_env
 from .routers import router as api_router, create_agent_scoped_router
 from .routers.agent_scoped import AgentContextMiddleware
+from .routers.approval import router as approval_router
 from .routers.voice import voice_router
 from ..envs import load_envs_into_environ
 from ..providers.provider_manager import ProviderManager
@@ -84,16 +85,20 @@ class DynamicMultiAgentRunner:
         """Set the MultiAgentManager instance after initialization."""
         self._multi_agent_manager = manager
 
-    async def _get_workspace_runner(self, request):
-        """Get the correct workspace runner based on request."""
+    async def _get_workspace(self, request):
+        """Get the correct workspace based on request.
+
+        Returns:
+            Workspace: The workspace instance for the current agent.
+        """
         from .agent_context import get_current_agent_id
 
         # Get agent_id from context (set by middleware or header)
         agent_id = get_current_agent_id()
 
-        logger.debug(f"_get_workspace_runner: agent_id={agent_id}")
+        logger.debug(f"_get_workspace: agent_id={agent_id}")
 
-        # Get the correct workspace runner
+        # Get the correct workspace
         if not self._multi_agent_manager:
             raise RuntimeError("MultiAgentManager not initialized")
 
@@ -104,23 +109,42 @@ class DynamicMultiAgentRunner:
                 workspace.agent_id,
                 workspace.runner,
             )
-            return workspace.runner
+            return workspace
         except (ValueError, AppBaseException) as e:
             logger.error(f"Agent not found: {e}")
             raise
         except Exception as e:
             logger.error(
-                f"Error getting workspace runner: {e}",
+                f"Error getting workspace: {e}",
                 exc_info=True,
             )
             raise
 
+    async def _get_workspace_runner(self, request):
+        """Get the correct workspace runner based on request."""
+        workspace = await self._get_workspace(request)
+        return workspace.runner
+
     async def stream_query(self, request, *args, **kwargs):
-        """Dynamically route to the correct workspace runner."""
+        """Dynamically route to the correct workspace runner.
+
+        Registers the task with the workspace's TaskTracker so that
+        graceful shutdown during agent reload can detect in-flight
+        background tasks (fixes #3275).
+        """
         logger.debug("DynamicMultiAgentRunner.stream_query called")
+        workspace = None
+        run_key = None
         try:
-            runner = await self._get_workspace_runner(request)
+            workspace = await self._get_workspace(request)
+            runner = workspace.runner
             logger.debug(f"Got runner: {runner}, type: {type(runner)}")
+
+            # Register this task with the workspace's TaskTracker so
+            # _graceful_stop_old_instance() can see it during reload.
+            run_key = f"ext-{uuid.uuid4().hex}"
+            await workspace.task_tracker.register_external_task(run_key)
+
             # Delegate to the actual runner's stream_query generator
             count = 0
             async for item in runner.stream_query(request, *args, **kwargs):
@@ -138,13 +162,35 @@ class DynamicMultiAgentRunner:
                 "error": str(e),
                 "type": "error",
             }
+        finally:
+            # Always unregister the task when done (success, error,
+            # or cancellation).
+            if workspace is not None and run_key is not None:
+                await workspace.task_tracker.unregister_external_task(run_key)
 
     async def query_handler(self, request, *args, **kwargs):
-        """Dynamically route to the correct workspace runner."""
-        runner = await self._get_workspace_runner(request)
-        # Delegate to the actual runner's query_handler generator
-        async for item in runner.query_handler(request, *args, **kwargs):
-            yield item
+        """Dynamically route to the correct workspace runner.
+
+        Registers the task with the workspace's TaskTracker so that
+        graceful shutdown during agent reload can detect in-flight
+        requests (fixes #3275).
+        """
+        workspace = None
+        run_key = None
+        try:
+            workspace = await self._get_workspace(request)
+            runner = workspace.runner
+
+            run_key = f"ext-{uuid.uuid4().hex}"
+            await workspace.task_tracker.register_external_task(run_key)
+
+            async for item in runner.query_handler(request, *args, **kwargs):
+                yield item
+        finally:
+            # Always unregister the task when done (success, error,
+            # or cancellation).
+            if workspace is not None and run_key is not None:
+                await workspace.task_tracker.unregister_external_task(run_key)
 
     # Async context manager support for AgentApp lifecycle
     async def __aenter__(self):
@@ -578,10 +624,12 @@ def get_doctor_runtime():
 
 app.include_router(api_router, prefix="/api")
 
+# Approval router: /api/approval/approve, /api/approval/deny, etc.
+app.include_router(approval_router, prefix="/api")
+
 # Agent-scoped router: /api/agents/{agentId}/chats, etc.
 agent_scoped_router = create_agent_scoped_router()
 app.include_router(agent_scoped_router, prefix="/api")
-
 
 app.include_router(
     agent_app.router,
@@ -624,7 +672,10 @@ if os.path.isdir(_CONSOLE_STATIC_DIR):
 
     # SPA fallback: catch-all route for frontend routing
     # Must be registered AFTER all API routes to avoid conflicts
-    @app.get("/{full_path:path}")
+    @app.get(
+        "/{full_path:path}",
+        name="qwenpaw_console_spa_catchall",
+    )
     def _console_spa(full_path: str):
         # Prevent catching common system/special paths
         if full_path in ("docs", "redoc", "openapi.json"):

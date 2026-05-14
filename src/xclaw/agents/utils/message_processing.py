@@ -10,7 +10,6 @@ import asyncio
 import logging
 import os
 import urllib.parse
-import urllib.request
 from pathlib import Path
 from typing import Optional
 

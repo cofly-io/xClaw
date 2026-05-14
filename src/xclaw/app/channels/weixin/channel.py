@@ -45,24 +45,24 @@ from ..base import (
     OutgoingContentPart,
     ProcessHandler,
 )
-from ..utils import split_text
+from ..utils import file_url_to_local_path, split_text
 from .client import ILinkClient, _DEFAULT_BASE_URL
 
 logger = logging.getLogger(__name__)
 
 # Max dedup set size
-_WEIXIN_PROCESSED_IDS_MAX = 2000
+_WECHAT_PROCESSED_IDS_MAX = 2000
 
 # Default token file path
-_DEFAULT_TOKEN_FILE = WORKING_DIR / "weixin_bot_token"
+_DEFAULT_TOKEN_FILE = WORKING_DIR / "wechat_bot_token"
 
 
-class WeixinChannel(BaseChannel):
+class WeChatChannel(BaseChannel):
     """WeChat iLink Bot channel: long-poll receive, HTTP send.
 
     Session IDs:
-        - Private chat:  weixin:<from_user_id>
-        - Group chat:    weixin:group:<group_id>
+        - Private chat:  wechat:<from_user_id>
+        - Group chat:    wechat:group:<group_id>
     """
 
     channel = "wechat"
@@ -109,7 +109,7 @@ class WeixinChannel(BaseChannel):
             else _DEFAULT_TOKEN_FILE
         )
         self._context_tokens_file = (
-            self._bot_token_file.parent / "weixin_context_tokens.json"
+            self._bot_token_file.parent / "wechat_context_tokens.json"
         )
         self._workspace_dir = (
             Path(workspace_dir).expanduser() if workspace_dir else None
@@ -169,8 +169,8 @@ class WeixinChannel(BaseChannel):
         cls,
         process: ProcessHandler,
         on_reply_sent: OnReplySent = None,
-    ) -> "WeixinChannel":
-        allow_from_env = os.getenv("WEIXIN_ALLOW_FROM", "")
+    ) -> "WeChatChannel":
+        allow_from_env = os.getenv("WECHAT_ALLOW_FROM", "")
         allow_from = (
             [s.strip() for s in allow_from_env.split(",") if s.strip()]
             if allow_from_env
@@ -178,17 +178,17 @@ class WeixinChannel(BaseChannel):
         )
         return cls(
             process=process,
-            enabled=os.getenv("WEIXIN_CHANNEL_ENABLED", "0") == "1",
-            bot_token=os.getenv("WEIXIN_BOT_TOKEN", ""),
-            bot_token_file=os.getenv("WEIXIN_BOT_TOKEN_FILE", ""),
-            base_url=os.getenv("WEIXIN_BASE_URL", ""),
-            bot_prefix=os.getenv("WEIXIN_BOT_PREFIX", ""),
-            media_dir=os.getenv("WEIXIN_MEDIA_DIR", ""),
+            enabled=os.getenv("WECHAT_CHANNEL_ENABLED", "0") == "1",
+            bot_token=os.getenv("WECHAT_BOT_TOKEN", ""),
+            bot_token_file=os.getenv("WECHAT_BOT_TOKEN_FILE", ""),
+            base_url=os.getenv("WECHAT_BASE_URL", ""),
+            bot_prefix=os.getenv("WECHAT_BOT_PREFIX", ""),
+            media_dir=os.getenv("WECHAT_MEDIA_DIR", ""),
             on_reply_sent=on_reply_sent,
-            dm_policy=os.getenv("WEIXIN_DM_POLICY", "open"),
-            group_policy=os.getenv("WEIXIN_GROUP_POLICY", "open"),
+            dm_policy=os.getenv("WECHAT_DM_POLICY", "open"),
+            group_policy=os.getenv("WECHAT_GROUP_POLICY", "open"),
             allow_from=allow_from,
-            deny_message=os.getenv("WEIXIN_DENY_MESSAGE", ""),
+            deny_message=os.getenv("WECHAT_DENY_MESSAGE", ""),
         )
 
     @classmethod
@@ -242,27 +242,27 @@ class WeixinChannel(BaseChannel):
         channel_meta: Optional[Dict[str, Any]] = None,
     ) -> str:
         meta = channel_meta or {}
-        group_id = (meta.get("weixin_group_id") or "").strip()
+        group_id = (meta.get("wechat_group_id") or "").strip()
         if group_id:
-            return f"weixin:group:{group_id}"
-        return f"weixin:{sender_id}" if sender_id else "weixin:unknown"
+            return f"wechat:group:{group_id}"
+        return f"wechat:{sender_id}" if sender_id else "wechat:unknown"
 
     @staticmethod
     def _parse_user_id_from_handle(to_handle: str) -> str:
         h = (to_handle or "").strip()
-        if h.startswith("weixin:group:"):
-            return h[len("weixin:group:") :]
-        if h.startswith("weixin:"):
-            return h[len("weixin:") :]
+        if h.startswith("wechat:group:"):
+            return h[len("wechat:group:") :]
+        if h.startswith("wechat:"):
+            return h[len("wechat:") :]
         return h
 
     def to_handle_from_target(self, *, user_id: str, session_id: str) -> str:
-        return session_id or f"weixin:{user_id}"
+        return session_id or f"wechat:{user_id}"
 
     def get_to_handle_from_request(self, request: Any) -> str:
         session_id = getattr(request, "session_id", "") or ""
         user_id = getattr(request, "user_id", "") or ""
-        return session_id or f"weixin:{user_id}"
+        return session_id or f"wechat:{user_id}"
 
     def get_on_reply_sent_args(self, request: Any, to_handle: str) -> tuple:
         return (
@@ -325,12 +325,12 @@ class WeixinChannel(BaseChannel):
                 ).strip()
                 if token:
                     logger.info(
-                        "weixin: loaded bot_token from %s",
+                        "wechat: loaded bot_token from %s",
                         self._bot_token_file,
                     )
                     return token
         except Exception:
-            logger.debug("weixin: failed to read token file", exc_info=True)
+            logger.debug("wechat: failed to read token file", exc_info=True)
         return ""
 
     def _save_token_to_file(self, token: str) -> None:
@@ -338,9 +338,9 @@ class WeixinChannel(BaseChannel):
         try:
             self._bot_token_file.parent.mkdir(parents=True, exist_ok=True)
             self._bot_token_file.write_text(token, encoding="utf-8")
-            logger.info("weixin: bot_token saved to %s", self._bot_token_file)
+            logger.info("wechat: bot_token saved to %s", self._bot_token_file)
         except Exception:
-            logger.warning("weixin: failed to save token file", exc_info=True)
+            logger.warning("wechat: failed to save token file", exc_info=True)
 
     def _load_context_tokens(self) -> None:
         """Load persisted context_tokens from file into memory."""
@@ -356,13 +356,13 @@ class WeixinChannel(BaseChannel):
                         if isinstance(k, str) and isinstance(v, str)
                     }
                     logger.info(
-                        "weixin: loaded %d context_tokens from %s",
+                        "wechat: loaded %d context_tokens from %s",
                         len(self._user_context_tokens),
                         self._context_tokens_file,
                     )
         except Exception:
             logger.debug(
-                "weixin: failed to load context_tokens file",
+                "wechat: failed to load context_tokens file",
                 exc_info=True,
             )
 
@@ -379,7 +379,7 @@ class WeixinChannel(BaseChannel):
             )
         except Exception:
             logger.debug(
-                "weixin: failed to save context_tokens file",
+                "wechat: failed to save context_tokens file",
                 exc_info=True,
             )
 
@@ -392,7 +392,7 @@ class WeixinChannel(BaseChannel):
             if msg_id in self._processed_ids:
                 return True
             self._processed_ids[msg_id] = None
-            while len(self._processed_ids) > _WEIXIN_PROCESSED_IDS_MAX:
+            while len(self._processed_ids) > _WECHAT_PROCESSED_IDS_MAX:
                 self._processed_ids.popitem(last=False)
         return False
 
@@ -416,18 +416,18 @@ class WeixinChannel(BaseChannel):
                 "",
             )
             logger.info(
-                "weixin: Please scan the QR code to log in.\n  QR URL: %s",
+                "wechat: Please scan the QR code to log in.\n  QR URL: %s",
                 qrcode_url or "(see qrcode_img_content in debug log)",
             )
             if logger.isEnabledFor(logging.DEBUG):
                 img_b64 = qr_data.get("qrcode_img_content", "")
                 if img_b64:
                     logger.debug(
-                        "weixin: QR code base64 PNG: %s",
+                        "wechat: QR code base64 PNG: %s",
                         img_b64[:80],
                     )
 
-            logger.info("weixin: waiting for QR code scan (up to 300s)…")
+            logger.info("wechat: waiting for QR code scan (up to 300s)…")
             token, base_url = await self._client.wait_for_login(qrcode)
             self.bot_token = token
             self._client.bot_token = token
@@ -435,10 +435,10 @@ class WeixinChannel(BaseChannel):
                 self._client.base_url = base_url.rstrip("/")
                 self._base_url = base_url.rstrip("/")
             self._save_token_to_file(token)
-            logger.info("weixin: QR code login succeeded")
+            logger.info("wechat: QR code login succeeded")
             return True
         except Exception:
-            logger.exception("weixin: QR code login failed")
+            logger.exception("wechat: QR code login failed")
             return False
 
     # ------------------------------------------------------------------
@@ -456,7 +456,7 @@ class WeixinChannel(BaseChannel):
         try:
             poll_loop.run_until_complete(self._poll_loop_async())
         except Exception:
-            logger.exception("weixin: poll thread failed")
+            logger.exception("wechat: poll thread failed")
         finally:
             try:
                 pending = asyncio.all_tasks(poll_loop)
@@ -497,12 +497,12 @@ class WeixinChannel(BaseChannel):
                     if ret != 0 and not msgs:
                         if ret == -1:
                             logger.debug(
-                                "weixin getupdates timeout (ret=-1)"
+                                "wechat getupdates timeout (ret=-1)"
                                 ", continue polling",
                             )
                         else:
                             logger.warning(
-                                "weixin getupdates non-zero ret=%s"
+                                "wechat getupdates non-zero ret=%s"
                                 " (no msgs), retry in 3s",
                                 ret,
                             )
@@ -510,7 +510,7 @@ class WeixinChannel(BaseChannel):
                 except asyncio.CancelledError:
                     break
                 except Exception:
-                    logger.exception("weixin poll error, retry in 5s")
+                    logger.exception("wechat poll error, retry in 5s")
                     if not self._stop_event.is_set():
                         await asyncio.sleep(5)
         finally:
@@ -525,7 +525,7 @@ class WeixinChannel(BaseChannel):
         msg: Dict[str, Any],
         client: ILinkClient,
     ) -> None:
-        """Parse one inbound WeixinMessage and enqueue for processing."""
+        """Parse one inbound WeChatMessage and enqueue for processing."""
         try:
             from_user_id = msg.get("from_user_id", "")
             to_user_id = msg.get("to_user_id", "")
@@ -543,7 +543,7 @@ class WeixinChannel(BaseChannel):
             )
             if dedup_key and self._is_duplicate(dedup_key):
                 logger.debug(
-                    "weixin: duplicate message skipped: %s",
+                    "wechat: duplicate message skipped: %s",
                     dedup_key[:40],
                 )
                 return
@@ -728,17 +728,17 @@ class WeixinChannel(BaseChannel):
 
             is_group = bool(group_id)
             meta: Dict[str, Any] = {
-                "weixin_from_user_id": from_user_id,
-                "weixin_to_user_id": to_user_id,
-                "weixin_context_token": context_token,
-                "weixin_group_id": group_id,
+                "wechat_from_user_id": from_user_id,
+                "wechat_to_user_id": to_user_id,
+                "wechat_context_token": context_token,
+                "wechat_group_id": group_id,
                 "is_group": is_group,
             }
 
             allowed, error_msg = self._check_allowlist(from_user_id, is_group)
             if not allowed:
                 logger.info(
-                    "weixin allowlist blocked: sender=%s is_group=%s",
+                    "wechat allowlist blocked: sender=%s is_group=%s",
                     from_user_id,
                     is_group,
                 )
@@ -760,11 +760,12 @@ class WeixinChannel(BaseChannel):
                 self._user_context_tokens[from_user_id] = context_token
                 self._save_context_tokens()
 
-            # Start typing indicator for this user
+            # Start "typing..." indicator immediately and keep refreshing
+            # until send_content_parts finishes the reply.
             if from_user_id and context_token:
 
-                async def _start_typing_async():
-                    # Stop any existing typing indicator to prevent task leak
+                async def _start_typing_on_receive():
+                    # Stop any existing typing indicator first
                     with self._typing_stop_lock:
                         old_stop = self._typing_stop_funcs.pop(
                             from_user_id,
@@ -782,7 +783,7 @@ class WeixinChannel(BaseChannel):
 
                 if self._loop and self._loop.is_running():
                     asyncio.run_coroutine_threadsafe(
-                        _start_typing_async(),
+                        _start_typing_on_receive(),
                         self._loop,
                     )
 
@@ -796,7 +797,7 @@ class WeixinChannel(BaseChannel):
                 "meta": meta,
             }
             logger.info(
-                "weixin recv: from=%s group=%s text_len=%s",
+                "wechat recv: from=%s group=%s text_len=%s",
                 (from_user_id or "")[:20],
                 (group_id or "")[:20],
                 len(text),
@@ -805,7 +806,142 @@ class WeixinChannel(BaseChannel):
                 self._enqueue(native)
 
         except Exception:
-            logger.exception("weixin _on_message failed")
+            logger.exception("wechat _on_message failed")
+
+    async def _process_quoted_ref_msg(
+        self,
+        ref_msg: Dict[str, Any],
+        text_parts: List[str],
+        content_parts: List[Any],
+        client: ILinkClient,
+    ) -> None:
+        """Process a quoted (replied-to) message from ``ref_msg``.
+
+        Extracts text and media from the referenced message and prepends
+        quoted text to *text_parts* / appends media to *content_parts*,
+        following the same pattern used by the WeCom and Feishu channels.
+
+        Args:
+            ref_msg: The ``ref_msg`` dict from an inbound item.
+            text_parts: Mutable list of text strings to prepend quoted text.
+            content_parts: Mutable list of content parts to append media.
+            client: The ILinkClient used for downloading media.
+        """
+        quoted_item = ref_msg.get("message_item") or {}
+        quoted_type = quoted_item.get("type", 0)
+
+        if quoted_type == 1:
+            # Quoted text
+            quoted_text = (
+                (quoted_item.get("text_item") or {}).get("text", "").strip()
+            )
+            if quoted_text:
+                text_parts.insert(0, f"[quoted message: {quoted_text}]")
+
+        elif quoted_type == 2:
+            # Quoted image
+            img_item = quoted_item.get("image_item") or {}
+            media = img_item.get("media") or {}
+            encrypt_query_param = media.get("encrypt_query_param", "")
+            aeskey_hex = img_item.get("aeskey", "")
+            if aeskey_hex:
+                aes_key = _b64.b64encode(
+                    bytes.fromhex(aeskey_hex),
+                ).decode()
+            else:
+                aes_key = media.get("aes_key", "")
+            if encrypt_query_param:
+                path = await self._download_media(
+                    client,
+                    "",
+                    aes_key,
+                    "image.jpg",
+                    encrypt_query_param=encrypt_query_param,
+                )
+                if path:
+                    content_parts.append(
+                        ImageContent(
+                            type=ContentType.IMAGE,
+                            image_url=path,
+                        ),
+                    )
+                else:
+                    text_parts.insert(0, "[quoted image: download failed]")
+            else:
+                text_parts.insert(0, "[quoted image: no url]")
+
+        elif quoted_type == 3:
+            # Quoted voice — use ASR transcription
+            voice_item = quoted_item.get("voice_item") or {}
+            asr_text = (
+                voice_item.get("text_item", {}).get("text", "").strip()
+                if isinstance(voice_item.get("text_item"), dict)
+                else voice_item.get("text", "").strip()
+            )
+            if asr_text:
+                text_parts.insert(0, f"[quoted voice: {asr_text}]")
+            else:
+                text_parts.insert(0, "[quoted voice: no transcription]")
+
+        elif quoted_type == 4:
+            # Quoted file
+            file_item = quoted_item.get("file_item") or {}
+            filename = file_item.get("file_name", "file.bin") or "file.bin"
+            media = file_item.get("media") or {}
+            encrypt_query_param = media.get("encrypt_query_param", "")
+            aes_key = media.get("aes_key", "")
+            if encrypt_query_param:
+                path = await self._download_media(
+                    client,
+                    "",
+                    aes_key,
+                    filename,
+                    encrypt_query_param=encrypt_query_param,
+                )
+                if path:
+                    content_parts.append(
+                        FileContent(
+                            type=ContentType.FILE,
+                            file_url=path,
+                        ),
+                    )
+                else:
+                    text_parts.insert(0, "[quoted file: download failed]")
+            else:
+                text_parts.insert(0, "[quoted file: no url]")
+
+        elif quoted_type == 5:
+            # Quoted video
+            video_item = quoted_item.get("video_item") or {}
+            media = video_item.get("media") or {}
+            encrypt_query_param = media.get("encrypt_query_param", "")
+            aes_key = media.get("aes_key", "")
+            if encrypt_query_param:
+                path = await self._download_media(
+                    client,
+                    "",
+                    aes_key,
+                    "video.mp4",
+                    encrypt_query_param=encrypt_query_param,
+                )
+                if path:
+                    content_parts.append(
+                        VideoContent(
+                            type=ContentType.VIDEO,
+                            video_url=path,
+                        ),
+                    )
+                else:
+                    text_parts.insert(0, "[quoted video: download failed]")
+            else:
+                text_parts.insert(0, "[quoted video: no url]")
+
+        else:
+            if quoted_type:
+                text_parts.insert(
+                    0,
+                    f"[quoted message: unsupported type {quoted_type}]",
+                )
 
     async def _process_quoted_ref_msg(
         self,
@@ -949,11 +1085,11 @@ class WeixinChannel(BaseChannel):
             url_hash = hashlib.md5(
                 (encrypt_query_param or url).encode(),
             ).hexdigest()[:8]
-            path = self._media_dir / f"weixin_{url_hash}_{safe_name}"
+            path = self._media_dir / f"wechat_{url_hash}_{safe_name}"
             path.write_bytes(data)
             return str(path)
         except Exception:
-            logger.exception("weixin _download_media failed url=%s", url[:60])
+            logger.exception("wechat _download_media failed url=%s", url[:60])
             return None
 
     # ------------------------------------------------------------------
@@ -972,9 +1108,20 @@ class WeixinChannel(BaseChannel):
         if not _client or not to_user_id or not text:
             return
         try:
-            await _client.send_text(to_user_id, text, context_token)
+            resp = await _client.send_text(to_user_id, text, context_token)
+            if isinstance(resp, dict):
+                ret = resp.get("ret", 0)
+                errcode = resp.get("errcode", 0)
+                if ret != 0 or errcode != 0:
+                    logger.warning(
+                        "wechat send_text rejected: "
+                        "ret=%s errcode=%s to_user_id=%s",
+                        ret,
+                        errcode,
+                        to_user_id,
+                    )
         except Exception:
-            logger.exception("weixin _send_text_direct failed")
+            logger.exception("wechat _send_text_direct failed")
 
     async def _send_media_file(
         self,
@@ -993,20 +1140,19 @@ class WeixinChannel(BaseChannel):
         """
         if not self._client or not to_user_id or not context_token:
             logger.warning(
-                "weixin _send_media_file: missing required parameters",
+                "wechat _send_media_file: missing required parameters",
             )
             return
 
         try:
             # Convert URL to local path if it's a file:// URL
-            if file_path.startswith("file://"):
-                file_path = file_path[7:]
+            file_path = file_url_to_local_path(file_path) or file_path
 
             # Check if file exists
             path_obj = Path(file_path)
             if not path_obj.exists():
                 logger.warning(
-                    "weixin _send_media_file: file not found: %s",
+                    "wechat _send_media_file: file not found: %s",
                     file_path,
                 )
                 return
@@ -1034,12 +1180,12 @@ class WeixinChannel(BaseChannel):
                 )
             else:
                 logger.warning(
-                    "weixin _send_media_file: unsupported content type: %s",
+                    "wechat _send_media_file: unsupported content type: %s",
                     content_type,
                 )
         except Exception:
             logger.exception(
-                "weixin _send_media_file failed type=%s path=%s",
+                "wechat _send_media_file failed type=%s path=%s",
                 content_type,
                 file_path[:60],
             )
@@ -1181,39 +1327,17 @@ class WeixinChannel(BaseChannel):
         """Actually send content parts to WeChat (no merge buffering)."""
         m = meta or {}
         to_user_id = (
-            m.get("weixin_from_user_id")
+            m.get("wechat_from_user_id")
             or self._parse_user_id_from_handle(to_handle)
             or ""
         )
-        context_token = m.get("weixin_context_token", "") or (
+        context_token = m.get("wechat_context_token", "") or (
             self._user_context_tokens.get(to_user_id, "")
         )
 
         if not to_user_id:
-            logger.warning("weixin send_content_parts: no to_user_id")
+            logger.warning("wechat send_content_parts: no to_user_id")
             return
-
-        # Stop any existing typing indicator before starting a new one
-        # (prevents multiple typing loops running simultaneously)
-        with self._typing_stop_lock:
-            old_stop = self._typing_stop_funcs.pop(to_user_id, None)
-        if old_stop:
-            old_stop()
-
-        # Start typing indicator for this reply
-        # (like Telegram/Mattermost: restart typing for each send)
-        stop_typing = None
-        if to_user_id and context_token:
-            try:
-                stop_typing = await self.start_typing(
-                    to_user_id,
-                    context_token,
-                )
-                # Store stop function for cleanup
-                with self._typing_stop_lock:
-                    self._typing_stop_funcs[to_user_id] = stop_typing
-            except Exception as e:
-                logger.warning(f"weixin start_typing failed: {e}")
 
         prefix = m.get("bot_prefix", "") or self.bot_prefix or ""
         text_parts: List[str] = []
@@ -1286,16 +1410,45 @@ class WeixinChannel(BaseChannel):
             body = prefix + "  " + body
 
         if not body:
-            if stop_typing:
-                stop_typing()
             return
 
         for chunk in split_text(body):
             await self._send_text_direct(to_user_id, chunk, context_token)
 
-        # Stop typing indicator after sending all messages
-        if stop_typing:
-            stop_typing()
+    async def _on_process_completed(
+        self,
+        request: Any,
+        to_handle: str,
+        send_meta: Dict[str, Any],
+    ) -> None:
+        """Flush merge buffer (if any) and stop typing indicator."""
+        # Flush any remaining merged messages before finishing
+        if self._message_merge_enabled:
+            await self._flush_merge_buffer(to_handle)
+
+        user_id = (
+            (send_meta or {}).get("wechat_from_user_id")
+            or self._parse_user_id_from_handle(to_handle)
+            or ""
+        )
+        if user_id:
+            self._stop_typing_for_user(user_id)
+
+    async def _on_consume_error(
+        self,
+        request: Any,
+        to_handle: str,
+        err_text: str,
+    ) -> None:
+        """Flush merge buffer, stop typing, and send error message."""
+        # Flush any buffered messages before sending the error
+        if self._message_merge_enabled:
+            await self._flush_merge_buffer(to_handle)
+
+        user_id = self._parse_user_id_from_handle(to_handle) or ""
+        if user_id:
+            self._stop_typing_for_user(user_id)
+        await super()._on_consume_error(request, to_handle, err_text)
 
     async def _on_process_completed(
         self,
@@ -1343,11 +1496,11 @@ class WeixinChannel(BaseChannel):
             return
         m = meta or {}
         to_user_id = (
-            m.get("weixin_from_user_id")
+            m.get("wechat_from_user_id")
             or self._parse_user_id_from_handle(to_handle)
             or ""
         )
-        context_token = m.get("weixin_context_token", "") or (
+        context_token = m.get("wechat_context_token", "") or (
             self._user_context_tokens.get(to_user_id, "")
         )
         prefix = m.get("bot_prefix", "") or self.bot_prefix or ""
@@ -1381,7 +1534,7 @@ class WeixinChannel(BaseChannel):
         cache_ttl = 24 * 3600  # 24 hours
 
         logger.debug(
-            "weixin _get_typing_ticket called for user_id="
+            "wechat _get_typing_ticket called for user_id="
             f"{user_id}, context_token="
             f"{context_token[:20] if context_token else 'NONE'}...",
         )
@@ -1392,7 +1545,7 @@ class WeixinChannel(BaseChannel):
                 ticket, expiry = self._typing_tickets[user_id]
                 if now < expiry:
                     logger.debug(
-                        f"weixin using cached typing_ticket for {user_id}",
+                        f"wechat using cached typing_ticket for {user_id}",
                     )
                     return ticket
                 # Expired, remove from cache
@@ -1400,7 +1553,7 @@ class WeixinChannel(BaseChannel):
 
         # Fetch new ticket from API
         try:
-            logger.info(f"weixin calling getconfig API for {user_id}")
+            logger.info(f"wechat calling getconfig API for {user_id}")
             resp = await self._client.getconfig(
                 ilink_user_id=user_id,
                 context_token=context_token,
@@ -1408,7 +1561,7 @@ class WeixinChannel(BaseChannel):
             ret = resp.get("ret", 1)
             errcode = resp.get("errcode") or 0  # Treat None as 0
             logger.info(
-                f"weixin getconfig response: ret={ret}, "
+                f"wechat getconfig response: ret={ret}, "
                 f"errcode={resp.get('errcode')}, "
                 f"ticket={'FOUND' if resp.get('typing_ticket') else 'EMPTY'}",
             )
@@ -1421,21 +1574,21 @@ class WeixinChannel(BaseChannel):
                             now + cache_ttl,
                         )
                     logger.info(
-                        f"weixin got typing_ticket for {user_id}: "
+                        f"wechat got typing_ticket for {user_id}: "
                         f"{ticket[:20]}... (length={len(ticket)})",
                     )
                     return ticket
                 else:
                     logger.warning(
-                        "weixin getconfig returned no typing_ticket",
+                        "wechat getconfig returned no typing_ticket",
                     )
             else:
                 logger.warning(
-                    f"weixin getconfig failed: ret={ret}, "
+                    f"wechat getconfig failed: ret={ret}, "
                     f"errcode={resp.get('errcode')}",
                 )
         except Exception as e:
-            logger.warning(f"weixin getconfig failed: {e}")
+            logger.warning(f"wechat getconfig failed: {e}")
 
         return ""
 
@@ -1453,11 +1606,10 @@ class WeixinChannel(BaseChannel):
         Returns:
             A stop function that cancels the typing indicator
         """
-        logger.info(f"weixin start_typing called for user_id={user_id}")
+        logger.info(f"wechat start_typing called for user_id={user_id}")
         ticket = await self._get_typing_ticket(user_id, context_token)
         if not ticket:
-            logger.warning(f"weixin start_typing: no ticket for {user_id}")
-            # Return empty function if no ticket
+            logger.debug("wechat start_typing: no ticket for %s", user_id)
             return lambda: None
 
         stop_event = asyncio.Event()
@@ -1465,92 +1617,71 @@ class WeixinChannel(BaseChannel):
 
         async def refresh_typing():
             """Refresh typing indicator every 5 seconds."""
-            logger.info(f"weixin refresh_typing task started for {user_id}")
+            logger.debug("wechat refresh_typing started for %s", user_id)
             while not stop_event.is_set():
-                try:
-                    await self._client.sendtyping(user_id, ticket, status=1)
-                    logger.info(
-                        "weixin refresh_typing: sent typing status "
-                        f"for {user_id}",
+                client = self._client
+                if client is None:
+                    logger.debug(
+                        "wechat refresh_typing: client gone, exiting "
+                        "for %s",
+                        user_id,
                     )
-                except Exception as e:
-                    logger.warning(f"weixin sendtyping refresh failed: {e}")
-                # Wait for 5 seconds or until stop
+                    break
+                try:
+                    await client.sendtyping(user_id, ticket, status=1)
+                except Exception as exc:
+                    logger.debug(
+                        "wechat sendtyping refresh failed: %s",
+                        exc,
+                    )
                 try:
                     await asyncio.wait_for(
                         stop_event.wait(),
                         timeout=5.0,
                     )
                 except asyncio.TimeoutError:
-                    pass  # Timeout, continue refreshing
-                # If wait_for completes without timeout, stop_event was set,
-                # so loop will exit
-            logger.info(f"weixin refresh_typing task stopped for {user_id}")
+                    pass
+            logger.debug("wechat refresh_typing stopped for %s", user_id)
 
-        # Start refresh task in background
-        task = None
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = self._loop
-
-        logger.info(
-            f"weixin start_typing: loop={loop}, "
-            f"is_running={loop.is_running() if loop else False}",
-        )
-        if loop and loop.is_running():
-            task = asyncio.create_task(refresh_typing())
-            logger.info(f"weixin start_typing: refresh task created: {task}")
-        else:
-            logger.warning(
-                "weixin start_typing: no event loop "
-                "available for refresh task",
-            )
+        # Create the background refresh task.
+        # The reference is held by the stop() closure via stop_event;
+        # we do not need to store it separately.
+        asyncio.create_task(refresh_typing())
 
         # Send initial typing status
-        try:
-            logger.info(
-                f"weixin sending initial typing status for {user_id} "
-                f"with ticket={ticket[:20]}...",
-            )
-            await self._client.sendtyping(user_id, ticket, status=1)
-            logger.info(
-                "weixin initial typing status sent successfully "
-                f"for {user_id}",
-            )
-        except Exception as e:
-            logger.warning(f"weixin sendtyping initial failed: {e}")
+        client = self._client
+        if client:
+            try:
+                await client.sendtyping(user_id, ticket, status=1)
+            except Exception as exc:
+                logger.debug("wechat sendtyping initial failed: %s", exc)
 
         def stop(send_cancel: bool = True):
-            """Stop typing indicator.
-
-            Args:
-                send_cancel: If True, send explicit cancel (status=2) to
-                    immediately hide typing indicator. Set to False to let
-                    it timeout naturally.
-            """
+            """Stop the typing indicator and cancel the refresh task."""
             nonlocal stop_called
             if stop_called:
                 return
             stop_called = True
             stop_event.set()
 
-            # Send cancel status to immediately hide typing indicator
             if send_cancel:
+                client = self._client
+                if client:
 
-                async def _cancel():
+                    async def _cancel():
+                        try:
+                            await client.sendtyping(
+                                user_id,
+                                ticket,
+                                status=2,
+                            )
+                        except Exception:
+                            pass
+
                     try:
-                        await self._client.sendtyping(
-                            user_id,
-                            ticket,
-                            status=2,
-                        )
-                    except Exception as e:
-                        logger.debug(f"weixin sendtyping cancel failed: {e}")
-
-                # Run cancel in background
-                if loop and loop.is_running():
-                    asyncio.create_task(_cancel())
+                        asyncio.ensure_future(_cancel())
+                    except RuntimeError:
+                        pass
 
         return stop
 
@@ -1558,9 +1689,39 @@ class WeixinChannel(BaseChannel):
     # Lifecycle
     # ------------------------------------------------------------------
 
+    async def health_check(self) -> Dict[str, Any]:
+        """Check WeChat long-poll client status."""
+        if not self.enabled:
+            return {
+                "channel": self.channel,
+                "status": "disabled",
+                "detail": "WeChat channel is disabled.",
+            }
+        issues = []
+        if self._client is None:
+            issues.append("WeChat client not initialized")
+        if not self.bot_token:
+            issues.append("Bot token not available (not logged in)")
+        poll_thread_alive = (
+            self._poll_thread is not None and self._poll_thread.is_alive()
+        )
+        if not poll_thread_alive:
+            issues.append("Long-poll thread is not running")
+        if issues:
+            return {
+                "channel": self.channel,
+                "status": "unhealthy",
+                "detail": "; ".join(issues),
+            }
+        return {
+            "channel": self.channel,
+            "status": "healthy",
+            "detail": "WeChat client is connected and polling.",
+        }
+
     async def start(self) -> None:
         if not self.enabled:
-            logger.debug("weixin channel disabled")
+            logger.debug("wechat channel disabled")
             return
 
         # Resolve token: config > token file
@@ -1579,7 +1740,7 @@ class WeixinChannel(BaseChannel):
                 ok = await self._do_qrcode_login()
                 if not ok:
                     raise ChannelError(
-                        channel_name="weixin",
+                        channel_name="wechat",
                         message=(
                             "WeChat QR code login failed. "
                             "Please provide a valid bot_token in config"
@@ -1605,11 +1766,11 @@ class WeixinChannel(BaseChannel):
         self._poll_thread = threading.Thread(
             target=self._run_poll_forever,
             daemon=True,
-            name="weixin-poll",
+            name="wechat-poll",
         )
         self._poll_thread.start()
         logger.info(
-            "weixin channel started (token=%s…)",
+            "wechat channel started (token=%s…)",
             (self.bot_token or "")[:12],
         )
 
@@ -1625,7 +1786,18 @@ class WeixinChannel(BaseChannel):
         if self._poll_thread:
             self._poll_thread.join(timeout=10)
         self._poll_thread = None
+
+        # Stop all active typing indicators before closing the client
+        with self._typing_stop_lock:
+            stop_funcs = list(self._typing_stop_funcs.values())
+            self._typing_stop_funcs.clear()
+        for func in stop_funcs:
+            try:
+                func()
+            except Exception:
+                pass
+
         if self._client:
             await self._client.stop()
         self._client = None
-        logger.info("weixin channel stopped")
+        logger.info("wechat channel stopped")

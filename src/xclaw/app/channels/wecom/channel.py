@@ -45,9 +45,34 @@ from ..base import (
 )
 from .cards import WecomCardHandler
 from .utils import compress_image_for_wecom, format_markdown_tables
-from ..utils import split_text
+from ..utils import file_url_to_local_path, split_text
 
 logger = logging.getLogger(__name__)
+
+# Bridge aibot SDK logs to Python standard logging so that the
+# level is controlled by the project's logging configuration.
+_sdk_logger = logging.getLogger("aibot")
+
+
+class _SdkLoggerAdapter:
+    """Adapter that satisfies the aibot SDK ``Logger`` protocol
+    and delegates to a standard ``logging.Logger``."""
+
+    def __init__(self, std_logger: logging.Logger) -> None:
+        self._log = std_logger
+
+    def debug(self, message: str, *args: object) -> None:
+        self._log.debug(message, *args)
+
+    def info(self, message: str, *args: object) -> None:
+        self._log.info(message, *args)
+
+    def warn(self, message: str, *args: object) -> None:
+        self._log.warning(message, *args)
+
+    def error(self, message: str, *args: object) -> None:
+        self._log.error(message, *args)
+
 
 # Max number of processed message_ids to keep for dedup.
 _WECOM_PROCESSED_IDS_MAX = 2000
@@ -125,6 +150,7 @@ class WecomChannel(BaseChannel):
         allow_from: Optional[List[str]] = None,
         deny_message: str = "",
         max_reconnect_attempts: int = -1,
+        streaming_enabled: bool = False,
     ):
         super().__init__(
             process,
@@ -136,6 +162,7 @@ class WecomChannel(BaseChannel):
             group_policy=group_policy,
             allow_from=allow_from,
             deny_message=deny_message,
+            streaming_enabled=streaming_enabled,
         )
         self.enabled = enabled
         self.bot_id = bot_id
@@ -248,6 +275,9 @@ class WecomChannel(BaseChannel):
                     if getattr(config, "max_reconnect_attempts", None) is None
                     else getattr(config, "max_reconnect_attempts")
                 ),
+            ),
+            streaming_enabled=bool(
+                getattr(config, "streaming_enabled", False),
             ),
         )
 
@@ -751,7 +781,12 @@ class WecomChannel(BaseChannel):
                 fn = (Path(fn).stem or "file") + hint_ext
             self._media_dir.mkdir(parents=True, exist_ok=True)
             safe_name = (
-                "".join(c for c in fn if c.isalnum() or c in "-_.") or "media"
+                "".join(
+                    c
+                    for c in fn.replace("企业微信截图", "screenshot")
+                    if c.isalnum() or c in "-_."
+                )
+                or "media"
             )
             url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
             path = self._media_dir / f"wecom_{url_hash}_{safe_name}"
@@ -832,7 +867,7 @@ class WecomChannel(BaseChannel):
         if not self._client or not self._upload_lock:
             return None
         # Strip file:// prefix
-        local = path.removeprefix("file://")
+        local = file_url_to_local_path(path) or path
         p = Path(local)
         if not p.is_file():
             logger.warning("wecom upload: file not found: %s", local[:80])
@@ -936,7 +971,7 @@ class WecomChannel(BaseChannel):
                 or ""
             )
             # WeCom voice only supports AMR; send other formats as file.
-            _local = raw_path.removeprefix("file://")
+            _local = file_url_to_local_path(raw_path) or raw_path
             media_type = (
                 "voice" if Path(_local).suffix.lower() == ".amr" else "file"
             )
@@ -1300,6 +1335,34 @@ class WecomChannel(BaseChannel):
                 pass
             self._ws_loop = None
 
+    async def health_check(self) -> Dict[str, Any]:
+        """Check WeCom WebSocket client status."""
+        if not self.enabled:
+            return {
+                "channel": self.channel,
+                "status": "disabled",
+                "detail": "WeCom channel is disabled.",
+            }
+        issues = []
+        if self._client is None:
+            issues.append("WeCom WebSocket client not initialized")
+        ws_thread_alive = (
+            self._ws_thread is not None and self._ws_thread.is_alive()
+        )
+        if not ws_thread_alive:
+            issues.append("WebSocket thread is not running")
+        if issues:
+            return {
+                "channel": self.channel,
+                "status": "unhealthy",
+                "detail": "; ".join(issues),
+            }
+        return {
+            "channel": self.channel,
+            "status": "healthy",
+            "detail": "WeCom WebSocket client is connected.",
+        }
+
     async def start(self) -> None:
         if not self.enabled:
             logger.debug("wecom channel disabled")
@@ -1320,6 +1383,7 @@ class WecomChannel(BaseChannel):
             bot_id=self.bot_id,
             secret=self.secret,
             max_reconnect_attempts=self._max_reconnect_attempts,
+            logger=_SdkLoggerAdapter(_sdk_logger),
         )
         self._client = WSClient(options)
 

@@ -8,7 +8,7 @@ metadata:
     requires: {}
 ---
 
-# 钉钉 Channel 自动连接（可视浏览器）
+# 钉钉频道自动连接（可视浏览器）
 
 此 skill 用于通过可视浏览器自动化完成钉钉应用创建与 xClaw channel 绑定。
 

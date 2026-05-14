@@ -90,6 +90,9 @@ pip install --upgrade xclaw
 ```
 cd xClaw
 git pull origin main
+cd console && npm ci && npm run build
+cd .. && mkdir -p src/qwenpaw/console
+cp -R console/dist/. src/qwenpaw/console/
 pip install -e .
 ```
 
@@ -197,6 +200,56 @@ netsh int ipv4 set dynamicport tcp start=49152 num=16384
 > ⚠️ **Warning**: This changes system-wide port configuration. Only do this if
 > you understand the implications.
 
+### APITimeoutError when running QwenPaw in WSL2 (NAT mode)
+
+When running QwenPaw inside WSL2 with NAT networking (especially when a VPN is
+active on the Windows host), you may encounter repeated timeouts:
+
+```
+agent error: APITimeoutError: Request timed out.
+```
+
+**Root cause:** WSL2's default network MTU (1500) is too large for the NAT
+tunnel, causing packets to be silently dropped when a VPN or certain network
+configurations are in use.
+
+**Solution:** Lower the WSL2 network interface MTU to **1350**.
+
+1. **Check the current MTU inside WSL2:**
+
+   ```bash
+   ip link show eth0 | grep mtu
+   ```
+
+2. **Set MTU to 1350 (temporary, resets on reboot):**
+
+   ```bash
+   sudo ip link set eth0 mtu 1350
+   ```
+
+3. **Make the change permanent** by adding a boot command to `/etc/wsl.conf`:
+
+   ```ini
+   [boot]
+   command = /sbin/ip link set eth0 mtu 1350
+   ```
+
+   Then restart WSL2 from PowerShell or CMD:
+
+   ```powershell
+   wsl --shutdown
+   ```
+
+4. **Verify** the change took effect:
+
+   ```bash
+   ip link show eth0 | grep mtu
+   # should show: mtu 1350
+   ```
+
+After this, QwenPaw should be able to communicate with model providers
+normally.
+
 ### Open-source repository
 
 xClaw is open source. Official repository:
@@ -272,10 +325,10 @@ download and start it.
      hf download agentscope-ai/xClaw-Flash-4B-Q4_K_M --local_dir ./dir
      ```
 
-1. Download and install Ollama from the [official site](https://ollama.com/download),
+2. Download and install Ollama from the [official site](https://ollama.com/download),
    then start it.
 
-1. Import the downloaded model into Ollama with the `ollama create` command:
+3. Import the downloaded model into Ollama with the `ollama create` command:
 
 Create a text file named `xclaw-flash.txt` with the following contents. Replace
 `/path/to/your/xclaw-xxx.gguf` with the absolute path to the `.gguf` file in
@@ -306,10 +359,10 @@ ollama create xclaw-flash -f xclaw-flash.txt
 1. Follow step 1 in the Ollama section above to download an appropriate
    quantized xClaw-Flash model.
 
-1. Download and install LM Studio from the [official site](https://lmstudio.ai/),
+2. Download and install LM Studio from the [official site](https://lmstudio.ai/),
    then start it.
 
-1. Import the downloaded model into LM Studio with the following command:
+3. Import the downloaded model into LM Studio with the following command:
 
 ```bash
 lms import /path/to/your/xclaw-xxx.gguf -c -y --user-repo AgentScope/xClaw-Flash

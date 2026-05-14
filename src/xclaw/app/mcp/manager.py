@@ -240,9 +240,14 @@ class MCPClientManager:
             setattr(client, "_xclaw_rebuild_info", rebuild_info)
             return client
 
-        headers = client_config.headers
-        if headers:
-            headers = {k: os.path.expandvars(v) for k, v in headers.items()}
+        headers: dict = dict(client_config.headers or {})
+        headers = {k: os.path.expandvars(v) for k, v in headers.items()}
+
+        # Inject OAuth access token (overrides any manually set Authorization)
+        headers = MCPClientManager._inject_oauth_token(
+            headers,
+            client_config,
+        )
 
         client = HttpStatefulClient(
             name=client_config.name,

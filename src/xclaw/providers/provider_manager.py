@@ -38,7 +38,6 @@ from ..security.secret_store import (
 
 logger = logging.getLogger(__name__)
 
-
 # -------------------------------------------------------
 # Built-in provider definitions and their default models.
 # -------------------------------------------------------
@@ -80,6 +79,44 @@ DASHSCOPE_MODELS: List[ModelInfo] = [
         name="DeepSeek-V3.2",
         supports_image=False,
         supports_video=False,
+        probe_source="documentation",
+    ),
+]
+
+ALIYUN_TOKENPLAN_MODELS: List[ModelInfo] = [
+    ModelInfo(
+        id="qwen3.6-plus",
+        name="Qwen3.6 Plus",
+        supports_image=True,
+        supports_video=True,
+        probe_source="documentation",
+    ),
+    ModelInfo(
+        id="glm-5",
+        name="GLM-5",
+        supports_image=False,
+        supports_video=False,
+        probe_source="documentation",
+    ),
+    ModelInfo(
+        id="MiniMax-M2.5",
+        name="MiniMax M2.5",
+        supports_image=False,
+        supports_video=False,
+        probe_source="documentation",
+    ),
+    ModelInfo(
+        id="deepseek-v3.2",
+        name="DeepSeek-V3.2",
+        supports_image=False,
+        supports_video=False,
+        probe_source="documentation",
+    ),
+    ModelInfo(
+        id="kimi-k2.5",
+        name="Kimi K2.5",
+        supports_image=True,
+        supports_video=True,
         probe_source="documentation",
     ),
 ]
@@ -676,11 +713,34 @@ PROVIDER_DASHSCOPE = OpenAIProvider(
 
 PROVIDER_ALIYUN_CODINGPLAN = OpenAIProvider(
     id="aliyun-codingplan",
-    name="Aliyun Coding Plan",
+    name="Aliyun Coding Plan (China)",
     base_url="https://coding.dashscope.aliyuncs.com/v1",
     api_key_prefix="sk-sp",
     models=ALIYUN_CODINGPLAN_MODELS,
     # This provider doesn't support connection check without model config
+    support_connection_check=False,
+    freeze_url=True,
+)
+
+PROVIDER_ALIYUN_CODINGPLAN_INTL = OpenAIProvider(
+    id="aliyun-codingplan-intl",
+    name="Aliyun Coding Plan (International)",
+    base_url="https://coding-intl.dashscope.aliyuncs.com/v1",
+    api_key_prefix="sk-sp",
+    models=ALIYUN_CODINGPLAN_MODELS,
+    # This provider doesn't support connection check without model config
+    support_connection_check=False,
+    freeze_url=True,
+)
+
+PROVIDER_ALIYUN_TOKENPLAN = OpenAIProvider(
+    id="aliyun-tokenplan",
+    name="Aliyun Token Plan",
+    base_url=(
+        "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+    ),
+    api_key_prefix="sk-sp",
+    models=ALIYUN_TOKENPLAN_MODELS,
     support_connection_check=False,
     freeze_url=True,
 )
@@ -940,9 +1000,13 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
         self._add_builtin(PROVIDER_QWENPAW)
         self._add_builtin(PROVIDER_OLLAMA)
         self._add_builtin(PROVIDER_LMSTUDIO)
+        self._add_builtin(PROVIDER_OPENROUTER)
         self._add_builtin(PROVIDER_MODELSCOPE)
         self._add_builtin(PROVIDER_DASHSCOPE)
         self._add_builtin(PROVIDER_ALIYUN_CODINGPLAN)
+        self._add_builtin(PROVIDER_ALIYUN_CODINGPLAN_INTL)
+        self._add_builtin(PROVIDER_ALIYUN_TOKENPLAN)
+        self._add_builtin(PROVIDER_OPENCODE)
         self._add_builtin(PROVIDER_OPENAI)
         self._add_builtin(PROVIDER_AZURE_OPENAI)
         self._add_builtin(PROVIDER_ANTHROPIC)
@@ -952,8 +1016,6 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
         self._add_builtin(PROVIDER_KIMI_INTL)
         self._add_builtin(PROVIDER_MINIMAX_CN)
         self._add_builtin(PROVIDER_MINIMAX)
-        self._add_builtin(PROVIDER_OPENROUTER)
-        self._add_builtin(PROVIDER_OPENCODE)
         self._add_builtin(PROVIDER_ZHIPU_CN)
         self._add_builtin(PROVIDER_ZHIPU_CN_CODINGPLAN)
         self._add_builtin(PROVIDER_ZHIPU_INTL)
@@ -1313,21 +1375,41 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
         self,
         provider_id: str,
         model_id: str,
+        image_only: bool = False,
     ) -> dict:
-        """Probe a model's multimodal capabilities and persist the result."""
+        """Probe a model's multimodal capabilities and persist the result.
+
+        Args:
+            provider_id: Provider identifier.
+            model_id: Model identifier.
+            image_only: When True, skip the video probe for a faster result.
+                Only ``supports_image`` will be accurate; ``supports_video``
+                will remain at its previous value (not updated).
+        """
         provider_id = self._normalize_provider_id(provider_id)
         provider = self.get_provider(provider_id)
         if not provider:
             return {"error": f"Provider '{provider_id}' not found"}
 
-        result = await provider.probe_model_multimodal(model_id)
+        result = await provider.probe_model_multimodal(
+            model_id,
+            image_only=image_only,
+        )
 
-        # Update the model's capability flags
+        # Update the model's capability flags.
+        # For image_only probes, leave supports_video untouched so a
+        # subsequent full probe can fill it in correctly.
         for model in provider.models + provider.extra_models:
             if model.id == model_id:
                 model.supports_image = result.supports_image
-                model.supports_video = result.supports_video
-                model.supports_multimodal = result.supports_multimodal
+                if not image_only:
+                    model.supports_video = result.supports_video
+                    model.supports_multimodal = result.supports_multimodal
+                else:
+                    # Partial update: derive supports_multimodal from
+                    # image alone; video will be updated by the full probe.
+                    if result.supports_image:
+                        model.supports_multimodal = True
                 model.probe_source = "probed"
                 break
 
@@ -1762,6 +1844,7 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
                 "Skipping local model restore because"
                 " llama.cpp is not installed.",
             )
+            _clear_local_provider()
             return
 
         if not local_manager.is_model_downloaded(model_id):
@@ -1770,6 +1853,7 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
                 " model is not downloaded: %s",
                 model_id,
             )
+            _clear_local_provider()
             return
 
         try:
@@ -1780,6 +1864,7 @@ class ProviderManager:  # pylint: disable=too-many-public-methods
                 model_id,
                 exc,
             )
+            _clear_local_provider()
             return
 
         self.update_provider(

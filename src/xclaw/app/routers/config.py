@@ -30,14 +30,20 @@ from ...config.config import (
     MattermostConfig,
     MQTTConfig,
     QQConfig,
+    SIPChannelConfig,
     SkillScannerConfig,
     SkillScannerWhitelistEntry,
     TelegramConfig,
     VoiceChannelConfig,
     WecomConfig,
 )
+from ...agents.acp.core import ACPConfig, ACPAgentConfig
 
-from .schemas_config import HeartbeatBody
+from .schemas_config import (
+    ChannelHealthResponse,
+    ChannelRestartResponse,
+    HeartbeatBody,
+)
 from ..channels.qrcode_auth_handler import (
     QRCODE_AUTH_HANDLERS,
     generate_qrcode_image,
@@ -55,10 +61,16 @@ _CHANNEL_CONFIG_CLASS_MAP = {
     "imessage": IMessageChannelConfig,
     "console": ConsoleConfig,
     "voice": VoiceChannelConfig,
+    "sip": SIPChannelConfig,
     "mattermost": MattermostConfig,
     "mqtt": MQTTConfig,
     "matrix": MatrixConfig,
     "wecom": WecomConfig,
+}
+_ALLOWED_ACP_TOOL_PARSE_MODES = {
+    "call_title",
+    "update_detail",
+    "call_detail",
 }
 
 
@@ -139,6 +151,102 @@ async def put_channels(
     schedule_agent_reload(request, agent.agent_id)
 
     return channels_config
+
+
+# ── Channel health check & restart ─────────────────────────────────────────
+
+
+async def _resolve_channel_manager(
+    request: Request,
+    channel_name: str = Path(
+        ...,
+        description="Name of the channel",
+        min_length=1,
+    ),
+):
+    """Shared dependency: validate channel name and return channel_manager."""
+    from ..agent_context import get_agent_for_request
+
+    available = get_available_channels()
+    if channel_name not in available:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Channel '{channel_name}' not available",
+        )
+
+    agent = await get_agent_for_request(request)
+    channel_manager = agent.channel_manager
+    if channel_manager is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Channel manager not initialized",
+        )
+    return channel_manager
+
+
+@router.get(
+    "/channels/{channel_name}/health",
+    response_model=ChannelHealthResponse,
+    summary="Health check for a channel",
+    description="Return the runtime health status of a specific channel",
+)
+async def get_channel_health(
+    channel_name: str = Path(
+        ...,
+        description="Name of the channel to check",
+        min_length=1,
+    ),
+    channel_manager=Depends(_resolve_channel_manager),
+) -> ChannelHealthResponse:
+    """Return health status for a specific channel."""
+    try:
+        return await channel_manager.get_channel_health(
+            channel_name,
+        )
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Channel '{channel_name}' is not running."
+                " It may be disabled or not configured."
+            ),
+        ) from exc
+
+
+@router.post(
+    "/channels/{channel_name}/restart",
+    response_model=ChannelRestartResponse,
+    summary="Restart a channel",
+    description=(
+        "Stop and re-start a specific channel" " without restarting the agent"
+    ),
+)
+async def restart_channel(
+    channel_name: str = Path(
+        ...,
+        description="Name of the channel to restart",
+        min_length=1,
+    ),
+    channel_manager=Depends(_resolve_channel_manager),
+) -> ChannelRestartResponse:
+    """Restart a specific channel."""
+    try:
+        return await channel_manager.restart_channel(
+            channel_name,
+        )
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Channel '{channel_name}' is not running."
+                " It may be disabled or not configured."
+            ),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(f"Failed to restart channel" f" '{channel_name}': {exc}"),
+        ) from exc
 
 
 # ── Unified QR code endpoints for all channels ─────────────────────────────
@@ -284,6 +392,120 @@ async def put_channel(
 
 
 @router.get(
+    "/acp",
+    response_model=ACPConfig,
+    summary="Get ACP config",
+    description="Retrieve ACP configuration for current agent",
+)
+async def get_acp_config(request: Request) -> ACPConfig:
+    """Return ACP config for the current agent."""
+    from ..agent_context import get_agent_for_request
+
+    agent = await get_agent_for_request(request)
+    return agent.config.acp or ACPConfig()
+
+
+@router.put(
+    "/acp",
+    response_model=ACPConfig,
+    summary="Update ACP config",
+    description="Update ACP configuration for current agent",
+)
+async def put_acp_config(
+    request: Request,
+    acp_config: ACPConfig = Body(
+        ...,
+        description="Complete ACP configuration",
+    ),
+) -> ACPConfig:
+    """Update ACP config for the current agent."""
+    from ..agent_context import get_agent_for_request
+    from ...config.config import save_agent_config
+
+    agent = await get_agent_for_request(request)
+    agent.config.acp = acp_config
+    save_agent_config(agent.agent_id, agent.config)
+    schedule_agent_reload(request, agent.agent_id)
+    return agent.config.acp
+
+
+@router.get(
+    "/acp/{agent_name}",
+    response_model=ACPAgentConfig,
+    summary="Get ACP agent config",
+    description="Retrieve ACP configuration for a specific ACP agent",
+)
+async def get_acp_agent_config(
+    request: Request,
+    agent_name: str = Path(
+        ...,
+        description="Name of the ACP agent to retrieve",
+        min_length=1,
+    ),
+) -> ACPAgentConfig:
+    """Return config for one ACP agent."""
+    from ..agent_context import get_agent_for_request
+
+    agent = await get_agent_for_request(request)
+    acp_config = agent.config.acp or ACPConfig()
+    acp_agent = acp_config.agents.get(agent_name)
+    if acp_agent is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"ACP agent '{agent_name}' not found",
+        )
+    return acp_agent
+
+
+@router.put(
+    "/acp/{agent_name}",
+    response_model=ACPAgentConfig,
+    summary="Update ACP agent config",
+    description="Update ACP configuration for a specific ACP agent",
+)
+async def put_acp_agent_config(
+    request: Request,
+    agent_name: str = Path(
+        ...,
+        description="Name of the ACP agent to update",
+        min_length=1,
+    ),
+    acp_agent_config: ACPAgentConfig = Body(
+        ...,
+        description="Updated ACP agent configuration",
+    ),
+) -> ACPAgentConfig:
+    """Update config for one ACP agent."""
+    from ..agent_context import get_agent_for_request
+    from ...config.config import save_agent_config
+
+    if acp_agent_config.tool_parse_mode not in _ALLOWED_ACP_TOOL_PARSE_MODES:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid tool_parse_mode. Allowed values: "
+                + ", ".join(sorted(_ALLOWED_ACP_TOOL_PARSE_MODES))
+            ),
+        )
+
+    agent = await get_agent_for_request(request)
+    if agent.config.acp is None:
+        agent.config.acp = ACPConfig()
+
+    agent_name = agent_name.strip()
+    if not agent_name:
+        raise HTTPException(
+            status_code=400,
+            detail="ACP agent name cannot be empty",
+        )
+
+    agent.config.acp.agents[agent_name] = acp_agent_config
+    save_agent_config(agent.agent_id, agent.config)
+    schedule_agent_reload(request, agent.agent_id)
+    return agent.config.acp.agents[agent_name]
+
+
+@router.get(
     "/heartbeat",
     summary="Get heartbeat config",
     description="Return current heartbeat config (interval, target, etc.)",
@@ -341,6 +563,39 @@ async def put_heartbeat(
     asyncio.create_task(reschedule_in_background())
 
     return hb.model_dump(mode="json", by_alias=True)
+
+
+@router.post(
+    "/heartbeat/run",
+    summary="Run heartbeat now",
+    description="Trigger one heartbeat execution immediately",
+)
+async def run_heartbeat_now(request: Request) -> Any:
+    """Trigger one heartbeat run in background for quick testing."""
+    from ..agent_context import get_agent_for_request
+    from ..crons.heartbeat import run_heartbeat_once
+    import asyncio
+    import logging
+
+    agent = await get_agent_for_request(request)
+
+    async def _run_once_bg() -> None:
+        try:
+            workspace_dir = getattr(agent.runner, "workspace_dir", None)
+            await run_heartbeat_once(
+                runner=agent.runner,
+                channel_manager=agent.channel_manager,
+                agent_id=agent.agent_id,
+                workspace_dir=workspace_dir,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logging.getLogger(__name__).exception(
+                "manual heartbeat run failed: %s",
+                e,
+            )
+
+    asyncio.create_task(_run_once_bg())
+    return {"started": True}
 
 
 @router.get(

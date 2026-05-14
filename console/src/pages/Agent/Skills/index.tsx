@@ -40,30 +40,20 @@ import api from "../../../api";
 import { invalidateSkillCache } from "../../../api/modules/skill";
 import { parseErrorDetail } from "../../../utils/error";
 import { PageHeader } from "@/components/PageHeader";
+import { useSkillsPage } from "./useSkillsPage";
 import styles from "./index.module.less";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-
-dayjs.extend(relativeTime);
-
-type DownloadConflict =
-  | {
-      skill_name: string;
-      reason: "conflict";
-    }
-  | {
-      skill_name: string;
-      reason: "builtin_upgrade";
-      current_version_text: string;
-      source_version_text: string;
-    };
 
 function SkillsPage() {
   const { t } = useTranslation();
-  const { message } = useAppMessage();
-  const { selectedAgent } = useAgentStore();
   const {
     skills,
+    visibleSkills,
+    hasMore,
+    sentinelRef,
+    poolSkills,
+    allTags,
+    sortedSkills,
+    conflictRenameModal,
     loading,
     uploading,
     importing,
@@ -763,6 +753,13 @@ function SkillsPage() {
               {t("skills.emptyStateCreate")}
             </Button>
           </div>
+        </div>
+      ) : sortedSkills.length === 0 ? (
+        <div className={styles.noSearchResults}>
+          <span className={styles.noSearchResultsIcon}>🔍</span>
+          <span className={styles.noSearchResultsText}>
+            {t("skills.noSearchResults")}
+          </span>
         </div>
       ) : viewMode === "card" ? (
         <div className={styles.skillsGrid}>

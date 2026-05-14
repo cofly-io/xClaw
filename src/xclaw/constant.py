@@ -165,6 +165,7 @@ HEARTBEAT_FILE = EnvVarLoader.get_str("QWENPAW_HEARTBEAT_FILE", "HEARTBEAT.md")
 HEARTBEAT_DEFAULT_EVERY = "6h"
 HEARTBEAT_DEFAULT_TARGET = "main"
 HEARTBEAT_TARGET_LAST = "last"
+HEARTBEAT_TARGET_INBOX = "inbox"
 
 # Debug history file for /dump_history and /load_history commands
 DEBUG_HISTORY_FILE = EnvVarLoader.get_str(
@@ -309,12 +310,25 @@ LLM_ACQUIRE_TIMEOUT = EnvVarLoader.get_float(
 try:
     TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS = max(
         float(
-            _get_env("QWENPAW_TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS", "600"),
+            _get_env("QWENPAW_TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS", "300"),
         ),
         1.0,
     )
 except (TypeError, ValueError):
-    TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS = 600.0
+    TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS = 300.0
+
+# Tool guard approval heartbeat interval (seconds).
+# Sends periodic heartbeat messages during approval wait to keep SSE
+# connection alive. Should be less than browser/proxy timeout (30-60s).
+try:
+    TOOL_GUARD_APPROVAL_HEARTBEAT_INTERVAL = max(
+        float(
+            _get_env("QWENPAW_TOOL_GUARD_APPROVAL_HEARTBEAT_INTERVAL", "15"),
+        ),
+        5.0,
+    )
+except (TypeError, ValueError):
+    TOOL_GUARD_APPROVAL_HEARTBEAT_INTERVAL = 15.0
 
 # Marker prepended to every truncation notice.
 # Format:

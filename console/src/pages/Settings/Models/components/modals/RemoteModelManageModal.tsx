@@ -13,7 +13,6 @@ import {
   PlusOutlined,
   ApiOutlined,
   EyeOutlined,
-  FilterOutlined,
   SettingOutlined,
   DownOutlined,
   ExperimentOutlined,
@@ -23,15 +22,8 @@ import {
   QuestionCircleOutlined,
   DatabaseOutlined,
   UserOutlined,
+  GiftOutlined,
 } from "@ant-design/icons";
-import {
-  SparkTextLine,
-  SparkImageuploadLine,
-  SparkAudiouploadLine,
-  SparkVideouploadLine,
-  SparkFilePdfLine,
-  SparkTextImageLine,
-} from "@agentscope-ai/icons";
 import type {
   ProviderInfo,
   SeriesResponse,
@@ -47,6 +39,7 @@ import {
   getLocalizedTestConnectionMessage,
   getTestConnectionFailureDetail,
 } from "./testConnectionMessage";
+import { OpenRouterFilterSection } from "./OpenRouterFilterSection";
 import styles from "../../index.module.less";
 
 function ModelConfigEditor({
@@ -196,6 +189,11 @@ const tagColors = (isDark: boolean) => ({
     color: "#52c41a",
     borderColor: isDark ? "rgba(82,196,26,0.3)" : "#b7eb8f",
   },
+  free: {
+    backgroundColor: isDark ? "rgba(82,196,26,0.15)" : "#f6ffed",
+    color: "#52c41a",
+    borderColor: isDark ? "rgba(82,196,26,0.3)" : "#b7eb8f",
+  },
   userAdded: {
     backgroundColor: isDark ? "rgba(24,144,255,0.15)" : "#e6f7ff",
     color: "#1890ff",
@@ -284,9 +282,10 @@ export function RemoteModelManageModal({
   const [availableSeries, setAvailableSeries] = useState<string[]>([]);
   const [discoveredModels, setDiscoveredModels] = useState<any[]>([]);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
-  const [selectedInputModality, setSelectedInputModality] = useState<
-    string | null
-  >(null);
+  const [selectedInputModalities, setSelectedInputModalities] = useState<
+    string[]
+  >([]);
+  const [showFreeOnly, setShowFreeOnly] = useState(false);
   const [loadingFilters, setLoadingFilters] = useState(false);
 
   const [loadingDiscoveredModels, setLoadingDiscoveredModels] = useState(false);
@@ -461,10 +460,17 @@ export function RemoteModelManageModal({
       api
         .getOpenRouterSeries()
         .then((res: SeriesResponse) => {
-          setAvailableSeries(res.series || []);
+          const series = res.series || [];
+          setAvailableSeries(series);
+          setSelectedSeries((prev) =>
+            prev.length === 0
+              ? series
+              : prev.filter((item) => series.includes(item)),
+          );
         })
         .catch(() => {
           setAvailableSeries([]);
+          setSelectedSeries([]);
         });
     }
   }, [isOpenRouter]);
@@ -479,8 +485,11 @@ export function RemoteModelManageModal({
       if (selectedSeries.length > 0) {
         filterBody.providers = selectedSeries;
       }
-      if (selectedInputModality) {
-        filterBody.input_modalities = [selectedInputModality];
+      if (selectedInputModalities.length > 0) {
+        filterBody.input_modalities = selectedInputModalities;
+      }
+      if (showFreeOnly) {
+        filterBody.is_free = true;
       }
 
       const result = await api.filterOpenRouterModels(filterBody);
@@ -502,7 +511,15 @@ export function RemoteModelManageModal({
   const handleAddFilteredModel = async (model: any) => {
     setSaving(true);
     try {
-      await api.addModel(provider.id, { id: model.id, name: model.name });
+      await api.addModel(provider.id, {
+        id: model.id,
+        name: model.name,
+        is_free: model.is_free,
+        supports_multimodal: model.supports_multimodal,
+        supports_image: model.supports_image,
+        supports_video: model.supports_video,
+        probe_source: model.probe_source,
+      });
       message.success(t("models.modelAdded", { name: model.name }));
       await onSaved();
       setDiscoveredModels((prev) => prev.filter((m) => m.id !== model.id));
@@ -542,8 +559,8 @@ export function RemoteModelManageModal({
 
   const filteredModels = useMemo(() => {
     const all_models = [
-      ...(provider.models ?? []),
       ...(provider.extra_models ?? []),
+      ...(provider.models ?? []),
     ];
     const q = modelSearchQuery.trim().toLowerCase();
     if (!q) return all_models;
@@ -586,6 +603,20 @@ export function RemoteModelManageModal({
                   </div>
                   <div className={styles.modelListItemActions}>
                     <CapabilityTags model={m} isDark={isDark} />
+                    {m.is_free && (
+                      <Tag
+                        style={{
+                          fontSize: 11,
+                          marginRight: 4,
+                          ...colors.free,
+                        }}
+                      >
+                        <GiftOutlined
+                          style={{ fontSize: 10, marginRight: 3 }}
+                        />
+                        {t("models.free")}
+                      </Tag>
+                    )}
                     <Tag
                       style={{
                         fontSize: 11,
@@ -616,16 +647,20 @@ export function RemoteModelManageModal({
                         flexShrink: 0,
                       }}
                     />
-                    <Tooltip title={t("models.probeMultimodal", "测试多模态")}>
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<ExperimentOutlined />}
-                        onClick={() => handleProbeMultimodal(m.id)}
-                        loading={probingModelId === m.id}
-                        style={darkBtnStyle}
-                      />
-                    </Tooltip>
+                    {m.probe_source !== "documentation" && (
+                      <Tooltip
+                        title={t("models.probeMultimodal", "测试多模态")}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<ExperimentOutlined />}
+                          onClick={() => handleProbeMultimodal(m.id)}
+                          loading={probingModelId === m.id}
+                          style={darkBtnStyle}
+                        />
+                      </Tooltip>
+                    )}
                     <Tooltip title={t("models.testConnection")}>
                       <Button
                         type="text"
@@ -684,7 +719,6 @@ export function RemoteModelManageModal({
         )}
       </div>
 
-      {/* OpenRouter Filter Section */}
       {isOpenRouter && (
         <div style={{ marginTop: 16, marginBottom: 16 }}>
           <Button

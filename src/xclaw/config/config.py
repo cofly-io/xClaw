@@ -6,7 +6,18 @@ import re
 from pathlib import Path
 from typing import Optional, Union, Dict, List, Literal, Any, Set
 
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+import json
+import re
+from pathlib import Path
+from typing import Optional, Union, Dict, List, Literal, Any, Set
+
+from pydantic import (
+    BaseModel,
+    Field,
+    ConfigDict,
+    field_validator,
+    model_validator,
+)
 import shortuuid
 from agentscope_runtime.engine.schemas.exception import (
     ConfigurationException,
@@ -280,12 +291,19 @@ class WecomConfig(BaseChannelConfig):
     # False to isolate each member into their own chat.
     share_session_in_group: bool = True
     max_reconnect_attempts: int = -1
+    streaming_enabled: bool = False
 
 
 class MatrixConfig(BaseChannelConfig):
     """Matrix channel configuration."""
 
     homeserver: str = ""
+
+    @field_validator("homeserver")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        return v.rstrip("/")
+
     user_id: str = ""
     access_token: str = ""
 
@@ -322,6 +340,34 @@ class VoiceChannelConfig(BaseChannelConfig):
     welcome_greeting: str = "Hi! This is xClaw. How can I help you?"
 
 
+class SIPChannelConfig(BaseChannelConfig):
+    """SIP voice channel: dual-track (pyVoIP dev / LiveKit production)."""
+
+    sip_mode: str = "dev"
+    sip_host: str = "0.0.0.0"
+    sip_port: int = 5061
+    sip_username: str = ""
+    sip_password: str = ""
+    sip_server: str = ""
+    sip_transport: str = "UDP"
+    rtp_port_low: int = 10000
+    rtp_port_high: int = 20000
+    dashscope_api_key: str = ""
+    tts_provider: str = "aliyun"
+    tts_voice: str = ""
+    stt_provider: str = "aliyun"
+    language: str = "zh-CN"
+    welcome_greeting: str = "你好，我是QwenPaw"
+    call_timeout: float = 120.0
+    livekit_url: str = ""
+    livekit_api_key: str = ""
+    livekit_api_secret: str = ""
+    livekit_sip_trunk_id: str = ""
+    livekit_room_name: str = "sip-inbound"
+    livekit_output_sample_rate: int = 24000
+    max_concurrent_calls: int = 5
+
+
 class XiaoYiConfig(BaseChannelConfig):
     """XiaoYi channel: Huawei A2A protocol via WebSocket."""
 
@@ -332,7 +378,7 @@ class XiaoYiConfig(BaseChannelConfig):
     task_timeout_ms: int = 3600000  # 1 hour task timeout
 
 
-class WeixinConfig(BaseChannelConfig):
+class WeChatConfig(BaseChannelConfig):
     """WeChat (iLink Bot) personal account channel config.
 
     bot_token:              Bearer token obtained after QR code login.
@@ -375,10 +421,28 @@ class ChannelConfig(BaseModel):
     console: ConsoleConfig = ConsoleConfig()
     matrix: MatrixConfig = MatrixConfig()
     voice: VoiceChannelConfig = VoiceChannelConfig()
+    sip: SIPChannelConfig = SIPChannelConfig()
     wecom: WecomConfig = WecomConfig()
     xiaoyi: XiaoYiConfig = XiaoYiConfig()
-    weixin: WeixinConfig = WeixinConfig()
+    wechat: WeChatConfig = WeChatConfig()
     onebot: OneBotConfig = OneBotConfig()
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_weixin_key(cls, data: Any) -> Any:
+        """One-shot migration: legacy ``weixin`` key -> canonical ``wechat``.
+
+        Older config files used ``weixin`` as the WeChat channel key. The
+        canonical key is now ``wechat``. When an old config is loaded we
+        rename the key in-place so validation succeeds. The on-disk file is
+        rewritten by ``load_config`` right after validation (see utils.py).
+        """
+        if isinstance(data, dict) and "weixin" in data:
+            data = dict(data)
+            legacy = data.pop("weixin")
+            if "wechat" not in data:
+                data["wechat"] = legacy
+        return data
 
 
 class LastApiConfig(BaseModel):
@@ -411,7 +475,37 @@ class AgentsDefaultsConfig(BaseModel):
     heartbeat: Optional[HeartbeatConfig] = None
 
 
-class EmbeddingConfig(BaseModel):
+class AutoMemorySearchConfig(BaseModel):
+    """Auto memory search configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = Field(
+        default=False,
+        description="Whether to auto search memory on every turn",
+    )
+
+    max_results: int = Field(
+        default=2,
+        ge=1,
+        description=(
+            "Maximum number of results to return when auto memory"
+            " search is enabled"
+        ),
+    )
+
+    min_score: float = Field(
+        default=0.3,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Minimum relevance score for results when auto memory"
+            " search is enabled"
+        ),
+    )
+
+
+class EmbeddingModelConfig(BaseModel):
     """Embedding model configuration."""
 
     model_config = ConfigDict(extra="ignore")
@@ -492,114 +586,59 @@ class ContextCompactConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    token_count_model: str = Field(
-        default="default",
-        description="Model to use for token counting",
-    )
+    # Database connection
+    host: str = ""
+    port: int = 5432
+    user: str = ""
+    password: str = ""
+    dbname: str = ""
 
-    token_count_use_mirror: bool = Field(
-        default=False,
-        description="Whether to use HuggingFace mirror for token counting",
-    )
+    # LLM for server-side fact extraction
+    llm_model: str = ""
+    llm_api_key: str = ""
+    llm_base_url: str = ""
 
-    token_count_estimate_divisor: float = Field(
-        default=4,
-        ge=2,
-        le=5,
-        description=(
-            "Divisor for byte-based token estimation (byte_len / divisor)"
-        ),
-    )
+    # Embedding
+    embedding_model: str = ""
+    embedding_api_key: str = ""
+    embedding_base_url: str = ""
+    embedding_dims: int = 1024
 
-    context_compact_enabled: bool = Field(
+    # API mode
+    api_mode: str = Field(
+        default="rest",
+        description="API mode: 'sql' (direct psycopg2) or 'rest' (HTTP API)",
+    )
+    rest_api_key: str = ""
+    rest_base_url: str = ""
+
+    # Behavior
+    memory_isolation: bool = Field(
         default=True,
-        description="Whether to enable automatic context compaction",
+        description="Per-agent memory isolation (True) or shared (False)",
     )
-
-    memory_compact_ratio: float = Field(
-        default=0.75,
-        ge=0.3,
-        le=0.9,
-        description=(
-            "Compaction trigger threshold ratio: compaction is triggered when "
-            "the context length reaches this fraction of max_input_length"
-        ),
-    )
-
-    memory_reserve_ratio: float = Field(
-        default=0.1,
-        ge=0.05,
-        le=0.3,
-        description=(
-            "Context reserve threshold ratio: the most recent fraction of the "
-            "context is preserved after compaction to maintain continuity"
-        ),
-    )
-
-    compact_with_thinking_block: bool = Field(
-        default=True,
-        description="Whether to include thinking blocks when compacting",
-    )
+    search_timeout: float = 10.0
+    pool_minconn: int = 1
+    pool_maxconn: int = 5
 
 
-class ToolResultCompactConfig(BaseModel):
-    """Tool result compaction thresholds and retention configuration."""
+class ReMeLightMemoryConfig(BaseModel):
+    """ReMeLight memory manager configuration."""
 
     model_config = ConfigDict(extra="ignore")
 
-    enabled: bool = Field(
-        default=True,
-        description="Whether to enable tool result compaction",
-    )
-
-    recent_n: int = Field(
-        default=2,
-        ge=1,
-        le=10,
-        description="Number of recent messages to use recent_max_bytes for",
-    )
-
-    old_max_bytes: int = Field(
-        default=3000,
-        ge=100,
-        description=(
-            "Byte threshold for old messages in tool result compaction"
-        ),
-    )
-
-    recent_max_bytes: int = Field(
-        default=50000,
-        ge=1000,
-        description=(
-            "Byte threshold for recent messages in tool result compaction"
-        ),
-    )
-
-    retention_days: int = Field(
-        default=5,
-        ge=1,
-        le=10,
-        description="Number of days to retain tool result files",
-    )
-
-
-class MemorySummaryConfig(BaseModel):
-    """Memory summarization and search configuration."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    memory_summary_enabled: bool = Field(
+    summarize_when_compact: bool = Field(
         default=True,
         description="Whether to enable memory summarization during compaction",
     )
 
-    memory_prompt_enabled: bool = Field(
-        default=True,
-        description=(
-            "Whether to include the memory guidance section in the system"
-            " prompt (the <!-- memory:start/end --> block in AGENTS.md)."
-            " Set to False to omit it and save tokens."
-        ),
+    auto_memory_interval: int | None = Field(
+        default=None,
+        description="Auto memory every N user queries. None disables "
+        "periodic auto memory, 1 means auto memory after every user "
+        "query, 2 means every 2 queries, etc. WARNING: Setting too "
+        "small (e.g., 1-3) may cause high token usage and heavy "
+        "background task burden. Recommended: 5 or 10.",
     )
 
     dream_cron: str = Field(
@@ -608,37 +647,12 @@ class MemorySummaryConfig(BaseModel):
         "(empty to disable)",
     )
 
-    force_memory_search: bool = Field(
-        default=False,
-        description="Whether to force memory search on every turn",
+    auto_memory_search_config: AutoMemorySearchConfig = Field(
+        default_factory=AutoMemorySearchConfig,
     )
 
-    force_max_results: int = Field(
-        default=1,
-        ge=1,
-        description=(
-            "Maximum number of results to return when force memory"
-            " search is enabled"
-        ),
-    )
-
-    force_min_score: float = Field(
-        default=0.3,
-        ge=0.0,
-        le=1.0,
-        description=(
-            "Minimum relevance score for results when force memory"
-            " search is enabled"
-        ),
-    )
-
-    force_memory_search_timeout: float = Field(
-        default=10.0,
-        gt=0.0,
-        description=(
-            "Timeout in seconds for force memory search. Increase this value"
-            " when using remote embedding APIs that may have higher latency."
-        ),
+    embedding_model_config: EmbeddingModelConfig = Field(
+        default_factory=EmbeddingModelConfig,
     )
 
     rebuild_memory_index_on_start: bool = Field(
@@ -724,6 +738,165 @@ class AutoTitleConfig(BaseModel):
 
     timeout_seconds: float = Field(
         default=45.0,
+        ge=1.0,
+        description=(
+            "Hard timeout for the title-generation LLM call. The "
+            "background task is swallowed if this fires, leaving the "
+            "placeholder name in place."
+        ),
+    )
+
+
+class ContextCompactConfig(BaseModel):
+    """Context compaction configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = Field(
+        default=True,
+        description="Whether to enable automatic context compaction",
+    )
+
+    compact_threshold_ratio: float = Field(
+        default=0.8,
+        ge=0.1,
+        le=0.9,
+        description=(
+            "Compaction trigger threshold ratio: compaction is triggered when "
+            "the context length reaches this fraction of max_input_length"
+        ),
+    )
+
+    reserve_threshold_ratio: float = Field(
+        default=0.1,
+        ge=0,
+        le=0.3,
+        description=(
+            "Context reserve threshold ratio: the most recent fraction of the "
+            "context is preserved after compaction to maintain continuity"
+        ),
+    )
+
+    compact_with_thinking_block: bool = Field(
+        default=True,
+        description="Whether to include thinking blocks when compacting",
+    )
+
+
+class ToolResultPruningConfig(BaseModel):
+    """Tool result pruning configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = Field(
+        default=True,
+        description="Whether to enable tool result pruning",
+    )
+
+    pruning_recent_n: int = Field(
+        default=2,
+        ge=1,
+        le=10,
+        description="Number of recent messages to use recent_max_bytes for",
+    )
+
+    pruning_old_msg_max_bytes: int = Field(
+        default=3000,
+        ge=100,
+        description=("Byte threshold for old messages in tool result pruning"),
+    )
+
+    pruning_recent_msg_max_bytes: int = Field(
+        default=50000,
+        ge=1000,
+        description=(
+            "Byte threshold for recent messages in tool result pruning"
+        ),
+    )
+
+    offload_retention_days: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+        description="Number of days to retain tool result files",
+    )
+
+    tool_results_cache: str = Field(
+        default="tool_results",
+        description="Directory name for tool result cache files "
+        "relative to working_dir",
+    )
+
+    exempt_file_extensions: List[str] = Field(
+        default_factory=lambda: [".md"],
+        description=(
+            "File extensions exempt from tool result pruning. "
+            "Tool results for read_file operations on these file types "
+            "will use recent_max_bytes instead of old_max_bytes."
+        ),
+    )
+
+    exempt_tool_names: List[str] = Field(
+        default_factory=lambda: ["chat_with_agent"],
+        description=(
+            "Tool names exempt from tool result pruning. "
+            "Tool results from these tools will use recent_max_bytes "
+            "instead of old_max_bytes."
+        ),
+    )
+
+
+class LightContextConfig(BaseModel):
+    """Light context manager configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    dialog_path: str = Field(
+        default="dialog",
+        description="Path for dialog persistence to jsonl files "
+        "relative to working_dir.",
+    )
+
+    token_count_estimate_divisor: float = Field(
+        default=4,
+        ge=2,
+        le=5,
+        description=(
+            "Divisor for byte-based token estimation (byte_len / divisor)"
+        ),
+    )
+
+    context_compact_config: ContextCompactConfig = Field(
+        default_factory=ContextCompactConfig,
+    )
+    tool_result_pruning_config: ToolResultPruningConfig = Field(
+        default_factory=ToolResultPruningConfig,
+    )
+
+
+class AutoTitleConfig(BaseModel):
+    """Async chat-title generation configuration.
+
+    The console handler creates each new chat with a 10-character
+    placeholder name and spawns a background task that asks the active
+    LLM for a concise title. Each new chat costs one short extra LLM
+    call; flip ``enabled`` to ``False`` to keep the placeholder and
+    avoid the spend.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = Field(
+        default=True,
+        description=(
+            "Generate a chat title via the active LLM after the first "
+            "user message. Disable to keep the truncated placeholder "
+            "and skip the extra per-chat LLM call."
+        ),
+    )
+
+    timeout_seconds: float = Field(
+        default=30.0,
         ge=1.0,
         description=(
             "Hard timeout for the title-generation LLM call. The "
@@ -880,9 +1053,10 @@ class AgentsRunningConfig(BaseModel):
         description="Maximum length for /history command output",
     )
 
-    context_compact: ContextCompactConfig = Field(
-        default_factory=ContextCompactConfig,
-        description="Context compaction configuration",
+    context_manager_backend: str = Field(default="light")
+
+    light_context_config: LightContextConfig = Field(
+        default_factory=LightContextConfig,
     )
 
     tool_result_compact: ToolResultCompactConfig = Field(
@@ -933,19 +1107,31 @@ class AgentsRunningConfig(BaseModel):
         ),
     )
 
-    @property
-    def memory_compact_reserve(self) -> int:
-        """Memory compact reserve size (tokens)."""
-        return int(
-            self.max_input_length * self.context_compact.memory_reserve_ratio,
-        )
+    memory_manager_backend: str = Field(default="remelight")
 
-    @property
-    def memory_compact_threshold(self) -> int:
-        """Memory compact threshold size (tokens)."""
-        return int(
-            self.max_input_length * self.context_compact.memory_compact_ratio,
-        )
+    adbpg_memory_config: Optional[ADBPGMemoryConfig] = Field(
+        default=None,
+        description="ADBPG memory configuration (used when "
+        "memory_manager_backend='adbpg')",
+    )
+
+    reme_light_memory_config: ReMeLightMemoryConfig = Field(
+        default_factory=ReMeLightMemoryConfig,
+    )
+
+    daily_memory_dir: str = Field(
+        default="memory",
+        description="Dir name to daily summary file",
+    )
+
+    approval_level: Optional[str] = Field(
+        default=None,
+        description=(
+            "Tool execution security level (proxied from agent profile): "
+            "STRICT, SMART, AUTO, or OFF.  When set via running-config API, "
+            "the value is written back to the agent profile."
+        ),
+    )
 
 
 class AgentsLLMRoutingConfig(BaseModel):
@@ -990,6 +1176,15 @@ class AgentProfileRef(BaseModel):
     enabled: bool = Field(
         default=True,
         description="Whether agent is enabled (controls instance loading)",
+    )
+
+
+class PlanConfig(BaseModel):
+    """Plan mode configuration (stored in agent.json)."""
+
+    enabled: bool = Field(
+        default=False,
+        description="Whether plan mode is enabled for this agent",
     )
 
 
@@ -1044,6 +1239,16 @@ class AgentProfileConfig(BaseModel):
         default="zh",
         description="Language setting for this agent",
     )
+    approval_level: str = Field(
+        default="AUTO",
+        description=(
+            "Tool execution security level: "
+            "STRICT (all tools need approval), "
+            "SMART (low-risk auto-allowed), "
+            "AUTO (only guarded tools), "
+            "OFF (guard disabled)"
+        ),
+    )
     system_prompt_files: List[str] = Field(
         default_factory=lambda: ["AGENTS.md", "SOUL.md", "PROFILE.md"],
         description="System prompt markdown files",
@@ -1055,6 +1260,14 @@ class AgentProfileConfig(BaseModel):
     security: Optional["SecurityConfig"] = Field(
         default=None,
         description="Security configuration for this agent",
+    )
+    acp: Optional[ACPConfig] = Field(
+        default=None,
+        description="ACP configuration for this agent",
+    )
+    plan: PlanConfig = Field(
+        default_factory=PlanConfig,
+        description="Plan mode configuration for this agent",
     )
 
 
@@ -1142,6 +1355,23 @@ class LastDispatchConfig(BaseModel):
     session_id: str = ""
 
 
+class MCPOAuthConfig(BaseModel):
+    """OAuth 2.1 configuration for a remote MCP client.
+
+    Stores OAuth credentials and endpoints discovered via RFC 8414 /
+    RFC 9728.  Tokens are masked in API responses; stored plain-text in
+    agent.json (file is local to the user's workspace).
+    """
+
+    client_id: str = ""
+    scope: str = ""
+    access_token: str = ""
+    refresh_token: str = ""
+    expires_at: float = 0.0
+    token_endpoint: str = ""
+    auth_endpoint: str = ""
+
+
 class MCPClientConfig(BaseModel):
     """Configuration for a single MCP client."""
 
@@ -1157,6 +1387,7 @@ class MCPClientConfig(BaseModel):
     args: List[str] = Field(default_factory=list)
     env: Dict[str, str] = Field(default_factory=dict)
     cwd: str = ""
+    oauth: Optional[MCPOAuthConfig] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -1265,9 +1496,14 @@ class BuiltinToolConfig(BaseModel):
     )
 
 
+# pylint: disable=too-many-nested-blocks
 def _default_builtin_tools() -> Dict[str, BuiltinToolConfig]:
-    """Return a fresh copy of the canonical built-in tool definitions."""
-    return {
+    """Return a fresh copy of the canonical built-in tool definitions.
+
+    This includes both hardcoded tools and dynamically registered tools
+    from plugins.
+    """
+    tools = {
         "execute_shell_command": BuiltinToolConfig(
             name="execute_shell_command",
             enabled=True,
@@ -1354,6 +1590,12 @@ def _default_builtin_tools() -> Dict[str, BuiltinToolConfig]:
             description="Get llm token usage",
             icon="📊",
         ),
+        "delegate_external_agent": BuiltinToolConfig(
+            name="delegate_external_agent",
+            enabled=False,
+            description="Delegate work to an external ACP agent runner",
+            icon="📡",
+        ),
         "list_agents": BuiltinToolConfig(
             name="list_agents",
             enabled=True,
@@ -1363,10 +1605,73 @@ def _default_builtin_tools() -> Dict[str, BuiltinToolConfig]:
         "chat_with_agent": BuiltinToolConfig(
             name="chat_with_agent",
             enabled=True,
-            description="Send a message to another configured agent",
+            description=(
+                "Send a message to another configured agent and wait for "
+                "the response"
+            ),
             icon="💬",
         ),
+        "submit_to_agent": BuiltinToolConfig(
+            name="submit_to_agent",
+            enabled=True,
+            description="Submit a background task to another configured agent",
+            icon="📨",
+        ),
+        "check_agent_task": BuiltinToolConfig(
+            name="check_agent_task",
+            enabled=True,
+            description="Check the status of a background agent task",
+            icon="⏳",
+        ),
     }
+
+    # Merge dynamically registered tools from plugins
+    try:
+        from ..plugins.registry import PluginRegistry
+
+        registry = PluginRegistry()
+        # Access manifests via public method
+        all_manifests = registry.get_all_plugin_manifests()
+        for plugin_id, manifest in all_manifests.items():
+            meta = manifest.get("meta", {})
+            # Support old format: meta.tool_name
+            if meta.get("tool_name"):
+                tool_name = meta["tool_name"]
+                if tool_name not in tools:
+                    tools[tool_name] = BuiltinToolConfig(
+                        name=tool_name,
+                        enabled=False,
+                        description=meta.get(
+                            "tool_description",
+                            f"Tool from plugin {plugin_id}",
+                        ),
+                        display_to_user=True,
+                        async_execution=False,
+                        icon=meta.get("tool_icon", "🔧"),
+                    )
+            # Support new format: meta.tools array
+            tools_list = meta.get("tools", [])
+            if isinstance(tools_list, list):
+                for tool_info in tools_list:
+                    if isinstance(tool_info, dict) and "name" in tool_info:
+                        tool_name = tool_info["name"]
+                        if tool_name not in tools:
+                            tools[tool_name] = BuiltinToolConfig(
+                                name=tool_name,
+                                enabled=False,
+                                description=tool_info.get(
+                                    "description",
+                                    f"Tool from plugin {plugin_id}",
+                                ),
+                                display_to_user=True,
+                                async_execution=False,
+                                icon=tool_info.get("icon", "🔧"),
+                            )
+    except Exception:
+        # Plugins not loaded yet, return hardcoded tools only
+        pass
+
+    return tools
 
 
 class ToolsConfig(BaseModel):
@@ -1431,6 +1736,8 @@ def build_local_agent_tools_config() -> ToolsConfig:
         {
             "list_agents",
             "chat_with_agent",
+            "submit_to_agent",
+            "check_agent_task",
             "execute_shell_command",
             "read_file",
             "write_file",
@@ -1566,6 +1873,7 @@ class Config(BaseModel):
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     last_dispatch: Optional[LastDispatchConfig] = None
     security: SecurityConfig = Field(default_factory=SecurityConfig)
+    acp: ACPConfig = Field(default_factory=ACPConfig)
     show_tool_details: bool = True
     user_timezone: str = Field(
         default_factory=detect_system_timezone,
@@ -1591,9 +1899,10 @@ ChannelConfigUnion = Union[
     ConsoleConfig,
     MatrixConfig,
     VoiceChannelConfig,
+    SIPChannelConfig,
     WecomConfig,
     XiaoYiConfig,
-    WeixinConfig,
+    WeChatConfig,
 ]
 
 
@@ -1656,7 +1965,10 @@ def build_fallback_agent_profile_config(
 
 
 def load_agent_config(agent_id: str) -> AgentProfileConfig:
-    """Load agent's complete configuration from workspace/agent.json.
+    """Load agent's complete configuration from workspace/agent.json with
+    mtime-based caching.
+
+    Uses file modification time to avoid unnecessary disk reads.
 
     Args:
         agent_id: Agent ID to load
@@ -1667,7 +1979,11 @@ def load_agent_config(agent_id: str) -> AgentProfileConfig:
     Raises:
         ValueError: If agent ID not found in root config
     """
-    from .utils import load_config
+    from .utils import (
+        load_config,
+        _agent_config_cache,
+        _agent_config_lock,
+    )
 
     config = load_config()
 
@@ -1687,27 +2003,83 @@ def load_agent_config(agent_id: str) -> AgentProfileConfig:
         save_agent_config(agent_id, fallback_config)
         return fallback_config
 
-    with open(agent_config_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    # Normalize legacy ~/.copaw-bound paths to current WORKING_DIR.
-    # This keeps QWENPAW_WORKING_DIR effective even if existing agent.json
-    # contains older hard-coded paths like "~/.copaw/media".
+    # Check mtime to see if we can use cached config
     try:
-        from .utils import _normalize_working_dir_bound_paths
+        current_mtime = agent_config_path.stat().st_mtime
+    except OSError:
+        fallback_config = build_fallback_agent_profile_config(agent_id, config)
+        save_agent_config(agent_id, fallback_config)
+        return fallback_config
 
-        data = _normalize_working_dir_bound_paths(data)
-    except Exception:
-        pass
+    with _agent_config_lock:
+        # Return cached config if mtime hasn't changed
+        if agent_id in _agent_config_cache:
+            cached_config, cached_mtime = _agent_config_cache[agent_id]
+            if cached_mtime == current_mtime:
+                return cached_config
 
-    return AgentProfileConfig(**data)
+        # Need to reload config from disk
+        with open(agent_config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # One-shot migration: rename legacy ``channels.weixin`` key to
+        # ``channels.wechat`` and rewrite the file on disk so future loads
+        # see the canonical key directly. This rewrite must happen BEFORE
+        # any in-memory normalization (e.g. ~/.copaw path rewriting) so we
+        # only persist the key rename, not unrelated runtime transforms.
+        channels = data.get("channels")
+        if isinstance(channels, dict) and "weixin" in channels:
+            legacy = channels.pop("weixin")
+            if "wechat" not in channels:
+                channels["wechat"] = legacy
+            try:
+                import uuid as _uuid
+                import shutil as _shutil
+
+                backup_path = agent_config_path.with_suffix(
+                    f".{_uuid.uuid4().hex[:8]}.weixin-migrate.bak",
+                )
+                _shutil.copy2(agent_config_path, backup_path)
+                with open(
+                    agent_config_path,
+                    "w",
+                    encoding="utf-8",
+                ) as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                # Refresh mtime cache key after rewriting the file so the
+                # cached config still reflects the on-disk state.
+                try:
+                    current_mtime = agent_config_path.stat().st_mtime
+                except OSError:
+                    pass
+            except OSError:
+                pass
+
+        # Normalize legacy ~/.copaw-bound paths to current WORKING_DIR.
+        # This keeps QWENPAW_WORKING_DIR effective even if existing agent.json
+        # contains older hard-coded paths like "~/.copaw/media".
+        # NOTE: this transform is applied in-memory only; it must not be
+        # persisted back to disk.
+        try:
+            from .utils import _normalize_working_dir_bound_paths
+
+            data = _normalize_working_dir_bound_paths(data)
+        except Exception:
+            pass
+
+        agent_config = AgentProfileConfig(**data)
+
+        # Cache the config with its mtime
+        _agent_config_cache[agent_id] = (agent_config, current_mtime)
+
+        return agent_config
 
 
 def save_agent_config(
     agent_id: str,
     agent_config: AgentProfileConfig,
 ) -> None:
-    """Save agent configuration to workspace/agent.json.
+    """Save agent configuration to workspace/agent.json and invalidate cache.
 
     Args:
         agent_id: Agent ID
@@ -1716,7 +2088,11 @@ def save_agent_config(
     Raises:
         ValueError: If agent ID not found in root config
     """
-    from .utils import load_config
+    from .utils import (
+        load_config,
+        _agent_config_cache,
+        _agent_config_lock,
+    )
 
     config = load_config()
 
@@ -1739,6 +2115,11 @@ def save_agent_config(
             ensure_ascii=False,
             indent=2,
         )
+
+    # Invalidate cache after saving
+    with _agent_config_lock:
+        if agent_id in _agent_config_cache:
+            del _agent_config_cache[agent_id]
 
 
 def migrate_legacy_config_to_multi_agent() -> bool:

@@ -21,6 +21,8 @@ import {
 import styles from "./index.module.less";
 
 interface ChatSessionItemProps {
+  /** Unique session id — used to call back parent handlers without inline closures */
+  sessionId: string;
   /** Session display name */
   name: string;
   /** Stable session id (drawer / virtual list; used with shared context menu) */
@@ -122,6 +124,41 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
     props.onDelete,
     props.pinned,
   ]);
+
+  const handleClick = useCallback(() => {
+    props.onClick?.(props.sessionId);
+  }, [props.onClick, props.sessionId]);
+
+  const handleEdit = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      props.onEdit?.(props.sessionId, props.name);
+    },
+    [props.onEdit, props.sessionId, props.name],
+  );
+
+  const handleDelete = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      props.onDelete?.(props.sessionId);
+    },
+    [props.onDelete, props.sessionId],
+  );
+
+  const handlePin = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      props.onPin?.(props.sessionId);
+    },
+    [props.onPin, props.sessionId],
+  );
+
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      props.onContextMenu?.(props.sessionId, event);
+    },
+    [props.onContextMenu, props.sessionId],
+  );
 
   const className = [
     styles.chatSessionItem,
@@ -235,8 +272,36 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
             className={styles.editInput}
             value={props.editValue}
             onChange={(e) => props.onEditChange?.(e.target.value)}
-            onPressEnter={props.onEditSubmit}
-            onBlur={props.onEditSubmit}
+            onCompositionStart={() => {
+              isComposingRef.current = true;
+            }}
+            onCompositionEnd={() => {
+              isComposingRef.current = false;
+            }}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                !e.nativeEvent.isComposing &&
+                !isComposingRef.current
+              ) {
+                e.preventDefault();
+                props.onEditSubmit?.();
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                props.onEditCancel?.();
+              }
+            }}
+            onBlur={() => {
+              /* Delay slightly so that IME composition end + blur
+                 ordering issues on some browsers don't cause
+                 premature submit */
+              setTimeout(() => {
+                if (!isComposingRef.current) {
+                  props.onEditSubmit?.();
+                }
+              }, 100);
+            }}
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
@@ -274,4 +339,4 @@ const ChatSessionItem: React.FC<ChatSessionItemProps> = (props) => {
   );
 };
 
-export default ChatSessionItem;
+export default React.memo(ChatSessionItem);

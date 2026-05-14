@@ -3,8 +3,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 from typing import Any, Dict
 
+from ..inbox_trace_store import (
+    append_trace_from_session_delta,
+    create_trace,
+    finalize_trace,
+    read_session_messages,
+)
 from .models import CronJobSpec
 
 logger = logging.getLogger(__name__)
@@ -15,7 +22,8 @@ class CronExecutor:
         self._runner = runner
         self._channel_manager = channel_manager
 
-    async def execute(self, job: CronJobSpec) -> None:
+    # pylint: disable=too-many-statements
+    async def execute(self, job: CronJobSpec) -> dict[str, Any]:
         """Execute one job once.
 
         - task_type text: send fixed text to channel
@@ -76,6 +84,7 @@ class CronExecutor:
             )
 
         async def _run() -> None:
+            nonlocal delivery_error
             async for event in self._runner.stream_query(req):
                 await self._channel_manager.send_event(
                     channel=target_channel,
@@ -90,13 +99,69 @@ class CronExecutor:
                 _run(),
                 timeout=job.runtime.timeout_seconds,
             )
+            await append_trace_from_session_delta(
+                run_id=run_id,
+                runner=self._runner,
+                session_id=req["session_id"],
+                user_id=req["user_id"],
+                channel=target_channel,
+                baseline_count=baseline_count,
+            )
+            await finalize_trace(run_id, status="success")
+            return {
+                "task_type": "agent",
+                "run_id": run_id,
+                "delivery_status": "failed" if delivery_error else "success",
+                "delivery_error": delivery_error,
+            }
         except asyncio.TimeoutError:
             logger.warning(
                 "cron execute: job_id=%s timed out after %ss",
                 job.id,
                 job.runtime.timeout_seconds,
             )
+            await append_trace_from_session_delta(
+                run_id=run_id,
+                runner=self._runner,
+                session_id=req["session_id"],
+                user_id=req["user_id"],
+                channel=target_channel,
+                baseline_count=baseline_count,
+            )
+            await finalize_trace(
+                run_id,
+                status="timeout",
+                error=f"timed out after {job.runtime.timeout_seconds}s",
+            )
             raise
         except asyncio.CancelledError:
             logger.info("cron execute: job_id=%s cancelled", job.id)
+            await append_trace_from_session_delta(
+                run_id=run_id,
+                runner=self._runner,
+                session_id=req["session_id"],
+                user_id=req["user_id"],
+                channel=target_channel,
+                baseline_count=baseline_count,
+            )
+            await finalize_trace(
+                run_id,
+                status="cancelled",
+                error="execution cancelled",
+            )
+            raise
+        except Exception as e:  # pylint: disable=broad-except
+            await append_trace_from_session_delta(
+                run_id=run_id,
+                runner=self._runner,
+                session_id=req["session_id"],
+                user_id=req["user_id"],
+                channel=target_channel,
+                baseline_count=baseline_count,
+            )
+            await finalize_trace(
+                run_id,
+                status="error",
+                error=repr(e),
+            )
             raise

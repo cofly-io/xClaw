@@ -26,6 +26,21 @@ DASHSCOPE_BASE_URLS = (
     "https://dashscope-us.aliyuncs.com/compatible-mode/v1",
 )
 CODING_DASHSCOPE_BASE_URL = "https://coding.dashscope.aliyuncs.com/v1"
+TOKEN_PLAN_BASE_URL = (
+    "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+)
+
+if os.environ.get("LANGFUSE_SECRET_KEY") and importlib.util.find_spec(
+    "langfuse",
+):
+    from langfuse.openai import AsyncOpenAI  # type: ignore[import]
+else:
+    if os.environ.get("LANGFUSE_SECRET_KEY"):
+        logger.warning(
+            "LANGFUSE_SECRET_KEY is set but langfuse is not installed; "
+            "install with `pip install langfuse` to enable tracing",
+        )
+    from openai import AsyncOpenAI  # pylint: disable=ungrouped-imports
 
 if os.environ.get("LANGFUSE_SECRET_KEY") and importlib.util.find_spec(
     "langfuse",
@@ -74,8 +89,6 @@ class OpenAIProvider(Provider):
 
     async def check_connection(self, timeout: float = 5) -> tuple[bool, str]:
         """Check if OpenAI provider is reachable with current configuration."""
-        if self.base_url == CODING_DASHSCOPE_BASE_URL:
-            return True, ""
         client = self._client()
         try:
             await client.models.list(timeout=timeout)
@@ -170,6 +183,18 @@ class OpenAIProvider(Provider):
                     ensure_ascii=False,
                 ),
             }
+        elif self.base_url == TOKEN_PLAN_BASE_URL:
+            client_kwargs["default_headers"] = {
+                "X-DashScope-Cdpl": json.dumps(
+                    {
+                        "agentType": "QwenPaw",
+                        "deployType": "UnKnown",
+                        "moduleCode": "model",
+                        "agentCode": "UnKnown",
+                    },
+                    ensure_ascii=False,
+                ),
+            }
 
         return OpenAIChatModelCompat(
             model_name=model_id,
@@ -183,7 +208,8 @@ class OpenAIProvider(Provider):
     async def probe_model_multimodal(
         self,
         model_id: str,
-        timeout: float = 10,
+        timeout: float = 60,
+        image_only: bool = False,
     ) -> ProbeResult:
         """Probe multimodal support via OpenAI-compatible API."""
         from .multimodal_prober import ProbeResult
@@ -202,6 +228,13 @@ class OpenAIProvider(Provider):
                 supports_video=False,
                 image_message=img_msg,
                 video_message="Skipped: image probe failed",
+            )
+        if image_only:
+            return ProbeResult(
+                supports_image=img_ok,
+                supports_video=False,
+                image_message=img_msg,
+                video_message="Skipped: image_only=True",
             )
         vid_ok, vid_msg = await self._probe_video_support(
             model_id,

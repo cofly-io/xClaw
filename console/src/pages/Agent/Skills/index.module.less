@@ -81,43 +81,23 @@
   color: #999;
 }
 
-.importHintBlock {
-  margin-bottom: 12px;
+.noSearchResults {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 24px;
+  color: rgba(20, 20, 19, 0.45);
 }
 
-.importHintTitle {
-  margin: 0;
-  font-size: 13px;
-  color: #666;
+.noSearchResultsIcon {
+  font-size: 40px;
+  opacity: 0.6;
 }
 
-.importHintList {
-  margin: 8px 0;
-  padding: 0 0 0 20px;
-  font-size: 12px;
-  color: #999;
-}
-
-.importUrlInput {
-  width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
-  outline: none;
+.noSearchResultsText {
   font-size: 14px;
-}
-
-.importUrlError {
-  margin-top: 8px;
-  color: #ff4d4f;
-  font-size: 13px;
-}
-
-.importLoadingText {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #666;
 }
 
 .skillsGrid {
@@ -880,27 +860,12 @@
     color: rgba(255, 255, 255, 0.35);
   }
 
-  /* Import modal hints */
-  .importHintTitle {
-    color: rgba(255, 255, 255, 0.55);
-  }
-
-  .importHintList {
-    color: rgba(255, 255, 255, 0.35);
-  }
-
-  .importUrlInput {
-    background: #2a2a2a;
-    border-color: rgba(255, 255, 255, 0.15);
-    color: rgba(255, 255, 255, 0.85);
-
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.25);
-    }
-  }
-
-  .importLoadingText {
+  .noSearchResults {
     color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tagSelectEmpty {
+    color: rgba(255, 255, 255, 0.35);
   }
 
   /* Skill card */

@@ -4,11 +4,19 @@ export { TIMEZONE_OPTIONS } from "../../../../constants/timezone";
 
 export const DEFAULT_FORM_VALUES = {
   enabled: false,
+  save_result_to_inbox: true,
+  scheduleType: "cron" as const,
   schedule: {
     type: "cron" as const,
     cron: "0 9 * * *",
     timezone: "UTC",
   },
+  onceRunAt: dayjs().add(1, "hour"),
+  onceRepeatEnabled: false,
+  onceRepeatEveryDays: 1,
+  onceRepeatEndType: "never" as const,
+  onceRepeatUntil: dayjs().add(7, "day"),
+  onceRepeatCount: 2,
   cronType: "daily",
   cronTime: dayjs().hour(9).minute(0),
   task_type: "agent" as const,

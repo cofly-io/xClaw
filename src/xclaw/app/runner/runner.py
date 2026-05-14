@@ -9,11 +9,10 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Coroutine
 
 import frontmatter as fm
 from agentscope.message import Msg, TextBlock
-from agentscope.pipeline import stream_printing_messages
 from agentscope_runtime.engine.runner import Runner
 from agentscope_runtime.engine.schemas.agent_schemas import AgentRequest
 from agentscope_runtime.engine.schemas.exception import (
@@ -41,36 +40,71 @@ from ...agents.utils.file_handling import (
     read_text_file_with_encoding_fallback,
 )
 from ...config.config import load_agent_config
-from ...constant import (
-    TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS,
-    WORKING_DIR,
-)
-from ...security.tool_guard.approval import ApprovalDecision
-from ...security.tool_guard.models import TOOL_GUARD_DENIED_MARK
+from ...constant import WORKING_DIR
 
 if TYPE_CHECKING:
     from ...agents.memory import BaseMemoryManager
+    from ...agents.context import BaseContextManager
 
 logger = logging.getLogger(__name__)
 
-_APPROVE_EXACT = frozenset(
-    {
-        "approve",
-        "/approve",
-        "/daemon approve",
-    },
-)
+
+_PRINT_END_SIGNAL = "[END]"
 
 
-def _is_approval(text: str) -> bool:
-    """Return True only when *text* is exactly ``approve``,
-    ``/approve``, or ``/daemon approve`` (case-insensitive).
+async def _cancel_streaming_agent_task(task: asyncio.Task) -> None:
+    if task.done():
+        return
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+    except Exception:
+        logger.debug(
+            "Streaming agent task finished with error during cancellation",
+            exc_info=True,
+        )
 
-    Leading/trailing whitespace and blank lines are stripped before
-    comparison.  Everything else is treated as denial.
+
+async def _stream_printing_messages_interruptible(
+    *,
+    agents: list[Any],
+    coroutine_task: Coroutine[Any, Any, Msg],
+) -> AsyncGenerator[tuple[Msg, bool], None]:
+    """Like agentscope.stream_printing_messages, but cancel the agent task
+    promptly when the outer stream is stopped or closed.
     """
-    normalized = " ".join(text.split()).lower()
-    return normalized in _APPROVE_EXACT
+
+    queue: asyncio.Queue = asyncio.Queue()
+    for agent in agents:
+        agent.set_msg_queue_enabled(True, queue)
+
+    task = asyncio.create_task(coroutine_task)
+    if task.done():
+        await queue.put(_PRINT_END_SIGNAL)
+    else:
+        task.add_done_callback(lambda _: queue.put_nowait(_PRINT_END_SIGNAL))
+
+    try:
+        while True:
+            printing_msg = await queue.get()
+            if (
+                isinstance(printing_msg, str)
+                and printing_msg == _PRINT_END_SIGNAL
+            ):
+                break
+            msg, last, _ = printing_msg
+            yield msg, last
+
+        exception = task.exception()
+        if exception is not None:
+            raise exception from None
+    except asyncio.CancelledError:
+        await _cancel_streaming_agent_task(task)
+        raise
+    finally:
+        await _cancel_streaming_agent_task(task)
 
 
 class AgentRunner(Runner):
@@ -90,6 +124,7 @@ class AgentRunner(Runner):
         self._mcp_manager = None  # MCP client manager for hot-reload
         self._workspace: Any = None  # Workspace instance for control commands
         self.memory_manager: BaseMemoryManager | None = None
+        self.context_manager: BaseContextManager | None = None
         self._task_tracker = task_tracker  # Task tracker for background tasks
         self._agent_name: str | None = None
 
@@ -267,106 +302,6 @@ class AgentRunner(Runner):
         elif isinstance(content, str):
             last.content = new_text
 
-    _APPROVAL_TIMEOUT_SECONDS = TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS
-
-    async def _resolve_pending_approval(
-        self,
-        session_id: str,
-        query: str | None,
-    ) -> tuple[Msg | None, bool, dict[str, Any] | None]:
-        """Check for a pending tool-guard approval for *session_id*.
-
-        Returns ``(response_msg, was_consumed, approved_tool_call)``:
-
-        - ``(None, False, None)`` — no pending approval, continue normally.
-        - ``(Msg, True, None)``   — denied; yield the Msg and stop.
-        - ``(None, True, dict)``  — approved with stored tool call.
-
-        Approvals are resolved FIFO per session (oldest pending first).
-        """
-        if not session_id:
-            return None, False, None
-
-        from ..approvals import get_approval_service
-
-        svc = get_approval_service()
-        pending = await svc.get_pending_by_session(session_id)
-        if pending is None:
-            return None, False, None
-
-        elapsed = time.time() - pending.created_at
-        if elapsed > self._APPROVAL_TIMEOUT_SECONDS:
-            await svc.resolve_request(
-                pending.request_id,
-                ApprovalDecision.TIMEOUT,
-            )
-            return (
-                Msg(
-                    name="Friday",
-                    role="assistant",
-                    content=[
-                        TextBlock(
-                            type="text",
-                            text=(
-                                f"⏰ Tool `{pending.tool_name}` approval "
-                                f"timed out ({int(elapsed)}s) — denied.\n"
-                                f"工具 `{pending.tool_name}` 审批超时"
-                                f"（{int(elapsed)}s），已拒绝执行。"
-                            ),
-                        ),
-                    ],
-                ),
-                True,
-                None,
-            )
-
-        normalized = (query or "").strip().lower()
-        if _is_approval(normalized):
-            resolved = await svc.resolve_request(
-                pending.request_id,
-                ApprovalDecision.APPROVED,
-            )
-            approved_tool_call: dict[str, Any] | None = None
-            record = resolved or pending
-            if isinstance(record.extra, dict):
-                candidate = record.extra.get("tool_call")
-                if isinstance(candidate, dict):
-                    approved_tool_call = dict(candidate)
-                    siblings = record.extra.get("sibling_tool_calls")
-                    if isinstance(siblings, list):
-                        approved_tool_call["_sibling_tool_calls"] = siblings
-                    remaining = record.extra.get("remaining_queue")
-                    if isinstance(remaining, list):
-                        approved_tool_call["_remaining_queue"] = remaining
-                    thinking_blocks = record.extra.get("thinking_blocks")
-                    if isinstance(thinking_blocks, list):
-                        approved_tool_call[
-                            "_thinking_blocks"
-                        ] = thinking_blocks
-            return None, True, approved_tool_call
-
-        await svc.resolve_request(
-            pending.request_id,
-            ApprovalDecision.DENIED,
-        )
-        return (
-            Msg(
-                name="Friday",
-                role="assistant",
-                content=[
-                    TextBlock(
-                        type="text",
-                        text=(
-                            f"❌ Tool `{pending.tool_name}` denied.\n"
-                            f"工具 `{pending.tool_name}` 已拒绝执行。"
-                        ),
-                    ),
-                ],
-            ),
-            True,
-            None,
-        )
-
     async def query_handler(
         self,
         msgs,
@@ -418,6 +353,7 @@ class AgentRunner(Runner):
         from ..agent_context import (
             set_current_agent_id,
             set_current_session_id,
+            set_current_root_session_id,
         )
 
         set_current_agent_id(self.agent_id)
@@ -543,9 +479,11 @@ class AgentRunner(Runner):
                 env_context=env_context,
                 mcp_clients=mcp_clients,
                 memory_manager=self.memory_manager,
+                context_manager=self.context_manager,
                 request_context=base_request_context,
                 workspace_dir=self.workspace_dir,
                 task_tracker=self._task_tracker,
+                plan_notebook=plan_notebook,
             )
             await agent.register_mcp_clients()
             agent.set_console_output_enabled(enabled=False)
@@ -726,7 +664,7 @@ class AgentRunner(Runner):
                     ):
                         yield msg, last
             else:
-                async for msg, last in stream_printing_messages(
+                async for msg, last in _stream_printing_messages_interruptible(
                     agents=[agent],
                     coroutine_task=agent(msgs),
                 ):
@@ -734,6 +672,29 @@ class AgentRunner(Runner):
 
         except asyncio.CancelledError as exc:
             logger.info(f"query_handler: {session_id} cancelled!")
+
+            # Cancel all pending approvals for this root session
+            root_session_id = base_request_context.get(
+                "root_session_id",
+                session_id,
+            )
+            from ..approvals.service import get_approval_service
+
+            approval_svc = get_approval_service()
+            cancelled_count = (
+                await approval_svc.cancel_all_pending_by_root_session(
+                    root_session_id,
+                )
+            )
+            if cancelled_count > 0:
+                logger.info(
+                    "Auto-denied %d pending approval(s) for root session %s",
+                    cancelled_count,
+                    root_session_id[:8]
+                    if len(root_session_id) >= 8
+                    else root_session_id,
+                )
+
             if agent is not None:
                 await agent.interrupt()
             raise AgentException("Task has been cancelled!") from exc
@@ -784,116 +745,6 @@ class AgentRunner(Runner):
 
             if self._chat_manager is not None and chat is not None:
                 await self._chat_manager.touch_chat(chat.id)
-
-    async def _cleanup_denied_session_memory(
-        self,
-        session_id: str,
-        user_id: str,
-        denial_response: "Msg | None" = None,
-    ) -> None:
-        """Clean up session memory after a tool-guard denial.
-
-        In the deny path (no agent is created), this method:
-
-        1. Removes the LLM denial explanation (the assistant message
-           immediately following the last marked entry).
-        2. Strips ``TOOL_GUARD_DENIED_MARK`` from all marks lists so
-           the kept tool-call info becomes normal memory entries.
-        3. Appends *denial_response* (e.g. "❌ Tool denied") to the
-           persisted session memory.
-        """
-        if not hasattr(self, "session") or self.session is None:
-            return
-
-        path = self.session._get_save_path(  # pylint: disable=protected-access
-            session_id,
-            user_id,
-        )
-        if not Path(path).exists():
-            return
-
-        try:
-            with open(
-                path,
-                "r",
-                encoding="utf-8",
-                errors="surrogatepass",
-            ) as f:
-                states = json.load(f)
-
-            agent_state = states.get("agent", {})
-            memory_state = agent_state.get("memory", {})
-            content = memory_state.get("content", [])
-
-            if not content:
-                return
-
-            def _is_marked(entry):
-                return (
-                    isinstance(entry, list)
-                    and len(entry) >= 2
-                    and isinstance(entry[1], list)
-                    and TOOL_GUARD_DENIED_MARK in entry[1]
-                )
-
-            last_marked_idx = -1
-            for i, entry in enumerate(content):
-                if _is_marked(entry):
-                    last_marked_idx = i
-
-            modified = False
-
-            if last_marked_idx >= 0 and last_marked_idx + 1 < len(content):
-                next_entry = content[last_marked_idx + 1]
-                if (
-                    isinstance(next_entry, list)
-                    and len(next_entry) >= 1
-                    and isinstance(next_entry[0], dict)
-                    and next_entry[0].get("role") == "assistant"
-                ):
-                    del content[last_marked_idx + 1]
-                    modified = True
-
-            for entry in content:
-                if _is_marked(entry):
-                    entry[1].remove(TOOL_GUARD_DENIED_MARK)
-                    modified = True
-
-            if denial_response is not None:
-                ts = getattr(denial_response, "timestamp", None)
-                msg_dict = {
-                    "id": getattr(denial_response, "id", ""),
-                    "name": getattr(denial_response, "name", "Friday"),
-                    "role": getattr(denial_response, "role", "assistant"),
-                    "content": denial_response.content,
-                    "metadata": getattr(
-                        denial_response,
-                        "metadata",
-                        None,
-                    ),
-                    "timestamp": str(ts) if ts is not None else "",
-                }
-                content.append([msg_dict, []])
-                modified = True
-
-            if modified:
-                with open(
-                    path,
-                    "w",
-                    encoding="utf-8",
-                    errors="surrogatepass",
-                ) as f:
-                    json.dump(states, f, ensure_ascii=False)
-                logger.info(
-                    "Tool guard: cleaned up denied session memory in %s",
-                    path,
-                )
-        except Exception:  # pylint: disable=broad-except
-            logger.warning(
-                "Failed to clean up denied messages from session %s",
-                session_id,
-                exc_info=True,
-            )
 
     async def init_handler(self, *args, **kwargs):
         """

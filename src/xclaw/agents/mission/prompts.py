@@ -359,12 +359,8 @@ controller — NEVER run implementation commands (npm, pip, python,
 make, cargo, etc.) yourself.  NEVER create/edit source files yourself.
 ALL implementation work is done by workers.**
 
-For each story, save the prompt to a file, then dispatch:
-```bash
-# Step A: write worker prompt to file (one per story)
-cat > {loop_dir}/worker_prompt_US-001.txt << 'WORKER_EOF'
-<paste the composed worker prompt here, including Worker Instructions>
-WORKER_EOF
+For each story in the current batch, compose a worker prompt and
+dispatch it using the `submit_to_agent` tool.
 
 # Step B: dispatch via xclaw agents chat
 xclaw agents chat --background \\
@@ -372,7 +368,8 @@ xclaw agents chat --background \\
   --text "$(cat {loop_dir}/worker_prompt_US-001.txt)"
 ```
 
-Repeat for each story in the batch.  Save **all** returned TASK_IDs.
+Repeat for **all** stories in the current batch (same priority).
+Save **all** returned task_ids for monitoring.
 
 ### 4. Monitor all workers
 
@@ -395,7 +392,8 @@ xclaw agents chat --background --task-id <TASK_ID_2>
 ### 5. Verify batch (worker → verifier pipeline)
 Once ALL **workers** in the batch finish:
 
-For **each completed story**, dispatch a **verification session**:
+For **each completed story**, dispatch a **verification session**
+using `submit_to_agent`.
 
 ```bash
 # Step A: write verifier prompt to file

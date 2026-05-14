@@ -132,18 +132,6 @@ xClaw app
 curl -fsSL https://qwenpaw.agentscope.io/install.sh | bash
 ```
 
-如需安装 Ollama 支持：
-
-```bash
-curl -fsSL https://qwenpaw.agentscope.io/install.sh | bash -s -- --extras ollama
-```
-
-如需安装多个扩展（例如 Ollama + local）：
-
-```bash
-curl -fsSL https://qwenpaw.agentscope.io/install.sh | bash -s -- --extras ollama,local
-```
-
 **Windows (CMD):**
 
 ```CMD
@@ -433,6 +421,7 @@ QwenPaw 可在本机完全本地运行大模型，无需 API Key 或云端服务
 | [模型](https://qwenpaw.agentscope.io/docs/models)           | 配置云/本地/自定义提供商             |
 | [频道配置](https://qwenpaw.agentscope.io/docs/channels)     | 钉钉、飞书、微信、Discord、Telegram 等 |
 | [Skills](https://qwenpaw.agentscope.io/docs/skills)         | 扩展与自定义能力                     |
+| [插件系统](https://qwenpaw.agentscope.io/docs/plugins)       | 插件系统                             |
 | [MCP和工具](https://qwenpaw.agentscope.io/docs/mcp)         | 管理 MCP 客户端和工具                |
 | [记忆](https://qwenpaw.agentscope.io/docs/memory)           | 长期记忆机制                         |
 | [记忆进化与主动交互](https://qwenpaw.agentscope.io/docs/memory-evolving-and-proactive) | 智能体记忆进化与主动交互               |
@@ -481,21 +470,26 @@ QwenPaw 内置多层安全防护机制，保障你的数据与系统安全：
 
 ## 路线图
 
-| 方向                   | 事项                                                                                                        | 状态     |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------- | -------- |
-| **横向拓展**           | 更多频道、模型、技能、MCP 等 — **欢迎社区贡献**                                                             | 征集中   |
-| **已有功能扩展与完善** | 展示优化、下载提示、Windows 路径兼容等 — **欢迎社区贡献**                                                   | 征集中   |
-| **控制台 Web UI**      | 在控制台中透出更多信息与配置                                                                                | 进行中   |
-| **多智能体**           | Agentic Ralph Loop                                                                                          | 进行中   |
-| **多模态**             | 语音/视频通话与实时交互                                                                                     | 进行中   |
-| **大小模型协同**       | 多模型路由，不同任务使用不同模型                                                                            | 进行中   |
-| **记忆系统**           | 经验沉淀与技能提炼                                                                                          | 进行中   |
-|                        | 记忆机制切换                                                                                                | 进行中   |
-|                        | 多模态记忆融合                                                                                              | 计划中   |
-|                        | 场景感知主动推送                                                                                            | 计划中   |
-| **沙箱**               | 与 AgentScope Runtime 沙箱深度集成                                                                          | 进行中   |
-| **云原生**             | 与 AgentScope Runtime 深度集成；利用云端算力、存储、工具与技能                                              | 进行中   |
-| **技能生态**           | 丰富 [AgentScope Skills](https://github.com/agentscope-ai/agentscope-skills) 仓库，提升优质技能的发现与使用 | 计划中   |
+| 方向                     | 事项                                                                                      | 状态   |
+| ------------------------ | ----------------------------------------------------------------------------------------- | ------ |
+| **横向拓展**             | 更多频道、模型、技能、MCP 等 — **欢迎社区贡献**                                           | 征集中 |
+| **已有功能扩展与完善**   | 展示优化、下载提示、Windows 路径兼容等 — **欢迎社区贡献**                                 | 征集中 |
+| **多智能体**             | HiClaw 接入：多租、跨域合作                                                               | 进行中 |
+|                          | Agent Swarm / Team                                                                        | 计划中 |
+| **大小模型协同**         | 端云模型智能切换                                                                          | 进行中 |
+| **QwenPaw 定制模型**     | 支持多模态模型                                                                            | 计划中 |
+| **记忆系统**             | 场景感知主动推送                                                                          | 进行中 |
+| **上下文管理**           | 抽象设计                                                                                  | 进行中 |
+|                          | 上下文智能压缩                                                                            | 计划中 |
+|                          | 用户可选压缩（细粒度控制）                                                                | 计划中 |
+| **版本管理与可迁移**     | 一键打包、多版本/多设备迁移                                                               | 进行中 |
+|                          | Agent 协议：QwenPaw → QwenPaw                                                             | 进行中 |
+|                          | Agent 协议：OpenClaw → QwenPaw                                                            | 计划中 |
+|                          | 文件区 / chat 回滚                                                                        | 进行中 |
+| **可靠性与自我运维**     | 自我更新                                                                                  | 计划中 |
+|                          | 失败回滚                                                                                  | 计划中 |
+| **安全**                 | 细粒度安全控制（rule-based）                                                              | 进行中 |
+|                          | 引入 LLM-based 的安全控制能力                                                             | 进行中 |
 
 _状态说明：**进行中** — 正在积极开发；**计划中** — 已排队或设计中，也欢迎贡献；**征集中** — 我们强烈鼓励社区参与。_
 

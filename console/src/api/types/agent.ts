@@ -7,33 +7,36 @@ export interface AgentRequest {
 }
 
 export interface ContextCompactConfig {
-  token_count_model: string;
-  token_count_use_mirror: boolean;
-  token_count_estimate_divisor: number;
-  context_compact_enabled: boolean;
-  memory_compact_ratio: number;
-  memory_reserve_ratio: number;
+  enabled: boolean;
+  compact_threshold_ratio: number;
+  reserve_threshold_ratio: number;
   compact_with_thinking_block: boolean;
 }
 
-export interface ToolResultCompactConfig {
+export interface ToolResultPruningConfig {
   enabled: boolean;
-  recent_n: number;
-  old_max_bytes: number;
-  recent_max_bytes: number;
-  retention_days: number;
+  pruning_recent_n: number;
+  pruning_old_msg_max_bytes: number;
+  pruning_recent_msg_max_bytes: number;
+  offload_retention_days: number;
+  exempt_file_extensions: string[];
+  exempt_tool_names: string[];
 }
 
-export interface MemorySummaryConfig {
-  memory_summary_enabled: boolean;
-  dream_cron: string;
-  force_memory_search: boolean;
-  force_max_results: number;
-  force_min_score: number;
-  rebuild_memory_index_on_start: boolean;
+export interface LightContextConfig {
+  dialog_path: string;
+  token_count_estimate_divisor: number;
+  context_compact_config: ContextCompactConfig;
+  tool_result_pruning_config: ToolResultPruningConfig;
 }
 
-export interface EmbeddingConfig {
+export interface AutoMemorySearchConfig {
+  enabled: boolean;
+  max_results: number;
+  min_score: number;
+}
+
+export interface EmbeddingModelConfig {
   backend: string;
   api_key: string;
   base_url: string;
@@ -75,7 +78,6 @@ export interface ADBPGMemoryConfig {
 
 export interface AgentsRunningConfig {
   max_iters: number;
-  /** When true, inject a hint and one extra reasoning pass if the model returns text-only (no tool calls). */
   auto_continue_on_text_only: boolean;
   shell_command_timeout: number;
   shell_command_executable: string;

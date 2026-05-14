@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from "react";
 import {
   Form,
   Input,
@@ -40,6 +41,40 @@ export function ReactAgentCard({
   onTimezoneChange,
 }: ReactAgentCardProps) {
   const { t } = useTranslation();
+  const { selectedAgent } = useAgentStore();
+  const [planEnabled, setPlanEnabled] = useState(false);
+  const [planLoading, setPlanLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    planApi
+      .getPlanConfig()
+      .then((cfg) => {
+        if (!cancelled) setPlanEnabled(cfg.enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAgent]);
+
+  const handlePlanToggle = useCallback(
+    async (checked: boolean) => {
+      setPlanLoading(true);
+      const prev = planEnabled;
+      setPlanEnabled(checked);
+      try {
+        const res = await planApi.updatePlanConfig({ enabled: checked });
+        setPlanEnabled(res.enabled);
+      } catch {
+        setPlanEnabled(prev);
+      } finally {
+        setPlanLoading(false);
+      }
+    },
+    [planEnabled],
+  );
+
   return (
     <Card className={styles.formCard} title={t("agentConfig.reactAgentTitle")}>
       <div className={styles.reactAgentRow}>
@@ -159,15 +194,38 @@ export function ReactAgentCard({
         name="memory_manager_backend"
         tooltip={t("agentConfig.memoryManagerBackendTooltip")}
       >
-        <Select
-          options={MEMORY_MANAGER_BACKEND_OPTIONS}
-          style={{ width: "100%" }}
-        />
+        <Switch />
       </Form.Item>
+
+      <div className={styles.reactAgentRow}>
+        <Form.Item
+          label={t("agentConfig.contextManagerBackend")}
+          name="context_manager_backend"
+          tooltip={t("agentConfig.contextManagerBackendTooltip")}
+          className={styles.reactAgentField}
+        >
+          <Select
+            options={CONTEXT_MANAGER_BACKEND_OPTIONS}
+            style={{ width: "100%" }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={t("agentConfig.memoryManagerBackend")}
+          name="memory_manager_backend"
+          tooltip={t("agentConfig.memoryManagerBackendTooltip")}
+          className={styles.reactAgentField}
+        >
+          <Select
+            options={MEMORY_MANAGER_BACKEND_OPTIONS}
+            style={{ width: "100%" }}
+          />
+        </Form.Item>
+      </div>
       <Alert
         type="warning"
         showIcon
-        message={t("agentConfig.memoryManagerBackendRestartWarning")}
+        message={t("agentConfig.backendRestartWarning")}
         style={{ marginBottom: 16 }}
       />
 
@@ -192,6 +250,20 @@ export function ReactAgentCard({
           min={1000}
           step={1024}
           placeholder={t("agentConfig.maxContextLengthPlaceholder")}
+        />
+      </Form.Item>
+
+      <Form.Item
+        label={t("agentConfig.planMode", "Plan Mode")}
+        tooltip={t(
+          "agentConfig.planModeTooltip",
+          "Enable plan mode to use /plan <description> for structured task planning",
+        )}
+      >
+        <Switch
+          checked={planEnabled}
+          loading={planLoading}
+          onChange={handlePlanToggle}
         />
       </Form.Item>
     </Card>

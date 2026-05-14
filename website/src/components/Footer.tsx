@@ -168,38 +168,17 @@ export function Footer() {
               <h4 className={sectionTitleClass}>
                 {t("footer.sections.builtBy")}
               </h4>
-              <a
-                href={AGENTSCOPE_ORG}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={linkClass}
-              >
-                {t("footer.poweredBy.team")}
-              </a>
-              <a
-                href={AGENTSCOPE_REPO}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={linkClass}
-              >
-                {t("footer.poweredBy.agentscope")}
-              </a>
-              <a
-                href={AGENTSCOPE_RUNTIME}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={linkClass}
-              >
-                {t("footer.poweredBy.runtime")}
-              </a>
-              <a
-                href={REME_REPO}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={linkClass}
-              >
-                {t("footer.poweredBy.reme")}
-              </a>
+              {poweredByLinks.map((link) => (
+                <a
+                  key={link.labelKey}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                >
+                  {t(link.labelKey)}
+                </a>
+              ))}
             </div>
           </section>
         </div>

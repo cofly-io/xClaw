@@ -80,7 +80,7 @@ Options:
   --from-source [DIR]   Install from source. If DIR is given, use that local
                         directory; otherwise clone from GitHub.
   --extras <EXTRAS>     Comma-separated optional extras to install
-                        (e.g. llamacpp, mlx, llamacpp,mlx)
+                        (e.g. dev, whisper)
   -h, --help            Show this help
 
 Environment:

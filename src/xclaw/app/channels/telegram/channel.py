@@ -10,7 +10,7 @@ import logging
 import re
 import uuid
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from telegram import BotCommand
 from telegram.constants import ParseMode
@@ -330,6 +330,7 @@ class TelegramChannel(BaseChannel):
             self._media_dir = _DEFAULT_MEDIA_DIR
         self._show_typing = show_typing
         self._typing_tasks: dict[str, asyncio.Task] = {}
+        self._is_processing: dict[str, bool] = {}
         self._task: Optional[asyncio.Task] = None
         self._application = None
         self._polling_error_task: Optional[asyncio.Task] = None
@@ -452,6 +453,7 @@ class TelegramChannel(BaseChannel):
             }
             if self._enqueue is not None:
                 self._start_typing(chat_id)
+                self._is_processing[chat_id] = True
                 self._enqueue(native)
             else:
                 logger.warning("telegram: _enqueue not set, message dropped")
@@ -716,6 +718,8 @@ class TelegramChannel(BaseChannel):
             return
         message_thread_id = meta.get("message_thread_id")
         self._stop_typing(chat_id)
+        if self._is_processing.get(to_handle, False):
+            self._start_typing(chat_id)
         chunks = self._chunk_text(text)
         for chunk in chunks:
             html_chunk = markdown_to_telegram_html(chunk)
@@ -772,6 +776,8 @@ class TelegramChannel(BaseChannel):
             return
         message_thread_id = meta.get("message_thread_id")
         self._stop_typing(chat_id)
+        if self._is_processing.get(to_handle, False):
+            self._start_typing(chat_id)
 
         part_type = getattr(part, "type", None)
         try:
@@ -867,6 +873,60 @@ class TelegramChannel(BaseChannel):
             )
         except Exception:
             logger.exception("telegram send_media failed")
+
+    async def on_event_message_completed(
+        self,
+        request,
+        to_handle: str,
+        event,
+        send_meta: dict,
+    ) -> None:
+        """Message completed — send content but keep typing active."""
+        await super().on_event_message_completed(
+            request,
+            to_handle,
+            event,
+            send_meta,
+        )
+        # Re-start typing after sending, in case more tool calls follow.
+        if self._is_processing.get(to_handle, False):
+            self._start_typing(to_handle)
+
+    async def _on_process_completed(
+        self,
+        request,
+        to_handle: str,
+        send_meta: dict,
+    ) -> None:
+        """All events done — clear processing flag and stop typing."""
+        self._is_processing.pop(to_handle, None)
+        self._stop_typing(to_handle)
+        await super()._on_process_completed(request, to_handle, send_meta)
+
+    async def _on_consume_error(
+        self,
+        request,
+        to_handle: str,
+        err_text: str,
+    ) -> None:
+        """Error or cancellation — clear processing flag and stop typing."""
+        self._is_processing.pop(to_handle, None)
+        self._stop_typing(to_handle)
+        await super()._on_consume_error(request, to_handle, err_text)
+
+    async def _consume_with_tracker(
+        self,
+        request,
+        payload,
+    ) -> None:
+        """Wrap parent to ensure typing cleanup on cancellation."""
+        to_handle = self.get_to_handle_from_request(request)
+        try:
+            await super()._consume_with_tracker(request, payload)
+        except asyncio.CancelledError:
+            self._is_processing.pop(to_handle, None)
+            self._stop_typing(to_handle)
+            raise
 
     async def _send_media_value(
         self,
@@ -1012,6 +1072,14 @@ class TelegramChannel(BaseChannel):
                 command="history",
                 description="Show conversation history",
             ),
+            BotCommand(
+                command="model",
+                description="Show or switch AI model",
+            ),
+            BotCommand(
+                command="stop",
+                description="Stop the current task",
+            ),
         ]
         try:
             await app.bot.set_my_commands(commands)
@@ -1126,6 +1194,33 @@ class TelegramChannel(BaseChannel):
             await asyncio.sleep(delay)
             delay = min(delay * _RECONNECT_FACTOR, _RECONNECT_MAX_S)
 
+    async def health_check(self) -> Dict[str, Any]:
+        """Check Telegram polling task status."""
+        if not self.enabled:
+            return {
+                "channel": self.channel,
+                "status": "disabled",
+                "detail": "Telegram channel is disabled.",
+            }
+        if not self._bot_token:
+            return {
+                "channel": self.channel,
+                "status": "unhealthy",
+                "detail": "Telegram bot token is not configured.",
+            }
+        task_alive = self._task is not None and not self._task.done()
+        if not task_alive:
+            return {
+                "channel": self.channel,
+                "status": "unhealthy",
+                "detail": "Telegram polling task is not running.",
+            }
+        return {
+            "channel": self.channel,
+            "status": "healthy",
+            "detail": "Telegram polling task is running.",
+        }
+
     async def start(self) -> None:
         if not self.enabled or not self._bot_token:
             logger.debug(
@@ -1152,6 +1247,7 @@ class TelegramChannel(BaseChannel):
             self._task = None
         for cid in list(self._typing_tasks):
             self._stop_typing(cid)
+        self._is_processing.clear()
         if self._application:
             await self._teardown_application(self._application)
 

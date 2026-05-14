@@ -21,6 +21,7 @@ export const KEY_TO_PATH: Record<string, string> = {
   chat: "/chat",
   channels: "/channels",
   sessions: "/sessions",
+  inbox: "/inbox",
   "cron-jobs": "/cron-jobs",
   heartbeat: "/heartbeat",
   skills: "/skills",
@@ -44,6 +45,7 @@ export const KEY_TO_LABEL: Record<string, string> = {
   chat: "nav.chat",
   channels: "nav.channels",
   sessions: "nav.sessions",
+  inbox: "nav.inbox",
   "cron-jobs": "nav.cronJobs",
   heartbeat: "nav.heartbeat",
   skills: "nav.skills",
@@ -119,6 +121,9 @@ pip install --upgrade xclaw
 \`\`\`
 cd xClaw
 git pull origin main
+cd console && npm ci && npm run build
+cd .. && mkdir -p src/qwenpaw/console
+cp -R console/dist/. src/qwenpaw/console/
 pip install -e .
 \`\`\`
 
@@ -148,6 +153,9 @@ pip install --upgrade xclaw
 \`\`\`
 cd xClaw
 git pull origin main
+cd console && npm ci && npm run build
+cd .. && mkdir -p src/qwenpaw/console
+cp -R console/dist/. src/qwenpaw/console/
 pip install -e .
 \`\`\`
 
@@ -177,6 +185,9 @@ pip install --upgrade xclaw
 \`\`\`
 cd xClaw
 git pull origin main
+cd console && npm ci && npm run build
+cd .. && mkdir -p src/qwenpaw/console
+cp -R console/dist/. src/qwenpaw/console/
 pip install -e .
 \`\`\`
 

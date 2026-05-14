@@ -7,7 +7,7 @@ metadata:
     emoji: "📤"
 ---
 
-# Channel Message（频道消息推送）
+# 频道消息推送
 
 ## 什么时候用
 

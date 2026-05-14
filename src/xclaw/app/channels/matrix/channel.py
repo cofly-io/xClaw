@@ -162,7 +162,8 @@ class MatrixChannelConfig:
 
     def __init__(self, raw: dict[str, Any]) -> None:
         self.enabled: bool = raw.get("enabled", True)
-        self.homeserver: str = raw.get("homeserver", "")
+        self.homeserver: str = raw.get("homeserver", "").rstrip("/")
+        self.user_id: str = raw.get("user_id", "")
         self.access_token: str = raw.get("access_token", "")
         # username/password fallback (rarely used in hiclaw)
         self.username: str = raw.get("username", "")
@@ -341,6 +342,33 @@ class MatrixChannel(BaseChannel):
             encryption_enabled=encryption,
             request_timeout=request_timeout,
         )
+
+    async def health_check(self) -> Dict[str, Any]:
+        """Check Matrix client connection status."""
+        if not getattr(self, "enabled", True) or not self._cfg.homeserver:
+            return {
+                "channel": self.channel,
+                "status": "disabled",
+                "detail": "Matrix homeserver not configured.",
+            }
+        if self._client is None:
+            return {
+                "channel": self.channel,
+                "status": "unhealthy",
+                "detail": "Matrix client not initialized.",
+            }
+        has_token = bool(self._client.access_token)
+        if not has_token:
+            return {
+                "channel": self.channel,
+                "status": "unhealthy",
+                "detail": "Matrix client has no access token (not logged in).",
+            }
+        return {
+            "channel": self.channel,
+            "status": "healthy",
+            "detail": "Matrix client is connected.",
+        }
 
     # pylint: disable=too-many-branches
     async def start(self) -> None:
@@ -1051,6 +1079,25 @@ class MatrixChannel(BaseChannel):
         d.mkdir(parents=True, exist_ok=True)
         return d
 
+    def _mxc_to_http(self, mxc_url: str) -> str:
+        """Convert an mxc:// URL to an HTTP download URL.
+
+        Returns the original URL unchanged if it is not an mxc:// URL or if
+        the format is invalid.
+        """
+        if not mxc_url:
+            return mxc_url
+        if not mxc_url.startswith("mxc://"):
+            return mxc_url
+        rest = mxc_url[6:]  # strip "mxc://"
+        if "/" not in rest:
+            return mxc_url
+        server, media_id = rest.split("/", 1)
+        return (
+            f"{self._cfg.homeserver}/_matrix/media/v3/download"
+            f"/{server}/{media_id}"
+        )
+
     async def _download_mxc(
         self,
         mxc_url: str,
@@ -1358,7 +1405,7 @@ class MatrixChannel(BaseChannel):
             return None
         try:
             # file_ref may be a file:// URI or a plain path
-            path = Path(file_ref.removeprefix("file://"))
+            path = Path(file_url_to_local_path(file_ref) or file_ref)
             if not path.exists():
                 logger.warning(
                     "MatrixChannel: upload source not found: %s",
@@ -2109,7 +2156,7 @@ class MatrixChannel(BaseChannel):
 
         # Build and send the Matrix room event
         try:
-            path_str = file_ref.removeprefix("file://")
+            path_str = file_url_to_local_path(file_ref) or file_ref
             filename = os.path.basename(path_str) or "file"
             mime_type, _ = mimetypes.guess_type(path_str)
             mime_type = mime_type or "application/octet-stream"

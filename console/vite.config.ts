@@ -1,6 +1,18 @@
+/// <reference types="vitest" />
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+
+// Vitest plugin: transforms .css imports inside node_modules to empty stubs.
+// This prevents errors from packages like @agentscope-ai/icons that import CSS.
+const cssStubPlugin = {
+  name: "css-stub",
+  transform(_code: string, id: string) {
+    if (id.includes("node_modules") && id.endsWith(".css")) {
+      return { code: "export default {}" };
+    }
+  },
+};
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -14,7 +26,7 @@ export default defineConfig(({ mode }) => {
       TOKEN: JSON.stringify(env.TOKEN || ""),
       MOBILE: false,
     },
-    plugins: [react()],
+    plugins: [react(), cssStubPlugin],
     css: {
       modules: {
         localsConvention: "camelCase",

@@ -6,6 +6,7 @@
 >
 > - **Incomplete compatibility testing**: Not fully tested across all system versions and hardware configurations
 > - **Potential performance issues**: Startup time, memory usage, and other performance aspects may need further optimization
+> - **Update workflow limitations**: You currently need to uninstall and download the app again to complete a version update
 > - **Features under development**: Some features may be unstable or missing
 >
 > We welcome your feedback to help improve product quality.
@@ -73,6 +74,7 @@ After installation, you'll see **two launch shortcuts**:
 ### Common Issues
 
 **Q: The app window is blank/white screen and cannot display properly?**
+
 A: This is usually because the system is missing the **Microsoft WebView2** runtime (some Windows 10 systems do not have it pre-installed).
 Download and install it from the Microsoft website:
 [Microsoft WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
@@ -85,11 +87,10 @@ A: Use "xClaw Desktop (Debug)" mode to view terminal output for error messages
 A: Go to Windows Settings → Apps → Installed apps → Find "xClaw Desktop" → Uninstall
 
 **Q: Is the installer safe?**
-A:
 
-- The application is **not Microsoft code-signed** (costs $200-800/year), so Windows Defender SmartScreen will show a warning
-- This is normal behavior; click "More info" → "Run anyway" to proceed
-- The code is completely open source, and the build process is transparently verifiable on GitHub Actions
+A: The application is **not Microsoft code-signed** (costs $200-800/year), so Windows Defender SmartScreen will show a warning
+This is normal behavior; click "More info" → "Run anyway" to proceed
+The code is completely open source, and the build process is transparently verifiable on GitHub Actions
 
 ---
 
@@ -99,8 +100,8 @@ A:
 
 - **Operating System**: macOS 14 (Sonoma) or later
 - **Architecture**:
-  - ✅ **Apple Silicon (M1/M2/M3/M4)** - Recommended, supports MLX local model acceleration
-  - ⚠️ Intel chips - May work, but cannot use MLX acceleration features
+  - ✅ **Apple Silicon (M1/M2/M3/M4)** - Recommended
+  - ⚠️ Intel chips - May works, but may not be able to use built-in local model services
 
 ### Installation Steps
 
@@ -204,25 +205,25 @@ tail -f ~/.xclaw/desktop.log
 ### Common Issues
 
 **Q: Nothing happens after double-clicking?**
-A:
+
+A: Try the following steps:
 
 1. Check the `~/.xclaw/desktop.log` file for errors
 2. Use the terminal command above to launch and view real-time output
 
 **Q: Message "Apple cannot verify this application"?**
+
 A: Follow the "Bypassing System Security Restrictions" steps above
 
 **Q: How to uninstall?**
 A: Drag `xClaw.app` to the Trash, then delete the `~/.xclaw` configuration folder
 
 **Q: Can I use it on Intel Mac?**
-A: Yes, but you cannot use MLX model acceleration (MLX only supports Apple Silicon)
+A: Yes, but may not be able to use built-in local model services
 
 **Q: Why is the app not signed, and why does the system show a risk warning?**
 
-A:
-
-Currently using:
+A: Currently using:
 
 - ✅ **Open source transparency**: All code and build processes are public on GitHub
 - ✅ **CI/CD verifiable**: GitHub Actions automated builds with viewable logs

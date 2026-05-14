@@ -14,6 +14,32 @@ interface ImportHubModalProps {
   hint?: string;
 }
 
+type ValidationResult =
+  | { ok: true; source: string }
+  | { ok: false; messageKey: string };
+
+function validateUrl(url: string): ValidationResult {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return { ok: false, messageKey: "" };
+  }
+
+  try {
+    new URL(trimmed);
+  } catch {
+    return { ok: false, messageKey: "skills.invalidUrl" };
+  }
+
+  const source = skillMarkets.find((m) =>
+    trimmed.toLowerCase().startsWith(m.urlPrefix.toLowerCase()),
+  );
+  if (!source) {
+    return { ok: false, messageKey: "skills.invalidSkillUrlSource" };
+  }
+
+  return { ok: true, source: source.name };
+}
+
 export function ImportHubModal({
   open,
   importing,
@@ -94,11 +120,12 @@ export function ImportHubModal({
       keyboard={!importing}
       closable={!importing}
       maskClosable={!importing}
+      width={680}
       footer={
-        <div style={{ textAlign: "right" }}>
+        <div className={styles.modalFooter}>
           <Button
+            className={styles.cancelButton}
             onClick={importing && cancelImport ? cancelImport : handleClose}
-            style={{ marginRight: 8 }}
           >
             {t(
               importing && cancelImport
@@ -107,6 +134,7 @@ export function ImportHubModal({
             )}
           </Button>
           <Button
+            className={styles.importButton}
             type="primary"
             onClick={handleConfirm}
             loading={importing}
@@ -116,7 +144,6 @@ export function ImportHubModal({
           </Button>
         </div>
       }
-      width={760}
     >
       {hint ? <div className={styles.hint}>{hint}</div> : null}
 
