@@ -596,6 +596,95 @@ class AgentRunner(Runner):
                     else:
                         base_request_context[key] = str(cv)
 
+            # --- Plan Mode ------------------------------------------
+            plan_notebook = None
+            plan_enabled = getattr(
+                getattr(agent_config, "plan", None),
+                "enabled",
+                False,
+            )
+            if plan_enabled:
+                try:
+                    from agentscope.plan import (
+                        InMemoryPlanStorage,
+                        PlanNotebook,
+                    )
+                    from ...plan.hints import SimplePlanToHint, set_plan_gate
+
+                    hint_gen = SimplePlanToHint()
+                    plan_notebook = PlanNotebook(
+                        plan_to_hint=hint_gen,
+                        storage=InMemoryPlanStorage(),
+                    )
+                    hint_gen.bind_notebook(plan_notebook)
+
+                    if query and query.strip().lower().startswith("/plan "):
+                        plan_desc = query.strip()[6:].strip()
+                        if plan_desc:
+                            set_plan_gate(plan_notebook, enabled=True)
+                            self._rewrite_last_message_text(
+                                msgs,
+                                plan_desc,
+                            )
+                            logger.info(
+                                "Plan mode: /plan gate set, desc=%s",
+                                plan_desc[:60],
+                            )
+
+                    from ...plan.broadcast import broadcast_plan_update
+                    from ...plan.schemas import plan_to_response
+
+                    def _on_plan_change(  # pylint: disable=protected-access
+                        nb,
+                        plan,
+                    ):
+                        if getattr(nb, "_loading_from_state", False):
+                            nb._qp_had_plan = plan is not None
+                            nb._qp_prev_plan_id = (
+                                plan.id if plan is not None else None
+                            )
+                            return
+
+                        had_plan = getattr(nb, "_qp_had_plan", False)
+                        prev_id = getattr(nb, "_qp_prev_plan_id", None)
+
+                        if plan is not None:
+                            cur_id = plan.id
+                            if not had_plan or cur_id != prev_id:
+                                nb._plan_just_mutated = True
+                            nb._qp_prev_plan_id = cur_id
+                        else:
+                            if had_plan:
+                                nb._plan_recently_finished = True
+                                nb._plan_awaiting_user_confirm = False
+                            nb._qp_prev_plan_id = None
+                        nb._qp_had_plan = plan is not None
+
+                        payload = {
+                            "type": "plan_update",
+                            "plan": (
+                                plan_to_response(plan).model_dump()
+                                if plan is not None
+                                else None
+                            ),
+                        }
+                        broadcast_plan_update(
+                            self.agent_id,
+                            payload,
+                            session_id=session_id,
+                        )
+
+                    plan_notebook.register_plan_change_hook(
+                        "broadcast",
+                        _on_plan_change,
+                    )
+                except Exception:
+                    logger.warning(
+                        "Failed to create PlanNotebook",
+                        exc_info=True,
+                    )
+                    plan_notebook = None
+
             if mission_info is not None:
                 base_request_context["_headless_tool_guard"] = "false"
                 logger.info(
@@ -612,7 +701,7 @@ class AgentRunner(Runner):
                 request_context=base_request_context,
                 workspace_dir=self.workspace_dir,
                 task_tracker=self._task_tracker,
-                plan_notebook=None,
+                plan_notebook=plan_notebook,
             )
             await agent.register_mcp_clients()
             agent.set_console_output_enabled(enabled=False)
@@ -711,7 +800,6 @@ class AgentRunner(Runner):
 
             # Ensure session file has a valid plan_notebook dict
             # to prevent TypeError/KeyError during load_state_dict
-            plan_notebook = getattr(agent, "plan_notebook", None)
             if plan_notebook is not None:
                 try:
                     _states = await self.session.get_session_state_dict(
@@ -740,6 +828,12 @@ class AgentRunner(Runner):
                         exc_info=True,
                     )
 
+            if plan_notebook is not None:
+                setattr(
+                    plan_notebook,
+                    "_loading_from_state",
+                    True,  # pylint: disable=protected-access
+                )
             try:
                 await self.session.load_session_state(
                     session_id=session_id,
@@ -753,7 +847,19 @@ class AgentRunner(Runner):
                     "will save fresh state on completion to recover file",
                     e,
                 )
+            finally:
+                if plan_notebook is not None:
+                    setattr(
+                        plan_notebook,
+                        "_loading_from_state",
+                        False,  # pylint: disable=protected-access
+                    )
             session_state_loaded = True
+
+            if plan_notebook is not None:
+                from ...plan.hints import clear_plan_awaiting_user_confirm
+
+                clear_plan_awaiting_user_confirm(plan_notebook)
 
             # Rebuild system prompt so it always reflects the latest
             # AGENTS.md / SOUL.md / PROFILE.md, not the stale one saved
