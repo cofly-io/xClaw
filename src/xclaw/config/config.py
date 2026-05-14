@@ -241,6 +241,7 @@ class TelegramConfig(BaseChannelConfig):
     http_proxy: str = ""
     http_proxy_auth: str = ""
     show_typing: Optional[bool] = None
+    streaming_enabled: bool = False
 
 
 class MQTTConfig(BaseChannelConfig):

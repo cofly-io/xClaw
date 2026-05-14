@@ -1271,7 +1271,7 @@ export function ChannelDrawer({
             </>
           )}
 
-          {activeKey === "wecom" && (
+          {(activeKey === "wecom" || activeKey === "telegram") && (
             <Form.Item
               name="streaming_enabled"
               label={t("channels.streamingEnabled")}
