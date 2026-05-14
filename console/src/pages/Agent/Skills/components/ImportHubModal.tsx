@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Button, Modal } from "@agentscope-ai/design";
 import { SnippetsOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { isSupportedSkillUrl, skillMarkets, type SkillMarket } from "./index";
+import { skillMarkets, type SkillMarket } from "./index";
 import styles from "./ImportHubModal.module.less";
 
 interface ImportHubModalProps {
@@ -12,6 +12,49 @@ interface ImportHubModalProps {
   onConfirm: (url: string, targetName?: string) => Promise<void>;
   cancelImport?: () => void;
   hint?: string;
+}
+
+type ValidationResult =
+  | { ok: true; source: string }
+  | { ok: false; messageKey: string };
+
+function normalizeHost(host: string): string {
+  return host.toLowerCase().replace(/^www\./, "");
+}
+
+function validateUrl(url: string): ValidationResult {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return { ok: false, messageKey: "" };
+  }
+
+  let parsedInput: URL;
+  try {
+    parsedInput = new URL(trimmed);
+  } catch {
+    return { ok: false, messageKey: "skills.invalidUrl" };
+  }
+
+  const inputHost = normalizeHost(parsedInput.host);
+  const inputPath = parsedInput.pathname.toLowerCase();
+
+  const source = skillMarkets.find((m) => {
+    let parsedPrefix: URL;
+    try {
+      parsedPrefix = new URL(m.urlPrefix);
+    } catch {
+      return false;
+    }
+    return (
+      inputHost === normalizeHost(parsedPrefix.host) &&
+      inputPath.startsWith(parsedPrefix.pathname.toLowerCase())
+    );
+  });
+  if (!source) {
+    return { ok: false, messageKey: "skills.invalidSkillUrlSource" };
+  }
+
+  return { ok: true, source: source.name };
 }
 
 export function ImportHubModal({
@@ -39,22 +82,20 @@ export function ImportHubModal({
   };
 
   const validation = useMemo(() => {
-    const trimmed = importUrl.trim();
-    if (!trimmed) return { ok: false, message: "" };
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      if (!isSupportedSkillUrl(trimmed)) {
-        return { ok: false, message: t("skills.invalidSkillUrlSource") };
-      }
-      return { ok: true, message: t("skills.skillUrlLooksValid") };
+    const vr = validateUrl(importUrl);
+    if (!vr.ok) {
+      if (!vr.messageKey) return { ok: false, message: "" };
+      return { ok: false, message: t(vr.messageKey) };
     }
-    return { ok: false, message: t("skills.enterValidUrl") };
+    return { ok: true, message: t("skills.skillUrlLooksValid") };
   }, [importUrl, t]);
 
   const handleConfirm = async () => {
     if (importing) return;
     const trimmed = importUrl.trim();
     if (!trimmed) return;
-    if (!isSupportedSkillUrl(trimmed)) {
+    const vr = validateUrl(trimmed);
+    if (!vr.ok) {
       setTouched(true);
       return;
     }
