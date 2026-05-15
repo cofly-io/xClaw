@@ -1423,6 +1423,8 @@
       "prev3Days": "Предыдущие 3 дня"
     },
     "createNewChat": "Создать новый чат",
+    "pinDrawer": "Закрепить",
+    "unpinDrawer": "Открепить",
     "statusIdle": "Ожидание",
     "statusInProgress": "Выполняется",
     "disclaimer": "Работает для вас, растёт вместе с вами",

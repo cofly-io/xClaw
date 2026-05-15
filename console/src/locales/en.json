@@ -1631,6 +1631,8 @@
       "prev3Days": "Previous 3 days"
     },
     "createNewChat": "Create New Chat",
+    "pinDrawer": "Pin",
+    "unpinDrawer": "Unpin",
     "statusIdle": "Idle",
     "statusInProgress": "In progress",
     "disclaimer": "Works for you, grows with you",
