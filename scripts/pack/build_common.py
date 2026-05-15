@@ -14,7 +14,6 @@ import random
 import string
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -72,6 +71,19 @@ def _pick_wheel(wheel_arg: str | None) -> Path:
             "No wheel found in dist/. Run: bash scripts/wheel_build.sh",
         )
     return wheels[0]
+
+
+def _desktop_pack_extras() -> str:
+    """Return pip extras for desktop conda-pack (without ``llamacpp``).
+
+    xClaw Local downloads llama.cpp server binaries at runtime; it does not
+    import the pip ``llama-cpp-python`` package. Omitting ``llamacpp`` avoids
+    flaky third-party wheels and long source builds on CI.
+    """
+    extras = ["local", "ollama", "whisper"]
+    if platform.system().lower() == "darwin":
+        extras.append("mlx")
+    return ",".join(extras)
 
 
 def main() -> int:
@@ -148,82 +160,11 @@ def main() -> int:
                 "pip",
             ],
         )
-        # Try to install llama-cpp-python from prebuilt wheel first
-        # Security: Use two-step download+install to isolate third-party index
-        # usage and avoid supply-chain risk from --extra-index-url affecting
-        # dependency resolution of other packages.
-        # See: https://pypi.org/project/llama-cpp-python/
-        print("Attempting to install llama-cpp-python from prebuilt wheel...")
-        needs_llama_compile = False
-
-        # Determine the appropriate wheel index URL based on platform
-        system = platform.system().lower()
-        if system == "darwin":
-            # macOS: use Metal-enabled wheel (macOS 11.0+, Python 3.10-3.12)
-            wheel_index = "https://abetlen.github.io/llama-cpp-python/whl/metal"
-            print("Using Metal-enabled wheel for macOS")
-        else:
-            # Windows/Linux: use CPU wheel
-            wheel_index = "https://abetlen.github.io/llama-cpp-python/whl/cpu"
-            print(f"Using CPU wheel for {system}")
-
-        try:
-            # Step 1: Download wheel from third-party index to temp directory
-            # This ensures only llama-cpp-python is fetched from third-party
-            with tempfile.TemporaryDirectory() as tmpdir:
-                print(f"Downloading llama-cpp-python wheel to {tmpdir}...")
-                _run(
-                    [
-                        conda,
-                        "run",
-                        "-n",
-                        env_name,
-                        "python",
-                        "-m",
-                        "pip",
-                        "download",
-                        "--only-binary=llama-cpp-python",
-                        "--extra-index-url",
-                        wheel_index,
-                        "--dest",
-                        tmpdir,
-                        "llama-cpp-python>=0.3.0",
-                    ],
-                )
-                # Step 2: Install from local wheel (no third-party index)
-                # Use --no-index to prevent fallback to PyPI, --find-links for
-                # local wheel dir. Dependencies will be resolved from PyPI when
-                # installing xclaw[full] later.
-                print("Installing llama-cpp-python from downloaded wheel...")
-                _run(
-                    [
-                        conda,
-                        "run",
-                        "-n",
-                        env_name,
-                        "python",
-                        "-m",
-                        "pip",
-                        "install",
-                        "--find-links",
-                        tmpdir,
-                        "--no-index",
-                        "llama-cpp-python",
-                    ],
-                )
-            print("Successfully installed llama-cpp-python from prebuilt wheel")
-        except subprocess.CalledProcessError:
-            print(
-                "Prebuilt wheel not available, will compile from source when "
-                "installing xclaw[full]"
-            )
-            needs_llama_compile = True
-
-        # Install xclaw with all dependencies
-        # Scope CMAKE_ARGS to this specific command to avoid affecting other
-        # CMake-based packages. Only set if we need to compile from source.
-        install_env = {}
-
+        pack_extras = _desktop_pack_extras()
+        print(
+            f"Installing xclaw[{pack_extras}] from wheel "
+            "(desktop pack; llamacpp omitted — use in-app llama.cpp download)",
+        )
         _run(
             [
                 conda,
@@ -234,9 +175,8 @@ def main() -> int:
                 "-m",
                 "pip",
                 "install",
-                f"xclaw[full] @ {wheel_uri}",
+                f"xclaw[{pack_extras}] @ {wheel_uri}",
             ],
-            env=install_env,
         )
         print("Verifying certifi is installed (required for SSL)...")
         _run(
