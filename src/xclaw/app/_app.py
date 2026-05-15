@@ -103,7 +103,10 @@ class DynamicMultiAgentRunner:
             raise RuntimeError("MultiAgentManager not initialized")
 
         try:
-            workspace = await self._multi_agent_manager.get_agent(agent_id)
+            workspace = await self._multi_agent_manager.get_agent(
+                agent_id,
+                ready="chat",
+            )
             logger.debug(
                 "Got workspace: %s, runner: %s",
                 workspace.agent_id,
@@ -312,6 +315,17 @@ async def lifespan(  # pylint: disable=too-many-statements,too-many-branches
     # ================================================================
     async def _background_startup():  # pylint: disable=too-many-statements
         try:
+            # Uvicorn 0.41 binds after lifespan yield; yield once first.
+            await asyncio.sleep(0)
+            # Skill pool init touches a shared manifest lock; run once before
+            # parallel workspace startup to avoid Windows file-lock stalls.
+            from ..agents.skill_system import ensure_skill_pool_initialized
+
+            await asyncio.to_thread(ensure_skill_pool_initialized)
+            boot_config = load_config(get_config_path())
+            active_agent = boot_config.agents.active_agent or "default"
+            if active_agent in boot_config.agents.profiles:
+                await multi_agent_manager.get_agent(active_agent, ready="chat")
             await multi_agent_manager.start_all_configured_agents()
 
             provider_manager.start_local_model_resume(local_model_manager)

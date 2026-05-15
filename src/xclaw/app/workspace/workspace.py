@@ -10,9 +10,10 @@ Each Workspace represents a standalone agent workspace with its own:
 
 All existing single-agent components are reused without modification.
 """
+import asyncio
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Awaitable, Callable, Optional
 
 from ...config.timezone import normalize_tz
 from ...config.utils import load_config
@@ -33,6 +34,15 @@ from ..crons.repo.json_repo import JsonJobRepository
 from ...config.config import load_agent_config
 
 logger = logging.getLogger(__name__)
+
+# Services through this priority include runner, memory/context, and
+# chat_manager (list chats + stream queries).
+_CHAT_SERVICES_MAX_PRIORITY = 20
+_CHAT_RUNTIME_SERVICE_NAMES = (
+    "memory_manager",
+    "context_manager",
+    "mcp_manager",
+)
 
 
 def _resolve_memory_class(backend: str) -> type:
@@ -78,6 +88,7 @@ class Workspace:
         # Non-service state
         self._config = None  # Loaded before start()
         self._started = False
+        self._chat_ready = False
         self._manager = None  # Reference to MultiAgentManager
         self._task_tracker = TaskTracker()
 
@@ -181,7 +192,8 @@ class Workspace:
             ),
         )
 
-        # Priority 20: Core services (concurrent)
+        # Priority 15-16: Memory/context before chat_ready so streaming chat
+        # can construct xClawAgent without waiting for channels/cron.
         sm.register(
             ServiceDescriptor(
                 name="memory_manager",
@@ -200,7 +212,7 @@ class Workspace:
                 start_method="start",
                 stop_method="close",
                 reusable=True,
-                priority=20,
+                priority=15,
                 concurrent_init=True,
             ),
         )
@@ -223,7 +235,7 @@ class Workspace:
                 start_method="start",
                 stop_method="close",
                 reusable=True,
-                priority=20,
+                priority=16,
                 concurrent_init=True,
             ),
         )
@@ -234,7 +246,7 @@ class Workspace:
                 service_class=MCPClientManager,
                 post_init=create_mcp_service,
                 stop_method="close_all",
-                priority=20,
+                priority=35,
                 concurrent_init=True,
             ),
         )
@@ -361,24 +373,42 @@ class Workspace:
         for name, component in components.items():
             await self._service_manager.set_reusable(name, component)
 
-    async def start(self):
+    async def ensure_chat_runtime_ready(self) -> None:
+        """Ensure services required for streaming chat are started.
+
+        During phased startup the workspace may be chat-ready (sidebar) while
+        phase-2 services are still starting in the background. Chat queries
+        need memory, context, and MCP managers attached to the runner.
+        """
+        runner = self.runner
+        if runner is None:
+            raise RuntimeError(
+                f"Runner not available for agent '{self.agent_id}'",
+            )
+
+        missing = [
+            name
+            for name in _CHAT_RUNTIME_SERVICE_NAMES
+            if name not in self._service_manager.services
+        ]
+        if missing:
+            await self._service_manager.ensure_services_started(missing)
+
+        if self.memory_manager is not None and runner.memory_manager is None:
+            runner.memory_manager = self.memory_manager
+        if self.context_manager is not None and runner.context_manager is None:
+            runner.context_manager = self.context_manager
+
+    async def start(
+        self,
+        on_chat_ready: Callable[[], None | Awaitable[None]] | None = None,
+    ):
         """Start workspace and initialize all components."""
         if self._started:
             logger.debug(f"Workspace already started: {self.agent_id}")
             return
 
         logger.info(f"Starting workspace: {self.agent_id}")
-
-        from ...agents.skill_system import (
-            ensure_skill_pool_initialized,
-        )
-
-        try:
-            ensure_skill_pool_initialized()
-        except Exception as e:
-            logger.warning(
-                f"Skill pool initialization failed (non-fatal): {e}",
-            )
 
         try:
             # 1. Load agent configuration
@@ -389,8 +419,20 @@ class Workspace:
             # start so ChatManager / Runner see the canonical layout.
             self._migrate_legacy_weixin_data()
 
-            # 3. Start all services via ServiceManager
-            await self._service_manager.start_all()
+            # 3. Chat-critical services first so /api/chats and streaming chat
+            # work while channels/cron continue starting in phase 2.
+            await self._service_manager.start_until_priority(
+                _CHAT_SERVICES_MAX_PRIORITY,
+            )
+            self._chat_ready = True
+            if on_chat_ready is not None:
+                result = on_chat_ready()
+                if asyncio.iscoroutine(result):
+                    await result
+
+            await self._service_manager.start_from_priority(
+                _CHAT_SERVICES_MAX_PRIORITY + 1,
+            )
 
             self._started = True
             logger.info(f"Workspace started successfully: {self.agent_id}")

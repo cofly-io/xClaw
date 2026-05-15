@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Spin } from "antd";
 import { useTranslation } from "react-i18next";
+import { useAgentStore } from "../../../../stores/agentStore";
 import type { IAgentScopeRuntimeWebUISession } from "@agentscope-ai/chat";
 import { chatApi } from "../../../../api/modules/chat";
 import sessionApi from "../../sessionApi";
@@ -16,7 +18,6 @@ import {
 import {
   requestSessionsListRefresh,
   XCLAW_NEW_CHAT_SESSION_EVENT,
-  XCLAW_REFRESH_SESSIONS_EVENT,
 } from "../../chatNewSessionBridge";
 import styles from "./index.module.less";
 
@@ -73,7 +74,10 @@ export default function SidebarSessionList({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const { selectedAgent } = useAgentStore();
   const [sessions, setSessions] = useState<ExtendedSession[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -82,24 +86,35 @@ export default function SidebarSessionList({
     return match?.[1];
   }, [location.pathname]);
 
-  const load = useCallback(() => {
-    void sessionApi
-      .getSessionList()
-      .then((list) => setSessions(list as ExtendedSession[]))
-      .catch(() => {});
+  const load = useCallback(async () => {
+    setListLoading(true);
+    setListError(null);
+    try {
+      const list = await sessionApi.getSessionList();
+      setSessions(list as ExtendedSession[]);
+    } catch (error) {
+      console.error("[xclaw][SidebarSessionList] load failed:", error);
+      setSessions([]);
+      setListError(
+        error instanceof Error ? error.message : "Failed to load sessions",
+      );
+    } finally {
+      setListLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    sessionApi.invalidateSessionList();
+    void load();
+  }, [load, selectedAgent]);
 
   useEffect(() => {
-    const onRefresh = () => load();
-    window.addEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, onRefresh);
-    window.addEventListener(XCLAW_REFRESH_SESSIONS_EVENT, onRefresh);
+    const onNewChat = () => {
+      void load();
+    };
+    window.addEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, onNewChat);
     return () => {
-      window.removeEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, onRefresh);
-      window.removeEventListener(XCLAW_REFRESH_SESSIONS_EVENT, onRefresh);
+      window.removeEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, onNewChat);
     };
   }, [load]);
 
@@ -210,6 +225,13 @@ export default function SidebarSessionList({
   return (
     <div className={styles.host}>
       <div className={styles.listWrap}>
+        {listLoading ? (
+          <div className={styles.listLoading}>
+            <Spin size="small" />
+          </div>
+        ) : listError ? (
+          <div className={styles.listError}>{listError}</div>
+        ) : (
         <div className={styles.list}>
           {pinnedSessions.length > 0 && (
             <>
@@ -293,6 +315,7 @@ export default function SidebarSessionList({
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

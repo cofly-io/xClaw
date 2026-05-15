@@ -379,6 +379,8 @@ class xClawAgent(ToolGuardMixin, ReActAgent):
         """
         workspace_dir = self._workspace_dir or WORKING_DIR
 
+        # Skills should be pre-initialized on the main thread before
+        # agent construction to avoid file lock issues in thread pool.
         ensure_skills_initialized(workspace_dir)
 
         request_context = getattr(self, "_request_context", {})

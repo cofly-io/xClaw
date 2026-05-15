@@ -749,6 +749,13 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     return [...this.sessionList];
   }
 
+  /** Drop cached list so the next fetch uses the current X-Agent-Id header. */
+  invalidateSessionList(): void {
+    this.sessionList = [];
+    this.sessionListRequest = null;
+    this.notifySubscribers();
+  }
+
   async getSessionList() {
     if (this.sessionListRequest) return this.sessionListRequest;
 

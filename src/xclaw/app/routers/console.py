@@ -172,18 +172,26 @@ async def post_console_chat(
     )
     tracker = workspace.task_tracker
 
-    # Kick off an LLM-backed title generation in the background when the chat
-    # was just created with the truncated placeholder. This runs detached so
-    # the streaming response is never blocked by title generation latency.
+    # Kick off title generation after the main chat stream starts so it does
+    # not compete with the user's first message for LLM rate-limiter slots.
     if first_text and chat.name == name:
-        asyncio.create_task(
-            generate_and_update_title(
+
+        async def _deferred_title_generation() -> None:
+            await asyncio.sleep(2.0)
+            if await tracker.has_active_tasks():
+                logger.debug(
+                    "Skipping title generation for chat %s: stream active",
+                    chat.id,
+                )
+                return
+            await generate_and_update_title(
                 workspace=workspace,
                 chat_id=chat.id,
                 user_message=first_text,
                 placeholder_name=name,
-            ),
-        )
+            )
+
+        asyncio.create_task(_deferred_title_generation())
 
     is_reconnect = False
     if isinstance(request_data, dict):

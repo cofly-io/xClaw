@@ -36,6 +36,7 @@ import styles from "./index.module.less";
 import { IconButton } from "@agentscope-ai/design";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatNewSessionBridge from "./components/ChatNewSessionBridge";
+import { requestSessionsListRefresh } from "./chatNewSessionBridge";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
 import ChatSessionsRefreshListener from "./components/ChatSessionsRefreshListener";
 import ChatLoadingOverlay from "./components/ChatLoadingOverlay";
@@ -842,6 +843,8 @@ export default function ChatPage() {
       prevSelectedAgentRef.current !== selectedAgent &&
       prevSelectedAgentRef.current !== undefined
     ) {
+      // SidebarSessionList reloads on selectedAgent; sync chat runtime once.
+      requestSessionsListRefresh();
       // Force re-render by updating refresh key
       setRefreshKey((prev) => prev + 1);
     }

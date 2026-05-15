@@ -7,7 +7,7 @@ including lazy loading, lifecycle management, and hot reloading.
 import asyncio
 import logging
 import time
-from typing import Dict, Set
+from typing import Dict, Literal, Set
 
 from agentscope_runtime.engine.schemas.exception import (
     ConfigurationException,
@@ -35,11 +35,24 @@ class MultiAgentManager:
         """Initialize multi-agent manager."""
         self.agents: Dict[str, Workspace] = {}
         self._lock = asyncio.Lock()
-        self._pending_starts: Dict[str, asyncio.Event] = {}
+        self._pending_starts: Dict[str, dict] = {}
         self._cleanup_tasks: Set[asyncio.Task] = set()
         logger.debug("MultiAgentManager initialized")
 
-    async def get_agent(self, agent_id: str) -> Workspace:
+    async def _publish_chat_ready(self, agent_id: str, instance: Workspace) -> None:
+        """Expose workspace for chat APIs before full startup completes."""
+        async with self._lock:
+            self.agents[agent_id] = instance
+            pending = self._pending_starts.get(agent_id)
+            if pending is not None:
+                pending["chat"].set()
+
+    async def get_agent(
+        self,
+        agent_id: str,
+        *,
+        ready: Literal["chat", "full"] = "full",
+    ) -> Workspace:
         """Get agent workspace by ID (lazy loading with dedup).
 
         If workspace doesn't exist in memory, it will be created and started.
@@ -51,6 +64,8 @@ class MultiAgentManager:
 
         Args:
             agent_id: Agent ID to retrieve
+            ready: ``chat`` returns once chat_manager is available;
+                ``full`` waits for all services.
 
         Returns:
             Workspace: The requested workspace instance
@@ -60,24 +75,31 @@ class MultiAgentManager:
         """
         # Fast path: already loaded (no lock)
         if agent_id in self.agents:
+            workspace = self.agents[agent_id]
+            if ready == "full" and not workspace._started:
+                pending = self._pending_starts.get(agent_id)
+                if pending is not None:
+                    await pending["full"].wait()
             logger.debug(f"Returning cached agent: {agent_id}")
-            return self.agents[agent_id]
+            return workspace
 
         should_start = False
-        event = None
+        wait_pending: dict | None = None
         agent_ref = None
 
         async with self._lock:
             # Re-check under lock
             if agent_id in self.agents:
-                logger.debug(f"Returning cached agent: {agent_id}")
-                return self.agents[agent_id]
+                workspace = self.agents[agent_id]
+                if ready == "full" and not workspace._started:
+                    wait_pending = self._pending_starts.get(agent_id)
+                else:
+                    logger.debug(f"Returning cached agent: {agent_id}")
+                    return workspace
 
-            if agent_id in self._pending_starts:
-                # Another task is already starting this agent; wait for it
-                event = self._pending_starts[agent_id]
-            else:
-                # We are the first caller — validate config and claim startup
+            if wait_pending is None and agent_id in self._pending_starts:
+                wait_pending = self._pending_starts[agent_id]
+            elif wait_pending is None:
                 config = load_config()
                 if agent_id not in config.agents.profiles:
                     raise ConfigurationException(
@@ -89,13 +111,19 @@ class MultiAgentManager:
                         ),
                     )
                 agent_ref = config.agents.profiles[agent_id]
-                event = asyncio.Event()
-                self._pending_starts[agent_id] = event
+                wait_pending = {
+                    "chat": asyncio.Event(),
+                    "full": asyncio.Event(),
+                }
+                self._pending_starts[agent_id] = wait_pending
                 should_start = True
 
         if not should_start:
-            # Wait for the in-progress startup to finish
-            await event.wait()
+            assert wait_pending is not None
+            if ready == "chat":
+                await wait_pending["chat"].wait()
+            else:
+                await wait_pending["full"].wait()
             if agent_id in self.agents:
                 logger.debug(f"Returning cached agent: {agent_id}")
                 return self.agents[agent_id]
@@ -113,7 +141,12 @@ class MultiAgentManager:
         )
 
         try:
-            await instance.start()
+            await instance.start(
+                on_chat_ready=lambda: self._publish_chat_ready(
+                    agent_id,
+                    instance,
+                ),
+            )
             instance.set_manager(self)
 
             async with self._lock:
@@ -129,11 +162,11 @@ class MultiAgentManager:
             logger.error(f"Failed to start workspace {agent_id}: {e}")
             raise
         finally:
-            # Always clean up pending state and signal waiters
-            # This handles cancellation (CancelledError) and all other cases
             async with self._lock:
-                self._pending_starts.pop(agent_id, None)
-            event.set()
+                pending_state = self._pending_starts.pop(agent_id, None)
+            if pending_state is not None:
+                pending_state["chat"].set()
+                pending_state["full"].set()
 
     async def _graceful_stop_old_instance(
         self,

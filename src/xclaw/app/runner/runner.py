@@ -514,6 +514,9 @@ class AgentRunner(Runner):
                 ),
             )
 
+            if self._workspace is not None:
+                await self._workspace.ensure_chat_runtime_ready()
+
             # Optional sender display name from channel_meta.user_name.
             channel_meta = getattr(request, "channel_meta", None)
             if not isinstance(channel_meta, dict):
@@ -692,17 +695,28 @@ class AgentRunner(Runner):
                     session_id,
                 )
 
-            agent = xClawAgent(
-                agent_config=agent_config,
-                env_context=env_context,
-                mcp_clients=mcp_clients,
-                memory_manager=self.memory_manager,
-                context_manager=self.context_manager,
-                request_context=base_request_context,
-                workspace_dir=self.workspace_dir,
-                task_tracker=self._task_tracker,
-                plan_notebook=plan_notebook,
+            # Pre-initialize skills on main thread to avoid file lock
+            # contention in the thread pool.
+            from ...agents.skill_system import ensure_skills_initialized
+
+            ensure_skills_initialized(
+                Path(self.workspace_dir or WORKING_DIR),
             )
+
+            def _build_agent() -> xClawAgent:
+                return xClawAgent(
+                    agent_config=agent_config,
+                    env_context=env_context,
+                    mcp_clients=mcp_clients,
+                    memory_manager=self.memory_manager,
+                    context_manager=self.context_manager,
+                    request_context=base_request_context,
+                    workspace_dir=self.workspace_dir,
+                    task_tracker=self._task_tracker,
+                    plan_notebook=plan_notebook,
+                )
+
+            agent = await asyncio.to_thread(_build_agent)
             await agent.register_mcp_clients()
             agent.set_console_output_enabled(enabled=False)
 

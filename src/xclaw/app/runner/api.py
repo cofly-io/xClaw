@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Chat management API."""
 from __future__ import annotations
+from pathlib import Path
 from typing import Optional
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -8,12 +9,14 @@ from agentscope.memory import InMemoryMemory
 
 from .session import SafeJSONSession
 from .manager import ChatManager
+from .repo.json_repo import JsonChatRepository
 from .models import (
     ChatSpec,
     ChatUpdate,
     ChatHistory,
 )
 from .utils import agentscope_msg_to_message
+from ...config.utils import load_config
 
 
 router = APIRouter(prefix="/chats", tags=["chats"])
@@ -24,6 +27,13 @@ async def get_workspace(request: Request):
     from ..agent_context import get_agent_for_request
 
     return await get_agent_for_request(request)
+
+
+async def get_workspace_for_chats(request: Request):
+    """Get workspace once chat_manager is ready (do not wait for memory/channels)."""
+    from ..agent_context import get_agent_for_request
+
+    return await get_agent_for_request(request, ready="chat")
 
 
 async def get_chat_manager(
@@ -40,8 +50,14 @@ async def get_chat_manager(
     Raises:
         HTTPException: If manager is not initialized
     """
-    workspace = await get_workspace(request)
-    return workspace.chat_manager
+    workspace = await get_workspace_for_chats(request)
+    mgr = workspace.chat_manager
+    if mgr is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Chat manager not ready",
+        )
+    return mgr
 
 
 async def get_session(
@@ -64,25 +80,42 @@ async def get_session(
 
 @router.get("", response_model=list[ChatSpec])
 async def list_chats(
+    request: Request,
     user_id: Optional[str] = Query(None, description="Filter by user ID"),
     channel: Optional[str] = Query(None, description="Filter by channel"),
-    mgr: ChatManager = Depends(get_chat_manager),
-    workspace=Depends(get_workspace),
 ):
     """List all chats with optional filters.
 
-    Args:
-        user_id: Optional user ID to filter chats
-        channel: Optional channel name to filter chats
-        mgr: Chat manager dependency
+    Reads ``chats.json`` directly while the agent workspace is still starting,
+    so the sidebar can load immediately (same behaviour as pre-sync xClaw).
     """
+    from ..agent_context import resolve_agent_id_for_request
+
+    agent_id = resolve_agent_id_for_request(request)
+    manager = request.app.state.multi_agent_manager
+    workspace = manager.agents.get(agent_id)
+
+    if (
+        workspace is not None
+        and workspace._chat_ready
+        and workspace.chat_manager is not None
+    ):
+        chats = await workspace.chat_manager.list_chats(
+            user_id=user_id,
+            channel=channel,
+        )
+        tracker = workspace.task_tracker
+        result = []
+        for spec in chats:
+            status = await tracker.get_status(spec.id)
+            result.append(spec.model_copy(update={"status": status}))
+        return result
+
+    profile = load_config().agents.profiles[agent_id]
+    chats_path = Path(profile.workspace_dir).expanduser() / "chats.json"
+    mgr = ChatManager(repo=JsonChatRepository(chats_path))
     chats = await mgr.list_chats(user_id=user_id, channel=channel)
-    tracker = workspace.task_tracker
-    result = []
-    for spec in chats:
-        status = await tracker.get_status(spec.id)
-        result.append(spec.model_copy(update={"status": status}))
-    return result
+    return [spec.model_copy(update={"status": "idle"}) for spec in chats]
 
 
 @router.post("", response_model=ChatSpec)

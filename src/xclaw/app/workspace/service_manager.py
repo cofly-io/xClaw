@@ -170,6 +170,66 @@ class ServiceManager:
             groups[descriptor.priority].append(descriptor)
         return groups
 
+    async def _start_priority_groups(
+        self,
+        priority_groups: Dict[int, List[ServiceDescriptor]],
+        *,
+        min_priority: int | None = None,
+        max_priority: int | None = None,
+    ) -> None:
+        """Start services for selected priority groups."""
+        for priority in sorted(priority_groups.keys()):
+            if min_priority is not None and priority < min_priority:
+                continue
+            if max_priority is not None and priority > max_priority:
+                continue
+
+            descriptors = priority_groups[priority]
+            concurrent = [d for d in descriptors if d.concurrent_init]
+            sequential = [d for d in descriptors if not d.concurrent_init]
+
+            if concurrent:
+                await asyncio.gather(
+                    *[self._start_service(desc) for desc in concurrent],
+                )
+
+            for desc in sequential:
+                await self._start_service(desc)
+
+            await asyncio.sleep(0)
+
+    async def start_until_priority(self, max_priority: int) -> None:
+        """Start services up to and including *max_priority*."""
+        await self._start_priority_groups(
+            self._group_by_priority(),
+            max_priority=max_priority,
+        )
+
+    async def start_from_priority(self, min_priority: int) -> None:
+        """Start services from *min_priority* upward."""
+        await self._start_priority_groups(
+            self._group_by_priority(),
+            min_priority=min_priority,
+        )
+
+    async def ensure_services_started(
+        self,
+        service_names: list[str],
+    ) -> None:
+        """Start named services if they are not running yet.
+
+        Used when a chat request arrives during phased workspace startup
+        (chat_ready published but phase-2 services still starting).
+        """
+        for name in service_names:
+            if name in self.services:
+                continue
+            descriptor = self.descriptors.get(name)
+            if descriptor is None:
+                logger.warning("Unknown service requested: %s", name)
+                continue
+            await self._start_service(descriptor)
+
     async def start_all(self) -> None:
         """Start all registered services in priority order.
 
@@ -184,27 +244,7 @@ class ServiceManager:
             f"({len(self.reused_services)} reused)",
         )
 
-        priority_groups = self._group_by_priority()
-
-        for priority in sorted(priority_groups.keys()):
-            descriptors = priority_groups[priority]
-
-            # Separate concurrent and sequential services
-            concurrent = [d for d in descriptors if d.concurrent_init]
-            sequential = [d for d in descriptors if not d.concurrent_init]
-
-            # Start concurrent services in parallel
-            if concurrent:
-                await asyncio.gather(
-                    *[self._start_service(desc) for desc in concurrent],
-                )
-
-            # Start sequential services one by one
-            for desc in sequential:
-                await self._start_service(desc)
-
-            # Yield between priority groups so event loop can serve requests
-            await asyncio.sleep(0)
+        await self._start_priority_groups(self._group_by_priority())
 
         elapsed = time.perf_counter() - t0
         logger.debug(

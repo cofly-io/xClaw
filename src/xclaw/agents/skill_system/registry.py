@@ -54,6 +54,8 @@ _ENV_LOCK = threading.Lock()
 
 _builtin_cache: dict[str, Any] = {}
 _BUILTIN_CACHE_LOCK = threading.Lock()
+_SKILL_POOL_INIT_LOCK = threading.Lock()
+_SKILL_POOL_INITIALIZED = False
 
 
 def _normalize_builtin_skill_language(
@@ -830,22 +832,30 @@ def migrate_pool_builtin_language_fields() -> bool:
 
 def ensure_skill_pool_initialized() -> bool:
     """Ensure the local skill pool exists and built-ins are synced into it."""
-    pool_dir = get_skill_pool_dir()
-    created = False
-    if not pool_dir.exists():
-        pool_dir.mkdir(parents=True, exist_ok=True)
-        created = True
+    global _SKILL_POOL_INITIALIZED  # pylint: disable=global-statement
 
-    manifest_path = get_pool_skill_manifest_path()
-    if not manifest_path.exists():
-        _write_json_atomic(manifest_path, _default_pool_manifest())
-        created = True
+    with _SKILL_POOL_INIT_LOCK:
+        if _SKILL_POOL_INITIALIZED:
+            return False
 
-    if created:
-        import_builtin_skills()
-    else:
-        migrate_pool_builtin_language_fields()
-    return created
+        pool_dir = get_skill_pool_dir()
+        created = False
+        if not pool_dir.exists():
+            pool_dir.mkdir(parents=True, exist_ok=True)
+            created = True
+
+        manifest_path = get_pool_skill_manifest_path()
+        if not manifest_path.exists():
+            _write_json_atomic(manifest_path, _default_pool_manifest())
+            created = True
+
+        if created:
+            import_builtin_skills()
+        else:
+            migrate_pool_builtin_language_fields()
+
+        _SKILL_POOL_INITIALIZED = True
+        return created
 
 
 def reconcile_pool_manifest() -> dict[str, Any]:
@@ -967,7 +977,8 @@ def reconcile_workspace_manifest(workspace_dir: Path) -> dict[str, Any]:
     workspace_skills_dir = get_workspace_skills_dir(workspace_dir)
     workspace_skills_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = get_workspace_skill_manifest_path(workspace_dir)
-    builtin_versions = _get_packaged_builtin_versions()
+    # Skip packaged builtin scan on reconcile; only used to label new skills.
+    builtin_versions: dict[str, str] = {}
 
     if not manifest_path.exists():
         _write_json_atomic(manifest_path, _default_workspace_manifest())
