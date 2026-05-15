@@ -16,8 +16,8 @@ import {
   sessionBucketKey,
 } from "../../sessionCalendarGroup";
 import {
-  requestSessionsListRefresh,
   XCLAW_NEW_CHAT_SESSION_EVENT,
+  XCLAW_REFRESH_SESSIONS_EVENT,
 } from "../../chatNewSessionBridge";
 import styles from "./index.module.less";
 
@@ -86,20 +86,27 @@ export default function SidebarSessionList({
     return match?.[1];
   }, [location.pathname]);
 
-  const load = useCallback(async () => {
-    setListLoading(true);
-    setListError(null);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setListLoading(true);
+      setListError(null);
+    }
     try {
       const list = await sessionApi.getSessionList();
       setSessions(list as ExtendedSession[]);
     } catch (error) {
       console.error("[xclaw][SidebarSessionList] load failed:", error);
-      setSessions([]);
-      setListError(
-        error instanceof Error ? error.message : "Failed to load sessions",
-      );
+      if (!silent) {
+        setSessions([]);
+        setListError(
+          error instanceof Error ? error.message : "Failed to load sessions",
+        );
+      }
     } finally {
-      setListLoading(false);
+      if (!silent) {
+        setListLoading(false);
+      }
     }
   }, []);
 
@@ -110,7 +117,7 @@ export default function SidebarSessionList({
 
   useEffect(() => {
     const onNewChat = () => {
-      void load();
+      void load({ silent: true });
     };
     window.addEventListener(XCLAW_NEW_CHAT_SESSION_EVENT, onNewChat);
     return () => {
@@ -118,9 +125,16 @@ export default function SidebarSessionList({
     };
   }, [load]);
 
+  // Sync after first reply registers chat on backend (sessionApi.updateSession).
   useEffect(() => {
-    if (location.pathname.startsWith("/chat")) load();
-  }, [location.pathname, load]);
+    const onRefresh = () => {
+      void load({ silent: true });
+    };
+    window.addEventListener(XCLAW_REFRESH_SESSIONS_EVENT, onRefresh);
+    return () => {
+      window.removeEventListener(XCLAW_REFRESH_SESSIONS_EVENT, onRefresh);
+    };
+  }, [load]);
 
   const sorted = useMemo(() => {
     return [...sessions].sort((a, b) => sessionSortTs(b) - sessionSortTs(a));
@@ -151,26 +165,41 @@ export default function SidebarSessionList({
   const handleSessionClick = useCallback(
     (session: ExtendedSession) => {
       const targetId = getBackendId(session) ?? session.id;
+      if (!targetId) return;
       navigate(`/chat/${targetId}`);
     },
     [navigate],
   );
 
   const handleDelete = useCallback(
-    async (sessionId: string) => {
+    (sessionId: string) => {
       const session = sessions.find((s) => s.id === sessionId) as
         | ExtendedSession
         | undefined;
       const backendId = session ? getBackendId(session) : null;
-      if (backendId) {
-        await chatApi.deleteChat(backendId);
+      const snapshot = sessions;
+      const remaining = sessions.filter((s) => s.id !== sessionId);
+
+      setSessions(remaining);
+      sessionApi.evictSessionFromList(sessionId);
+
+      if (session && sessionMatchesChatRoute(session, chatId)) {
+        const next = remaining[0];
+        if (next) {
+          const targetId = getBackendId(next) ?? next.id;
+          navigate(targetId ? `/chat/${targetId}` : "/chat");
+        } else {
+          navigate("/chat");
+        }
       }
-      if (chatId === sessionId) {
-        const next = sessions.filter((s) => s.id !== sessionId);
-        navigate(next[0]?.id ? `/chat/${next[0].id}` : "/chat");
-      }
-      load();
-      requestSessionsListRefresh();
+
+      if (!backendId) return;
+
+      void chatApi.deleteChat(backendId).catch((error) => {
+        console.error("[xclaw][SidebarSessionList] delete failed:", error);
+        setSessions(snapshot);
+        void load();
+      });
     },
     [sessions, chatId, navigate, load],
   );
@@ -180,20 +209,24 @@ export default function SidebarSessionList({
     setEditValue(name);
   }, []);
 
-  const handleEditSubmit = useCallback(async () => {
+  const handleEditSubmit = useCallback(() => {
     if (!editingSessionId) return;
     const session = sessions.find((s) => s.id === editingSessionId) as
       | ExtendedSession
       | undefined;
     const backendId = session ? getBackendId(session) : null;
     const newName = editValue.trim();
-    if (backendId && newName && session) {
-      await chatApi.updateChat(backendId, { name: newName });
-    }
     setEditingSessionId(null);
     setEditValue("");
-    load();
-    requestSessionsListRefresh();
+    if (!backendId || !newName || !session) return;
+
+    setSessions((prev) =>
+      prev.map((s) => (s.id === editingSessionId ? { ...s, name: newName } : s)),
+    );
+    void chatApi.updateChat(backendId, { name: newName }).catch((error) => {
+      console.error("[xclaw][SidebarSessionList] rename failed:", error);
+      void load({ silent: true });
+    });
   }, [editingSessionId, editValue, sessions, load]);
 
   const handleEditCancel = useCallback(() => {
@@ -202,20 +235,23 @@ export default function SidebarSessionList({
   }, []);
 
   const handlePin = useCallback(
-    async (sessionId: string) => {
+    (sessionId: string) => {
       const session = sessions.find((s) => s.id === sessionId) as
         | ExtendedSession
         | undefined;
       const backendId = session ? getBackendId(session) : null;
       if (!backendId || !session) return;
       const nextPinned = !session.pinned;
-      try {
-        await chatApi.updateChat(backendId, { pinned: nextPinned });
-      } catch {
-        return;
-      }
-      load();
-      requestSessionsListRefresh();
+
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === sessionId ? { ...s, pinned: nextPinned } : s,
+        ),
+      );
+      void chatApi.updateChat(backendId, { pinned: nextPinned }).catch((error) => {
+        console.error("[xclaw][SidebarSessionList] pin failed:", error);
+        void load({ silent: true });
+      });
     },
     [sessions, load],
   );

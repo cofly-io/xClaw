@@ -673,6 +673,23 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
   }
 
   /**
+   * Resolve the persistence session_id used for /console/chat and session files.
+   * Accepts a library id (timestamp), backend chat UUID, or persistence id.
+   */
+  getPersistenceSessionId(idOrChatId: string): string | null {
+    if (!idOrChatId) return null;
+    const fromList = this.sessionList.find(
+      (s) =>
+        s.id === idOrChatId ||
+        (s as ExtendedSession).realId === idOrChatId ||
+        (s as ExtendedSession).sessionId === idOrChatId,
+    ) as ExtendedSession | undefined;
+    if (fromList?.sessionId) return fromList.sessionId;
+    if (isLocalTimestamp(idOrChatId)) return idOrChatId;
+    return null;
+  }
+
+  /**
    * Returns the number of messages loaded for a session (backend message count).
    * Used to determine if a chat has many loaded messages and needs special handling.
    */
@@ -1007,15 +1024,32 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     this.setLoadedTailCount(backendId, displayId, n);
     this.patchLastUserMessage(messages, generating, backendId);
 
+    let entry = listEntry;
+    if (!entry?.sessionId) {
+      await this.getSessionList();
+      entry = this.sessionList.find(
+        (s) =>
+          s.id === displayId ||
+          s.id === backendId ||
+          (s as ExtendedSession).realId === backendId,
+      ) as ExtendedSession | undefined;
+    }
+
+    const persistenceSessionId =
+      chatHistory.session_id ||
+      entry?.sessionId ||
+      this.getPersistenceSessionId(displayId) ||
+      this.getPersistenceSessionId(backendId);
+
     const session: ExtendedSession = {
       id: displayId,
-      name: listEntry?.name || DEFAULT_SESSION_NAME,
-      sessionId: listEntry?.sessionId || displayId,
-      userId: listEntry?.userId || DEFAULT_USER_ID,
-      channel: listEntry?.channel || DEFAULT_CHANNEL,
+      name: entry?.name || listEntry?.name || DEFAULT_SESSION_NAME,
+      sessionId: persistenceSessionId || entry?.sessionId || displayId,
+      userId: entry?.userId || listEntry?.userId || DEFAULT_USER_ID,
+      channel: entry?.channel || listEntry?.channel || DEFAULT_CHANNEL,
       messages,
-      meta: listEntry?.meta || {},
-      realId: listEntry?.realId,
+      meta: entry?.meta || listEntry?.meta || {},
+      realId: entry?.realId ?? listEntry?.realId,
       generating,
     };
     this.updateWindowVariables(session);
@@ -1060,9 +1094,18 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     }
 
     // --- Regular backend UUID ---
-    const fromList = this.sessionList.find((s) => s.id === sessionId) as
-      | ExtendedSession
-      | undefined;
+    let fromList = this.sessionList.find(
+      (s) =>
+        s.id === sessionId || (s as ExtendedSession).realId === sessionId,
+    ) as ExtendedSession | undefined;
+
+    if (!fromList) {
+      await this.getSessionList();
+      fromList = this.sessionList.find(
+        (s) =>
+          s.id === sessionId || (s as ExtendedSession).realId === sessionId,
+      ) as ExtendedSession | undefined;
+    }
 
     return this.fetchAndBuildSession(sessionId, sessionId, fromList);
   }
@@ -1077,6 +1120,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     if (realId) {
       this.notifyRealIdResolved(tempId);
       this.onSessionIdResolved?.(tempId, realId);
+      requestSessionsListRefresh();
     }
   }
 
@@ -1124,6 +1168,24 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     return this.sessionList;
   }
 
+  /**
+   * Remove a session from the in-memory list/cache only (no API, no refresh event).
+   * Used by the sidebar for optimistic delete.
+   */
+  evictSessionFromList(sessionId: string): void {
+    const existing = this.sessionList.find((s) => s.id === sessionId) as
+      | ExtendedSession
+      | undefined;
+    if (!existing) return;
+
+    this.sessionList = this.sessionList.filter((s) => s.id !== sessionId);
+    this.clearSessionCache(sessionId);
+    this.cancelPendingLoads(sessionId);
+
+    const resolvedId = existing.realId ?? sessionId;
+    this.onSessionRemoved?.(resolvedId);
+  }
+
   async removeSession(session: Partial<IAgentScopeRuntimeWebUISession>) {
     if (!session.id) return [...this.sessionList];
 
@@ -1138,10 +1200,7 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
 
     if (deleteId) await api.deleteChat(deleteId);
 
-    this.sessionList = this.sessionList.filter((s) => s.id !== sessionId);
-
-    const resolvedId = existing?.realId ?? sessionId;
-    this.onSessionRemoved?.(resolvedId);
+    this.evictSessionFromList(sessionId);
 
     this.notifySubscribers();
     return [...this.sessionList];

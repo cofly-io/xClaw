@@ -209,14 +209,18 @@ async def get_chat(
             detail=f"Chat not found: {chat_id}",
         )
 
-    state = await session.get_session_state_dict(
-        chat_spec.session_id,
-        chat_spec.user_id,
-        chat_spec.channel,
+    state = await session.resolve_session_state_dict(
+        session_ids=[chat_spec.session_id, chat_id],
+        user_id=chat_spec.user_id,
+        channel=chat_spec.channel,
     )
     status = await workspace.task_tracker.get_status(chat_id)
     if not state:
-        return ChatHistory(messages=[], status=status)
+        return ChatHistory(
+            messages=[],
+            status=status,
+            session_id=chat_spec.session_id,
+        )
     memory_state = state.get("agent", {}).get("memory", {})
     memory = InMemoryMemory()
     memory.load_state_dict(memory_state, strict=False)
@@ -234,7 +238,11 @@ async def get_chat(
 
     messages = agentscope_msg_to_message(memories)
 
-    return ChatHistory(messages=messages, status=status)
+    return ChatHistory(
+        messages=messages,
+        status=status,
+        session_id=chat_spec.session_id,
+    )
 
 
 @router.put("/{chat_id}", response_model=ChatSpec)

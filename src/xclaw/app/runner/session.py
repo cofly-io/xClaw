@@ -470,3 +470,61 @@ class SafeJSONSession(SessionBase):
                 f"because it does not exist"
             ),
         )
+
+    async def _read_state_from_path(self, session_save_path: str) -> dict:
+        async with aiofiles.open(
+            session_save_path,
+            "r",
+            encoding="utf-8",
+            errors="surrogatepass",
+        ) as file:
+            content = await file.read()
+            states = _safe_json_loads(content, session_save_path)
+
+        logger.info(
+            "Get session state dict from %s successfully.",
+            session_save_path,
+        )
+        return states
+
+    async def resolve_session_state_dict(
+        self,
+        session_ids: list[str],
+        user_id: str = "",
+        channel: str = "",
+    ) -> dict:
+        """Load session state, trying multiple ids and legacy flat layout.
+
+        Console chats historically used ``sessions/default_<id>.json``; newer
+        runs use ``sessions/console/default_<id>.json``. Some clients also
+        persisted under the chat UUID instead of ``ChatSpec.session_id``.
+        """
+        seen_paths: set[str] = set()
+        channels_to_try: list[str] = []
+        if channel:
+            channels_to_try.append(channel)
+        channels_to_try.append("")
+
+        for session_id in session_ids:
+            if not session_id:
+                continue
+            for ch in channels_to_try:
+                path = self._get_save_path(
+                    session_id,
+                    user_id=user_id,
+                    channel=ch,
+                )
+                if path in seen_paths:
+                    continue
+                seen_paths.add(path)
+                if not os.path.exists(path):
+                    continue
+                return await self._read_state_from_path(path)
+
+        logger.info(
+            "No session file found for ids=%s user_id=%s channel=%s",
+            session_ids,
+            user_id,
+            channel,
+        )
+        return {}

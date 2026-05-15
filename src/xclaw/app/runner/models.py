@@ -76,6 +76,10 @@ class ChatHistory(BaseModel):
         default="idle",
         description="Conversation status: idle or running",
     )
+    session_id: str | None = Field(
+        default=None,
+        description="Persistence key used for session JSON on disk",
+    )
 
 
 class ChatsFile(BaseModel):

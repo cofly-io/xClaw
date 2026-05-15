@@ -66,7 +66,7 @@ def _extract_placeholder_name(content_parts: list) -> tuple[str, str]:
         first_text = ""
     if not first_text:
         return "Media Message", ""
-    return first_text[:10], first_text
+    return first_text[:18], first_text
 
 
 def _extract_session_and_payload(request_data: Union[AgentRequest, dict]):

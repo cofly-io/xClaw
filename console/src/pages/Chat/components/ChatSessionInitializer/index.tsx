@@ -16,6 +16,13 @@ function sessionMatchesChatId(
   return false;
 }
 
+function findSessionForChatId(
+  sessions: IAgentScopeRuntimeWebUISession[],
+  chatId: string,
+): IAgentScopeRuntimeWebUISession | undefined {
+  return sessions.find((s) => sessionMatchesChatId(s, chatId));
+}
+
 export interface ChatSessionInitializerProps {
   onLoadingChange?: (loading: boolean) => void;
 }
@@ -50,21 +57,17 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
   const sessionsRef = useRef(sessions);
   sessionsRef.current = sessions;
 
-  /**
-   * The runtime session id we are waiting for the runtime to fully display.
-   * null means "no pending switch".
-   */
   const [pendingId, setPendingId] = useState<string | null>(null);
   const pendingIdRef = useRef<string | null>(null);
   const loadingGuardRef = useRef<number | null>(null);
-  /** After `/chat` the library may still have []; sync list once per URL chatId. */
   const emptyLibrarySyncDoneRef = useRef(false);
-  /** If URL id is missing from library list, refresh list once per chatId. */
   const noMatchListRefreshRef = useRef<string | null>(null);
-  /** Track if this is the first mount to force loading */
   const isFirstMountRef = useRef(true);
+  /** URL chat id we already switched the runtime to (prevents re-entrant sync). */
+  const syncedChatIdRef = useRef<string | null>(null);
+  /** URL chat id we already requested a direct getSession for (no-match path). */
+  const directFetchChatIdRef = useRef<string | null>(null);
 
-  // Global guard: never keep overlay forever if matching chain gets stuck.
   useEffect(() => {
     if (!chatId) return;
     if (loadingGuardRef.current !== null) {
@@ -92,12 +95,49 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
   useEffect(() => {
     emptyLibrarySyncDoneRef.current = false;
     noMatchListRefreshRef.current = null;
+    isFirstMountRef.current = true;
+    syncedChatIdRef.current = null;
+    directFetchChatIdRef.current = null;
   }, [chatId]);
 
-  // ── Step 1: react to URL chatId or session list changes ──────────────────
+  const switchToSession = (libraryId: string) => {
+    onLoadingChange?.(true);
+    pendingIdRef.current = libraryId;
+    setPendingId(libraryId);
+    setCurrentSessionId(libraryId);
+  };
+
+  const fetchAndApplySession = (urlChatId: string) => {
+    if (directFetchChatIdRef.current === urlChatId) return;
+    directFetchChatIdRef.current = urlChatId;
+    void sessionApi
+      .getSession(urlChatId)
+      .then((loaded) => {
+        const libId = loaded.id;
+        const prev = sessionsRef.current;
+        const idx = prev.findIndex(
+          (s) => s.id === libId || sessionMatchesChatId(s, urlChatId),
+        );
+        const next =
+          idx >= 0
+            ? prev.map((s, i) => (i === idx ? { ...s, ...loaded } : s))
+            : [...prev, loaded];
+        setSessions(next);
+        syncedChatIdRef.current = urlChatId;
+        switchToSession(libId);
+      })
+      .catch((err) => {
+        directFetchChatIdRef.current = null;
+        console.error(
+          "[xclaw][ChatSessionInitializer] getSession failed:",
+          err,
+        );
+        onLoadingChange?.(false);
+      });
+  };
+
   useEffect(() => {
     if (!chatId) {
-      console.log("[xclaw][ChatSessionInitializer] no chatId, hiding loading");
       onLoadingChange?.(false);
       pendingIdRef.current = null;
       setPendingId(null);
@@ -105,10 +145,6 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     }
 
     if (sessions.length === 0) {
-      // Sessions not loaded yet — proactively fetch; wait for next cycle
-      console.log(
-        "[xclaw][ChatSessionInitializer] sessions empty, showing loading",
-      );
       onLoadingChange?.(true);
       if (!emptyLibrarySyncDoneRef.current) {
         emptyLibrarySyncDoneRef.current = true;
@@ -123,24 +159,12 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
             );
           });
       }
-      void sessionApi.getSession(chatId).catch((err) => {
-        console.error(
-          "[xclaw][ChatSessionInitializer] getSession failed when sessions empty",
-          err,
-        );
-        console.log(
-          "[xclaw][ChatSessionInitializer] getSession failed, hiding loading (sessions empty case)",
-        );
-        onLoadingChange?.(false);
-      });
+      fetchAndApplySession(chatId);
       return;
     }
 
-    const matching = sessions.find((s) => sessionMatchesChatId(s, chatId));
+    const matching = findSessionForChatId(sessions, chatId);
     if (!matching) {
-      console.log(
-        "[xclaw][ChatSessionInitializer] no matching session, showing loading",
-      );
       onLoadingChange?.(true);
       if (noMatchListRefreshRef.current !== chatId) {
         noMatchListRefreshRef.current = chatId;
@@ -157,61 +181,64 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
             );
           });
       }
-      void sessionApi.getSession(chatId).catch((err) => {
-        console.error(
-          "[xclaw][ChatSessionInitializer] getSession failed when no matching",
-          err,
-        );
-        console.log(
-          "[xclaw][ChatSessionInitializer] getSession failed, hiding loading (no match case)",
-        );
-        onLoadingChange?.(false);
-      });
+      fetchAndApplySession(chatId);
       return;
     }
 
-    // On first mount (component just created), always force loading
-    // This handles the case when component is remounted but currentSessionId hasn't changed yet
     const isCurrentSession = currentSessionIdRef.current === matching.id;
-    if (isCurrentSession && !isFirstMountRef.current) {
-      // Already on the correct session — nothing to do
-      console.log(
-        "[xclaw][ChatSessionInitializer] already on correct session, hiding loading",
-      );
+    const currentInLibrary = sessions.find(
+      (s) => s.id === currentSessionIdRef.current,
+    );
+    const currentMatchesUrl =
+      !!currentInLibrary && sessionMatchesChatId(currentInLibrary, chatId);
+    const historyLoaded =
+      sessionApi.getLoadedMessageCount(chatId) > 0 ||
+      (matching.messages?.length ?? 0) > 0;
+
+    if (
+      syncedChatIdRef.current === chatId &&
+      isCurrentSession &&
+      !isFirstMountRef.current &&
+      currentMatchesUrl
+    ) {
       onLoadingChange?.(false);
       pendingIdRef.current = null;
       setPendingId(null);
       return;
     }
 
-    // Clear first mount flag after first check
+    if (
+      isCurrentSession &&
+      !isFirstMountRef.current &&
+      currentMatchesUrl &&
+      historyLoaded
+    ) {
+      syncedChatIdRef.current = chatId;
+      onLoadingChange?.(false);
+      pendingIdRef.current = null;
+      setPendingId(null);
+      return;
+    }
+
     isFirstMountRef.current = false;
 
-    // Need to switch — show overlay and queue the switch
-    console.log(
-      "[xclaw][ChatSessionInitializer] switching to session, showing loading:",
-      matching.id,
-    );
-    onLoadingChange?.(true);
-    pendingIdRef.current = matching.id;
-    setPendingId(matching.id);
-    setCurrentSessionId(matching.id);
+    if (syncedChatIdRef.current === chatId && isCurrentSession) {
+      return;
+    }
+
+    syncedChatIdRef.current = chatId;
+    switchToSession(matching.id);
+    // Runtime calls sessionApi.getSession once via setCurrentSessionId.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, sessions, setCurrentSessionId, setSessions, onLoadingChange]);
 
-  // ── Step 2: watch runtime state until target session is ready ────────────
   useEffect(() => {
     currentSessionIdRef.current = currentSessionId;
 
     if (!pendingId) return;
     if (currentSessionId !== pendingId) return;
 
-    // Runtime has switched to the target session — dismiss overlay.
-    // Use sessionsRef (not sessions) to avoid resetting the timer on list updates.
     const finish = () => {
-      console.log(
-        "[xclaw][ChatSessionInitializer] session loaded, hiding loading",
-      );
       if (loadingGuardRef.current !== null) {
         window.clearTimeout(loadingGuardRef.current);
         loadingGuardRef.current = null;
@@ -223,18 +250,18 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
 
     const session = sessionsRef.current.find((s) => s.id === currentSessionId);
     const hasMessages = (session?.messages?.length ?? 0) > 0;
+    const historyLoaded =
+      hasMessages || sessionApi.getLoadedMessageCount(chatId ?? "") > 0;
 
-    if (hasMessages) {
+    if (historyLoaded) {
       const t = window.requestAnimationFrame(finish);
       return () => window.cancelAnimationFrame(t);
     }
 
-    // Messages not yet in context — wait longer for remounted components
-    // During remount, the session might not have messages loaded yet even though getSession is running
     const t = window.setTimeout(finish, 1000);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSessionId, pendingId, onLoadingChange]);
+  }, [currentSessionId, pendingId, onLoadingChange, chatId]);
 
   return null;
 };

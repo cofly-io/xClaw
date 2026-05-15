@@ -23,6 +23,8 @@ export interface Message {
 export interface ChatHistory {
   messages: Message[];
   status?: ChatStatus; // Conversation status: idle or running
+  /** Persistence key for session JSON (from ChatSpec.session_id). */
+  session_id?: string | null;
 }
 
 export interface ChatUpdateRequest {

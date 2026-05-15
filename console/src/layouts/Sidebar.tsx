@@ -6,12 +6,9 @@ import { Ellipsis, MessageSquarePlus, SquarePlus } from "lucide-react";
 import {
   SparkExitFullscreenLine,
   SparkSearchUserLine,
-  SparkDebugLine,
 } from "@agentscope-ai/icons";
-import { Package } from "lucide-react";
 import { clearAuthToken } from "../api/config";
 import { authApi } from "../api/modules/auth";
-import { usePlugins } from "../plugins/PluginContext";
 import styles from "./index.module.less";
 import { useTheme } from "../contexts/ThemeContext";
 import AgentSelector from "../components/AgentSelector";
@@ -38,7 +35,6 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
   const location = useLocation();
   const { t } = useTranslation();
   const { isDark } = useTheme();
-  const { pluginRoutes } = usePlugins();
   const [authEnabled, setAuthEnabled] = useState(false);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
@@ -158,6 +154,7 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
     }
   };
 
+  /** Collapsed rail: only primary actions; debug/plugins stay in expanded nav / settings. */
   const collapsedNavItems: Array<{
     key: string;
     icon: ReactNode;
@@ -173,25 +170,6 @@ export default function Sidebar({ onOpenSettingsMore }: SidebarProps) {
       },
       label: t("chat.newChat"),
     },
-    {
-      key: "debug",
-      icon: <SparkDebugLine size={18} />,
-      path: "/debug",
-      label: t("nav.debug", "Debug"),
-    },
-    {
-      key: "plugin-manager",
-      icon: <Package size={18} />,
-      path: "/plugin-manager",
-      label: t("nav.pluginManager", "Plugin Manager"),
-    },
-    // Append plugin nav items dynamically
-    ...pluginRoutes.map((route) => ({
-      key: route.path.replace(/^\//, ""),
-      icon: <span style={{ fontSize: 18 }}>{route.icon}</span>,
-      path: route.path,
-      label: route.label,
-    })),
   ];
 
   const siderWidth = collapsed ? (isMobile ? 56 : 72) : 255;

@@ -905,9 +905,16 @@ export default function ChatPage() {
             ]
           : lastInput;
 
+      const persistenceSessionId =
+        sessionApi.getPersistenceSessionId(window.currentSessionId || "") ||
+        sessionApi.getPersistenceSessionId(chatIdRef.current || "") ||
+        window.currentSessionId ||
+        session?.session_id ||
+        "";
+
       const requestBody = {
         input: rewrittenInput,
-        session_id: window.currentSessionId || session?.session_id || "",
+        session_id: persistenceSessionId,
         user_id: window.currentUserId || session?.user_id || DEFAULT_USER_ID,
         channel: window.currentChannel || session?.channel || DEFAULT_CHANNEL,
         stream: true,
