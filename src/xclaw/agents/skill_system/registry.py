@@ -93,7 +93,11 @@ def get_builtin_skill_language_preference() -> str:
             result = explicit
         else:
             ui_lang = str(payload.get("language", "") or "").strip().lower()
-            result = "zh" if ui_lang.startswith("zh") else "en"
+            if not ui_lang:
+                # Match server-first UI default when settings.json has no language yet.
+                result = "zh"
+            else:
+                result = "zh" if ui_lang.startswith("zh") else "en"
         _builtin_cache["language_preference"] = result
         return result
 
@@ -147,12 +151,23 @@ def _iter_packaged_builtin_variants() -> Iterator[BuiltinSkillVariant]:
 
         identity = _parse_builtin_skill_identity(skill_dir.name)
         if identity is None:
-            continue
+            # Monolingual packaged skills (directory name without ``-en/-zh`` suffix)
+            pref = get_builtin_skill_language_preference()
+            post = _read_frontmatter_safe_from_path(
+                skill_md_path,
+                skill_dir.name,
+            )
+            identity = BuiltinSkillIdentity(
+                name=skill_dir.name,
+                language=pref,
+                source_name=skill_dir.name,
+            )
+        else:
+            post = _read_frontmatter_safe_from_path(
+                skill_md_path,
+                identity.name,
+            )
 
-        post = _read_frontmatter_safe_from_path(
-            skill_md_path,
-            identity.name,
-        )
         yield BuiltinSkillVariant(
             name=identity.name,
             language=identity.language,

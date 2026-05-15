@@ -20,6 +20,9 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 _SETTINGS_FILE = WORKING_DIR / "settings.json"
 
 _VALID_LANGUAGES = {"en", "zh", "ja", "ru", "pt-BR"}
+# Match console i18n: first-time installs should be Chinese unless the user
+# explicitly saved another language in settings.json.
+_DEFAULT_UI_LANGUAGE = "zh"
 
 
 def _load() -> dict:
@@ -41,7 +44,7 @@ def _save(data: dict) -> None:
 
 @router.get("/language", summary="Get UI language")
 async def get_language() -> dict:
-    return {"language": _load().get("language", "en")}
+    return {"language": _load().get("language", _DEFAULT_UI_LANGUAGE)}
 
 
 @router.put("/language", summary="Update UI language")

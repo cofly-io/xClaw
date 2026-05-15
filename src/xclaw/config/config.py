@@ -1684,6 +1684,12 @@ def _default_builtin_tools() -> Dict[str, BuiltinToolConfig]:
             description="Check the status of a background agent task",
             icon="⏳",
         ),
+        "supos_api_call": BuiltinToolConfig(
+            name="supos_api_call",
+            enabled=True,
+            description="Call supOS Open API (Bearer SUPOS_AK)",
+            icon="🔗",
+        ),
     }
 
     # Merge dynamically registered tools from plugins
