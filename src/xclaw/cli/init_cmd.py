@@ -280,6 +280,7 @@ def init_cmd(
         # --- show_tool_details ---
         if use_defaults:
             existing.show_tool_details = True
+            existing.agents.language = "zh"
         else:
             existing.show_tool_details = prompt_confirm(
                 "Show tool call/result details in channel messages?",
@@ -518,5 +519,11 @@ def init_cmd(
             encoding="utf-8",
         )
         click.echo(f"✓ Heartbeat query saved to {heartbeat_path}")
+
+    if use_defaults:
+        from .desktop_defaults import apply_desktop_pack_defaults, is_desktop_packaged_app
+
+        if is_desktop_packaged_app():
+            apply_desktop_pack_defaults(default_workspace)
 
     click.echo("\n✓ Initialization complete!")

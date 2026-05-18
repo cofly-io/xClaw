@@ -58,13 +58,34 @@ if [[ -x "${APP_DIR}/Contents/Resources/env/bin/conda-unpack" ]]; then
   (cd "${APP_DIR}/Contents/Resources/env" && ./bin/conda-unpack)
 fi
 
+echo "== Bundling SUPOS_AK (xclaw.env) =="
+BUNDLED_ENV="${APP_DIR}/Contents/Resources/xclaw.env"
+WRITE_ENV_ARGS=(--output "${BUNDLED_ENV}")
+if [[ -n "${SUPOS_AK:-}" ]]; then
+  WRITE_ENV_ARGS+=(--supos-ak "${SUPOS_AK}")
+fi
+if python "${REPO_ROOT}/scripts/pack/write_bundled_env.py" "${WRITE_ENV_ARGS[@]}"; then
+  echo "== Wrote ${BUNDLED_ENV}"
+elif [[ "${ALLOW_MISSING_SUPOS_AK:-}" == "1" ]]; then
+  echo "== WARN: SUPOS_AK missing; xclaw.env not written (ALLOW_MISSING_SUPOS_AK=1)"
+else
+  echo "ERROR: SUPOS_AK required for distributable macOS build."
+  echo "  export SUPOS_AK=... or create desktop/supos_ak.env (see desktop/supos_ak.env.example)"
+  echo "  or: ALLOW_MISSING_SUPOS_AK=1 for dev builds without bundled AK"
+  exit 1
+fi
+
 cat > "${APP_DIR}/Contents/MacOS/${APP_NAME}" << 'LAUNCHER'
 #!/usr/bin/env bash
 ENV_DIR="$(cd "$(dirname "$0")/../Resources/env" && pwd)"
+RESOURCES="$(cd "$(dirname "$0")/../Resources" && pwd)"
 LOG="$HOME/.xclaw/desktop.log"
 unset PYTHONPATH
 export PYTHONHOME="$ENV_DIR"
 export QWENPAW_DESKTOP_APP=1
+if [ -f "$RESOURCES/xclaw.env" ]; then
+  export QWENPAW_BUNDLED_ENV_FILE="$RESOURCES/xclaw.env"
+fi
 
 export PATH="$ENV_DIR/bin:$PATH"
 

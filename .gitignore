@@ -41,6 +41,7 @@ website/public/search-index.json
 # misc
 .env
 .env.*
+desktop/supos_ak.env
 providers.json
 envs.json
 !.env.example

@@ -27,11 +27,6 @@ import sys
 import tempfile
 import zipfile
 
-try:
-    from copaw.security.xclaw_env_crypto import encrypt_to_b64
-except ModuleNotFoundError:  # 部分环境仅安装 xclaw 包名
-    from xclaw.security.xclaw_env_crypto import encrypt_to_b64
-
 # Windows portable Node (LTS) next to xClaw.exe: dist/xClaw/node/
 WIN_NODE_VERSION = "20.18.1"
 NODE_ZIP_NAME = f"node-v{WIN_NODE_VERSION}-win-x64.zip"
@@ -162,16 +157,12 @@ def _run_console_build() -> None:
 
 def _write_env_file(supos_ak: str) -> None:
     """Write encrypted SUPOS_AK into dist/xClaw/xclaw.env (SUPOS_AK_ENC)."""
+    from xclaw.security.bundled_env import write_bundled_env_file
+
     env_path = os.path.join(DIST_DIR, "xclaw.env")
-    v = (supos_ak or "").replace("\r", "").replace("\n", "").strip()
-    if not v:
-        return
-    enc = encrypt_to_b64(v)
-    with open(env_path, "w", encoding="utf-8") as f:
-        f.write(f"SUPOS_AK_ENC={enc}\n")
-    print(
-        f"==> Wrote xclaw.env -> {DIST_DIR} (SUPOS_AK_ENC length={len(enc)})",
-    )
+    write_bundled_env_file(env_path, supos_ak)
+    if (supos_ak or "").strip():
+        print(f"==> Wrote xclaw.env -> {DIST_DIR}")
 
 
 def _download_file(url: str, dest_path: str) -> None:

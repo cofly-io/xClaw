@@ -165,6 +165,7 @@ cd /d "%~dp0"
 
 REM Isolate packaged Python from user site-packages to prevent conflicts
 set "PYTHONNOUSERSITE=1"
+set "QWENPAW_DESKTOP_APP=1"
 
 REM Preserve system PATH for accessing system commands
 REM Prepend packaged env to PATH so packaged Python takes precedence
@@ -201,6 +202,7 @@ cd /d "%~dp0"
 
 REM Isolate packaged Python from user site-packages to prevent conflicts
 set "PYTHONNOUSERSITE=1"
+set "QWENPAW_DESKTOP_APP=1"
 
 REM Preserve system PATH for accessing system commands
 REM Prepend packaged env to PATH so packaged Python takes precedence

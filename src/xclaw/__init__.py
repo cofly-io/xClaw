@@ -10,6 +10,10 @@ LOG_LEVEL_ENV = "QWENPAW_LOG_LEVEL"
 
 _bootstrap_err: Exception | None = None
 try:
+    # Shipped xclaw.env (desktop exe / .app) before ~/.xClaw/envs.json.
+    from .security.bundled_env import load_bundled_env_into_environ
+
+    load_bundled_env_into_environ()
     # Load persisted env vars before importing modules that read env-backed
     # constants at import time (e.g., WORKING_DIR).
     from .envs import load_envs_into_environ

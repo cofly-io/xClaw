@@ -8,46 +8,9 @@ import threading
 import time
 
 try:
-    from xclaw.security.xclaw_env_crypto import decrypt_from_b64
+    from xclaw.security.bundled_env import load_bundled_env_into_environ
 except ModuleNotFoundError:
-    # Backward compatibility for environments still exposing the old package name.
-    from copaw.security.xclaw_env_crypto import decrypt_from_b64
-
-
-def _load_bundled_env() -> None:
-    """Load env vars from xclaw.env next to the exe (Windows)."""
-    if not getattr(sys, "frozen", False):
-        return
-
-    exe_dir = os.path.dirname(sys.executable)
-    env_path = os.path.join(exe_dir, "xclaw.env")
-    if not os.path.exists(env_path):
-        return
-
-    try:
-        with open(env_path, "r", encoding="utf-8-sig") as f:
-            for raw in f.read().splitlines():
-                line = raw.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                k, v = line.split("=", 1)
-                k = k.strip()
-                v = v.strip().strip('"').strip("'")
-                if k and v:
-                    os.environ.setdefault(k, v)
-    except OSError:
-        return
-
-    # Back-compat and safety: decrypt bundled SUPOS_AK_ENC into SUPOS_AK
-    # at runtime, so the env file does not contain plaintext.
-    if not os.environ.get("SUPOS_AK"):
-        enc = (os.environ.get("SUPOS_AK_ENC") or "").strip()
-        if enc:
-            try:
-                os.environ["SUPOS_AK"] = decrypt_from_b64(enc).strip()
-            except Exception:
-                # Leave SUPOS_AK unset; downstream will show a clear error.
-                pass
+    from copaw.security.bundled_env import load_bundled_env_into_environ
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +18,7 @@ def _load_bundled_env() -> None:
 # ---------------------------------------------------------------------------
 if getattr(sys, "frozen", False):
     BASE_DIR = sys._MEIPASS
-    _load_bundled_env()
+    load_bundled_env_into_environ()
     # New runtime env key; keep old key for compatibility with legacy builds.
     os.environ.setdefault(
         "QWENPAW_CONSOLE_STATIC_DIR", os.path.join(BASE_DIR, "xclaw", "console")

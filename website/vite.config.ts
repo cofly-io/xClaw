@@ -24,7 +24,6 @@ export default defineConfig(({ mode }) => {
               "remark-gfm",
               "rehype-highlight",
               "rehype-raw",
-              "highlight.js",
               "react-syntax-highlighter",
             ],
             mermaid: ["mermaid"],

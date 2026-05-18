@@ -42,14 +42,12 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
-      // CodeMirror throws if multiple @codemirror/state instances are loaded.
-      // Dedupe forces Vite to resolve them from a single location.
+      // @agentscope-ai/design pulls CodeMirror; dedupe avoids duplicate @codemirror/state.
       dedupe: [
         "@codemirror/state",
         "@codemirror/view",
         "@codemirror/language",
         "@codemirror/autocomplete",
-        "@uiw/react-codemirror",
       ],
     },
     server: {

@@ -56,8 +56,14 @@ jobs:
         run: rm -rf dist && mkdir -p dist
 
       - name: Build macOS .app (ARM64)
+        env:
+          SUPOS_AK: ${{ secrets.SUPOS_AK }}
+          ALLOW_MISSING_SUPOS_AK: ${{ secrets.SUPOS_AK == '' && '1' || '' }}
         run: |
           chmod +x scripts/pack/macos/build.sh scripts/pack/build_macos.sh
+          if [ -n "${SUPOS_AK}" ]; then
+            echo "SUPOS_AK=${SUPOS_AK}" > desktop/supos_ak.env
+          fi
           conda run -n xclaw-build bash -c 'CREATE_ZIP=1 ./scripts/pack/macos/build.sh'
 
       - name: Upload macOS artifact
