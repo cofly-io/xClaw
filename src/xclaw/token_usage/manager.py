@@ -52,6 +52,10 @@ class TokenUsageSummary(BaseModel):
     total_prompt_tokens: int = Field(0, ge=0)
     total_completion_tokens: int = Field(0, ge=0)
     total_calls: int = Field(0, ge=0)
+    by_model: dict[str, TokenUsageByModel] = Field(
+        default_factory=dict,
+        description="Per model (provider:model key) aggregation",
+    )
     by_date: dict[str, TokenUsageStats] = Field(
         default_factory=dict,
         description="Per date (YYYY-MM-DD) - all models combined",
@@ -186,7 +190,7 @@ class TokenUsageManager:
             provider_id: Optional provider ID filter.
 
         Returns:
-            TokenUsageSummary with totals, by_model, by_provider, by_date.
+            TokenUsageSummary with totals, by_model, and by_date.
         """
         if end_date is None:
             end_date = date.today()
@@ -206,6 +210,7 @@ class TokenUsageManager:
         total_prompt = 0
         total_completion = 0
         total_calls = 0
+        by_model_raw: dict[str, dict] = {}
         by_date_raw: dict[str, dict] = {}
 
         for r in records:
@@ -216,14 +221,14 @@ class TokenUsageManager:
             total_completion += ct
             total_calls += calls
 
-            model = r.model
-            prov = r.provider_id
-            composite = f"{prov}:{model}" if prov else model
+            model_key = (
+                f"{r.provider_id}:{r.model}" if r.provider_id else r.model
+            )
             bm = by_model_raw.setdefault(
-                composite,
+                model_key,
                 {
-                    "provider_id": prov,
-                    "model": model,
+                    "provider_id": r.provider_id,
+                    "model": r.model,
                     "prompt_tokens": 0,
                     "completion_tokens": 0,
                     "call_count": 0,
@@ -232,14 +237,6 @@ class TokenUsageManager:
             bm["prompt_tokens"] += pt
             bm["completion_tokens"] += ct
             bm["call_count"] += calls
-
-            bp = by_provider_raw.setdefault(
-                prov,
-                {"prompt_tokens": 0, "completion_tokens": 0, "call_count": 0},
-            )
-            bp["prompt_tokens"] += pt
-            bp["completion_tokens"] += ct
-            bp["call_count"] += calls
 
             bd = by_date_raw.setdefault(
                 r.date,
@@ -255,11 +252,7 @@ class TokenUsageManager:
             total_calls=total_calls,
             by_model={
                 k: TokenUsageByModel.model_validate(v)
-                for k, v in by_model_raw.items()
-            },
-            by_provider={
-                k: TokenUsageStats.model_validate(v)
-                for k, v in by_provider_raw.items()
+                for k, v in sorted(by_model_raw.items())
             },
             by_date={
                 k: TokenUsageStats.model_validate(v)

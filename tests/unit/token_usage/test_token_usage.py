@@ -257,6 +257,7 @@ class TestTokenUsageModels:
         assert summary.total_completion_tokens == 0
         assert summary.total_calls == 0
         assert summary.by_model == {}
+        assert summary.by_date == {}
 
     def test_summary_with_data(self):
         """Should accept populated data."""
@@ -268,13 +269,6 @@ class TestTokenUsageModels:
                 "openai:gpt-4": TokenUsageByModel(
                     provider_id="openai",
                     model="gpt-4",
-                    prompt_tokens=300,
-                    completion_tokens=150,
-                    call_count=6,
-                ),
-            },
-            by_provider={
-                "openai": TokenUsageStats(
                     prompt_tokens=500,
                     completion_tokens=250,
                     call_count=10,
@@ -290,6 +284,8 @@ class TestTokenUsageModels:
         )
         assert summary.total_prompt_tokens == 500
         assert len(summary.by_model) == 1
+        assert summary.by_model["openai:gpt-4"].model == "gpt-4"
+        assert len(summary.by_date) == 1
 
 
 # =============================================================================
@@ -303,11 +299,11 @@ class TestTokenUsageManagerCore:
     def test_get_instance_returns_singleton(self, tmp_path, monkeypatch):
         """Should return same instance on multiple calls."""
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.WORKING_DIR",
+            "xclaw.token_usage.manager.WORKING_DIR",
             tmp_path,
         )
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
             "test_token_usage.json",
         )
 
@@ -319,11 +315,11 @@ class TestTokenUsageManagerCore:
     async def test_start_and_stop(self, tmp_path, monkeypatch):
         """Should start and stop cleanly."""
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.WORKING_DIR",
+            "xclaw.token_usage.manager.WORKING_DIR",
             tmp_path,
         )
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
             "test_token_usage.json",
         )
 
@@ -335,11 +331,11 @@ class TestTokenUsageManagerCore:
     async def test_record_usage(self, tmp_path, monkeypatch):
         """Should record token usage."""
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.WORKING_DIR",
+            "xclaw.token_usage.manager.WORKING_DIR",
             tmp_path,
         )
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
             "test_token_usage.json",
         )
 
@@ -360,11 +356,11 @@ class TestTokenUsageManagerCore:
     async def test_get_summary_empty(self, tmp_path, monkeypatch):
         """Should return empty summary when no data."""
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.WORKING_DIR",
+            "xclaw.token_usage.manager.WORKING_DIR",
             tmp_path,
         )
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
             "test_token_usage.json",
         )
 
@@ -376,6 +372,47 @@ class TestTokenUsageManagerCore:
         assert summary.total_prompt_tokens == 0
         assert summary.total_completion_tokens == 0
         assert summary.total_calls == 0
+        assert summary.by_model == {}
+
+        await manager.stop()
+
+    @pytest.mark.asyncio
+    async def test_get_summary_by_model(self, tmp_path, monkeypatch):
+        """Should aggregate usage by model in summary."""
+        monkeypatch.setattr(
+            "xclaw.token_usage.manager.WORKING_DIR",
+            tmp_path,
+        )
+        monkeypatch.setattr(
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "test_token_usage.json",
+        )
+
+        manager = TokenUsageManager()
+        manager.start(flush_interval=10)
+
+        await manager.record(
+            provider_id="openai",
+            model_name="gpt-4",
+            prompt_tokens=100,
+            completion_tokens=50,
+        )
+        await manager.record(
+            provider_id="dashscope",
+            model_name="qwen-max",
+            prompt_tokens=200,
+            completion_tokens=80,
+        )
+        await asyncio.sleep(0.2)
+
+        summary = await manager.get_summary()
+
+        assert summary.total_prompt_tokens == 300
+        assert summary.total_completion_tokens == 130
+        assert summary.total_calls == 2
+        assert len(summary.by_model) == 2
+        assert summary.by_model["openai:gpt-4"].prompt_tokens == 100
+        assert summary.by_model["dashscope:qwen-max"].prompt_tokens == 200
 
         await manager.stop()
 
@@ -393,11 +430,11 @@ class TestTokenRecordingModelWrapper:
     def test_init_wraps_model(self, tmp_path, monkeypatch):
         """Should wrap a ChatModelBase instance."""
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.WORKING_DIR",
+            "xclaw.token_usage.manager.WORKING_DIR",
             tmp_path,
         )
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
             "test_token_usage.json",
         )
 
@@ -416,11 +453,11 @@ class TestTokenRecordingModelWrapper:
     def test_record_usage_with_valid_usage(self, tmp_path, monkeypatch):
         """Should record valid usage."""
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.WORKING_DIR",
+            "xclaw.token_usage.manager.WORKING_DIR",
             tmp_path,
         )
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
             "test_token_usage.json",
         )
 
@@ -441,11 +478,11 @@ class TestTokenRecordingModelWrapper:
     def test_pop_usage_for_session(self, monkeypatch):
         """Should pop usage for session."""
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.WORKING_DIR",
+            "xclaw.token_usage.manager.WORKING_DIR",
             "/tmp",
         )
         monkeypatch.setattr(
-            "qwenpaw.token_usage.manager.TOKEN_USAGE_FILE",
+            "xclaw.token_usage.manager.TOKEN_USAGE_FILE",
             "test_token_usage.json",
         )
 
