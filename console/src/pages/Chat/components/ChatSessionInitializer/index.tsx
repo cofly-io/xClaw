@@ -39,6 +39,10 @@ export interface ChatSessionInitializerProps {
  * library does not auto-pick sessions[0]. Navigating to `/chat/:id` does not
  * always trigger a fresh list fetch; we must sync via getSessionList +
  * setSessions before setCurrentSessionId can run.
+ *
+ * IMPORTANT: sessions array reference changes (e.g. from polling in pinned drawer)
+ * must NOT re-trigger setCurrentSessionId when the chatId hasn't changed, otherwise
+ * it causes an infinite loop of getSession calls bouncing between two chat IDs.
  */
 const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
   onLoadingChange,
@@ -67,6 +71,11 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
   const syncedChatIdRef = useRef<string | null>(null);
   /** URL chat id we already requested a direct getSession for (no-match path). */
   const directFetchChatIdRef = useRef<string | null>(null);
+
+  /** Track the last chatId for which we called setCurrentSessionId, so that
+   *  subsequent sessions array reference changes (from polling in pinned drawer)
+   *  don't re-trigger setCurrentSessionId and cause infinite getSession loops. */
+  const lastAppliedChatIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (!chatId) return;
@@ -98,12 +107,14 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     isFirstMountRef.current = true;
     syncedChatIdRef.current = null;
     directFetchChatIdRef.current = null;
+    lastAppliedChatIdRef.current = undefined;
   }, [chatId]);
 
   const switchToSession = (libraryId: string) => {
     onLoadingChange?.(true);
     pendingIdRef.current = libraryId;
     setPendingId(libraryId);
+    lastAppliedChatIdRef.current = chatId;
     setCurrentSessionId(libraryId);
   };
 
@@ -185,6 +196,11 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
       return;
     }
 
+    // Pinned-drawer polling refreshes `sessions` without changing chatId.
+    if (chatId === lastAppliedChatIdRef.current) {
+      return;
+    }
+
     const isCurrentSession = currentSessionIdRef.current === matching.id;
     const currentInLibrary = sessions.find(
       (s) => s.id === currentSessionIdRef.current,
@@ -201,6 +217,7 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
       !isFirstMountRef.current &&
       currentMatchesUrl
     ) {
+      lastAppliedChatIdRef.current = chatId;
       onLoadingChange?.(false);
       pendingIdRef.current = null;
       setPendingId(null);
@@ -214,6 +231,7 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
       historyLoaded
     ) {
       syncedChatIdRef.current = chatId;
+      lastAppliedChatIdRef.current = chatId;
       onLoadingChange?.(false);
       pendingIdRef.current = null;
       setPendingId(null);
