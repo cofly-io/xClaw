@@ -55,15 +55,20 @@ _PUBLIC_PATHS: frozenset[str] = frozenset(
         "/api/auth/register",
         "/api/version",
         "/api/settings/language",
-        "/api/plugins",
+        "/api/frontend_plugin",
     },
 )
 
 # Prefixes that do NOT require authentication (static assets)
+# /api/frontend_plugin/ is safe: only read-only GET handlers are registered
+# under that prefix (list + static file serving).  All write operations
+# remain under /api/plugins/ which requires authentication.
 _PUBLIC_PREFIXES: tuple[str, ...] = (
     "/assets/",
     "/logo.png",
     "/xclaw-symbol.svg",
+    "/qwenpaw-symbol.svg",
+    "/api/frontend_plugin/",
 )
 
 
