@@ -6,43 +6,34 @@ interface ProviderCardProps {
   provider: ProviderInfo;
   activeModels: ActiveModelsInfo | null;
   onSaved: () => void;
-  isHover: boolean;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
+  onOpenConfig: (provider: ProviderInfo) => void;
+  onOpenModels: (provider: ProviderInfo) => void;
 }
+
+const LOCAL_PROVIDER_IDS = new Set([
+  "xclaw-local",
+  "qwenpaw-local",
+  "copaw-local",
+]);
 
 export function ProviderCard({
   provider,
-  activeModels,
   onSaved,
-  isHover,
-  onMouseEnter,
-  onMouseLeave,
+  onOpenConfig,
+  onOpenModels,
 }: ProviderCardProps) {
-  if (
-    provider.id === "xclaw-local" ||
-    provider.id === "qwenpaw-local" ||
-    provider.id === "copaw-local"
-  ) {
+  if (LOCAL_PROVIDER_IDS.has(provider.id)) {
     return (
-      <LocalProviderCard
-        provider={provider}
-        onSaved={onSaved}
-        isHover={isHover}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      />
+      <LocalProviderCard provider={provider} onOpenModels={onOpenModels} />
     );
   }
 
   return (
     <RemoteProviderCard
       provider={provider}
-      activeModels={activeModels}
       onSaved={onSaved}
-      isHover={isHover}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onOpenConfig={onOpenConfig}
+      onOpenModels={onOpenModels}
     />
   );
 }

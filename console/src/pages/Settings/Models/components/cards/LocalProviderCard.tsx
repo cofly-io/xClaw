@@ -1,25 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, Button } from "@agentscope-ai/design";
 import type { ProviderInfo } from "../../../../../api/types";
-import { ModelManageModal } from "../modals/ModelManageModal";
 import { useTranslation } from "react-i18next";
 import styles from "../../index.module.less";
 import { ProviderIcon } from "../ProviderIconComponent";
 
 interface LocalProviderCardProps {
   provider: ProviderInfo;
-  onSaved: () => void;
-  isHover?: boolean;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
+  onOpenModels: (provider: ProviderInfo) => void;
 }
 
 export const LocalProviderCard = React.memo(function LocalProviderCard({
   provider,
-  onSaved,
+  onOpenModels,
 }: LocalProviderCardProps) {
   const { t } = useTranslation();
-  const [modelManageOpen, setModelManageOpen] = useState(false);
 
   const totalCount = provider.models.length + provider.extra_models.length;
   const statusReady = totalCount > 0;
@@ -29,7 +24,6 @@ export const LocalProviderCard = React.memo(function LocalProviderCard({
 
   return (
     <Card hoverable className={styles.providerCard}>
-      {/* Card Header with Icon and Status */}
       <div className={styles.cardHeaderRow}>
         <ProviderIcon providerId={provider.id} size={32} />
         <div className={styles.cardStatusHeader}>
@@ -52,13 +46,11 @@ export const LocalProviderCard = React.memo(function LocalProviderCard({
         </div>
       </div>
 
-      {/* Title Row */}
       <div className={styles.cardTitleRow}>
         <span className={styles.cardName}>{provider.name}</span>
         <span className={styles.localTag}>{t("models.local")}</span>
       </div>
 
-      {/* Info Section */}
       <div className={styles.cardInfo}>
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>{t("models.localType")}:</span>
@@ -80,20 +72,13 @@ export const LocalProviderCard = React.memo(function LocalProviderCard({
           size="small"
           onClick={(e) => {
             e.stopPropagation();
-            setModelManageOpen(true);
+            onOpenModels(provider);
           }}
           className={styles.actionBtn}
         >
           {t("models.models")}
         </Button>
       </div>
-
-      <ModelManageModal
-        provider={provider}
-        open={modelManageOpen}
-        onClose={() => setModelManageOpen(false)}
-        onSaved={onSaved}
-      />
     </Card>
   );
 });

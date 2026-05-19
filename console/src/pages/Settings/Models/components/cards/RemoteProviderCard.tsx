@@ -1,32 +1,28 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, Button, Modal } from "@agentscope-ai/design";
-import type { ProviderInfo, ActiveModelsInfo } from "../../../../../api/types";
-import { ProviderConfigModal } from "../modals/ProviderConfigModal";
-import { ModelManageModal } from "../modals/ModelManageModal";
+import type { ProviderInfo } from "../../../../../api/types";
 import api from "../../../../../api";
 import { useTranslation } from "react-i18next";
 import { useAppMessage } from "../../../../../hooks/useAppMessage";
+import { getIsConfigured } from "../../utils";
 import styles from "../../index.module.less";
 import { ProviderIcon } from "../ProviderIconComponent";
 
 interface RemoteProviderCardProps {
   provider: ProviderInfo;
-  activeModels: ActiveModelsInfo | null;
   onSaved: () => void;
-  isHover?: boolean;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
+  onOpenConfig: (provider: ProviderInfo) => void;
+  onOpenModels: (provider: ProviderInfo) => void;
 }
 
 export const RemoteProviderCard = React.memo(function RemoteProviderCard({
   provider,
-  activeModels,
   onSaved,
+  onOpenConfig,
+  onOpenModels,
 }: RemoteProviderCardProps) {
   const { t } = useTranslation();
   const { message } = useAppMessage();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modelManageOpen, setModelManageOpen] = useState(false);
 
   const handleDeleteProvider = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -53,23 +49,7 @@ export const RemoteProviderCard = React.memo(function RemoteProviderCard({
   };
 
   const totalCount = provider.models.length + provider.extra_models.length;
-
-  let isConfigured = false;
-
-  if (
-    provider.id === "xclaw-local" ||
-    provider.id === "qwenpaw-local" ||
-    provider.id === "copaw-local"
-  ) {
-    isConfigured = true;
-  } else if (provider.is_custom && provider.base_url) {
-    isConfigured = true;
-  } else if (provider.require_api_key === false) {
-    isConfigured = true;
-  } else if (provider.require_api_key && provider.api_key) {
-    isConfigured = true;
-  }
-
+  const isConfigured = getIsConfigured(provider);
   const hasModels = totalCount > 0;
   const isAvailable = isConfigured && hasModels;
 
@@ -102,7 +82,6 @@ export const RemoteProviderCard = React.memo(function RemoteProviderCard({
 
   return (
     <Card hoverable className={styles.providerCard}>
-      {/* Card Header with Icon and Status */}
       <div className={styles.cardHeaderRow}>
         <ProviderIcon providerId={provider.id} size={32} />
         <div className={styles.cardStatusHeader}>
@@ -127,13 +106,11 @@ export const RemoteProviderCard = React.memo(function RemoteProviderCard({
         </div>
       </div>
 
-      {/* Title Row */}
       <div className={styles.cardTitleRow}>
         <span className={styles.cardName}>{provider.name}</span>
         {providerTag}
       </div>
 
-      {/* Info Section */}
       <div className={styles.cardInfo}>
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>Base URL:</span>
@@ -169,7 +146,7 @@ export const RemoteProviderCard = React.memo(function RemoteProviderCard({
           size="small"
           onClick={(e) => {
             e.stopPropagation();
-            setModelManageOpen(true);
+            onOpenModels(provider);
           }}
           className={styles.actionBtn}
         >
@@ -180,7 +157,7 @@ export const RemoteProviderCard = React.memo(function RemoteProviderCard({
           size="small"
           onClick={(e) => {
             e.stopPropagation();
-            setModalOpen(true);
+            onOpenConfig(provider);
           }}
           className={styles.actionBtn}
         >
@@ -198,20 +175,6 @@ export const RemoteProviderCard = React.memo(function RemoteProviderCard({
           </Button>
         )}
       </div>
-
-      <ProviderConfigModal
-        provider={provider}
-        activeModels={activeModels}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSaved={onSaved}
-      />
-      <ModelManageModal
-        provider={provider}
-        open={modelManageOpen}
-        onClose={() => setModelManageOpen(false)}
-        onSaved={onSaved}
-      />
     </Card>
   );
 });

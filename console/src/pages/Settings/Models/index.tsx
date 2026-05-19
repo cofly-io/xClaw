@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { Button, Input } from "@agentscope-ai/design";
 import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import { useProviders } from "./useProviders";
@@ -7,26 +7,39 @@ import {
   ProviderCard,
   CustomProviderModal,
   ModelsSection,
+  ProviderConfigModal,
+  ModelManageModal,
 } from "./components";
 import { PageHeader } from "@/components/PageHeader";
 import { useTranslation } from "react-i18next";
 import type { ProviderInfo } from "../../../api/types/provider";
+import { getIsConfigured } from "./utils";
 import styles from "./index.module.less";
-
-/* ------------------------------------------------------------------ */
-/* Main Page                                                           */
-/* ------------------------------------------------------------------ */
 
 function ModelsPage() {
   const { t } = useTranslation();
   const { providers, activeModels, loading, error, fetchAll } = useProviders();
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [addProviderOpen, setAddProviderOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [configModalProvider, setConfigModalProvider] =
+    useState<ProviderInfo | null>(null);
+  const [modelsModalProvider, setModelsModalProvider] =
+    useState<ProviderInfo | null>(null);
 
   const refreshProvidersSilently = useCallback(() => {
     void fetchAll(false);
   }, [fetchAll]);
+
+  const handleOpenConfig = useCallback((provider: ProviderInfo) => {
+    setConfigModalProvider(provider);
+  }, []);
+
+  const handleOpenModels = useCallback((provider: ProviderInfo) => {
+    setModelsModalProvider(provider);
+  }, []);
+
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const { regularProviders, localProviders } = useMemo(() => {
     const regular: ProviderInfo[] = [];
@@ -35,18 +48,9 @@ function ModelsPage() {
       if (p.is_local) local.push(p);
       else regular.push(p);
     }
-    const sortPriority = (provider: ProviderInfo): number => {
-      let isConfigured = false;
-      if (provider.id === "qwenpaw-local") {
-        isConfigured = true;
-      } else if (provider.is_custom && provider.base_url) {
-        isConfigured = true;
-      } else if (provider.require_api_key === false) {
-        isConfigured = true;
-      } else if (provider.require_api_key && provider.api_key) {
-        isConfigured = true;
-      }
 
+    const sortPriority = (provider: ProviderInfo): number => {
+      const isConfigured = getIsConfigured(provider);
       const hasModels =
         provider.models.length + provider.extra_models.length > 0;
       const isAvailable = isConfigured && hasModels;
@@ -60,8 +64,7 @@ function ModelsPage() {
 
     regular.sort((a, b) => sortPriority(a) - sortPriority(b));
 
-    // Fuzzy search filter: match provider name (case-insensitive)
-    const query = searchQuery.trim().toLowerCase();
+    const query = deferredSearchQuery.trim().toLowerCase();
     if (!query) {
       return { regularProviders: regular, localProviders: local };
     }
@@ -71,15 +74,7 @@ function ModelsPage() {
       ),
       localProviders: local.filter((p) => p.name.toLowerCase().includes(query)),
     };
-  }, [providers, searchQuery]);
-
-  const handleMouseEnter = (providerId: string) => {
-    setHoveredCard(providerId);
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredCard(null);
-  };
+  }, [providers, deferredSearchQuery]);
 
   const renderProviderCards = (list: ProviderInfo[]) =>
     list.map((provider) => (
@@ -88,9 +83,8 @@ function ModelsPage() {
         provider={provider}
         activeModels={activeModels}
         onSaved={refreshProvidersSilently}
-        isHover={hoveredCard === provider.id}
-        onMouseEnter={() => handleMouseEnter(provider.id)}
-        onMouseLeave={handleMouseLeave}
+        onOpenConfig={handleOpenConfig}
+        onOpenModels={handleOpenModels}
       />
     ));
 
@@ -102,19 +96,16 @@ function ModelsPage() {
         <LoadingState message={error} error onRetry={fetchAll} />
       ) : (
         <>
-          {/* ---- LLM Section (top) ---- */}
           <PageHeader
             parent={t("nav.settings")}
             current={t("models.llmTitle")}
           />
-          {/* ---- Scrollable Content ---- */}
           <div className={styles.content}>
             <ModelsSection
               providers={providers}
               activeModels={activeModels}
               onSaved={fetchAll}
             />
-            {/* ---- Providers Section ---- */}
             <div className={styles.providersBlock}>
               <div className={styles.sectionHeaderRow}>
                 <PageHeader
@@ -122,7 +113,6 @@ function ModelsPage() {
                   className={styles.providersPageHeader}
                 />
                 <div className={styles.headerRight}>
-                  {/* ---- Search ---- */}
                   <div className={styles.searchRow}>
                     <Input
                       placeholder={t("models.searchPlaceholder")}
@@ -152,9 +142,6 @@ function ModelsPage() {
 
               {localProviders.length > 0 && (
                 <div className={styles.providerGroup}>
-                  {/* <h4 className={styles.providerGroupTitle}>
-                  {t("models.localEmbedded")}
-                </h4> */}
                   <div className={styles.providerCards}>
                     {renderProviderCards(localProviders)}
                   </div>
@@ -175,6 +162,24 @@ function ModelsPage() {
               onClose={() => setAddProviderOpen(false)}
               onSaved={fetchAll}
             />
+
+            {configModalProvider && (
+              <ProviderConfigModal
+                provider={configModalProvider}
+                activeModels={activeModels}
+                open={!!configModalProvider}
+                onClose={() => setConfigModalProvider(null)}
+                onSaved={refreshProvidersSilently}
+              />
+            )}
+            {modelsModalProvider && (
+              <ModelManageModal
+                provider={modelsModalProvider}
+                open={!!modelsModalProvider}
+                onClose={() => setModelsModalProvider(null)}
+                onSaved={refreshProvidersSilently}
+              />
+            )}
           </div>
         </>
       )}
