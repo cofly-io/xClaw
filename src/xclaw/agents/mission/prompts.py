@@ -360,13 +360,24 @@ make, cargo, etc.) yourself.  NEVER create/edit source files yourself.
 ALL implementation work is done by workers.**
 
 For each story in the current batch, compose a worker prompt and
-dispatch it using the `submit_to_agent` tool.
+dispatch it using `xclaw agents chat --background`.
 
-# Step B: dispatch via xclaw agents chat
+**Example dispatch pattern:**
+- Build a prompt string containing loop_dir, story details, and Worker
+  Instructions
+- Estimate complexity and set `--task-timeout` accordingly:
+  - Simple tasks (single file edit, config change): 120–300s
+  - Medium tasks (new feature, multi-file changes): 300–600s
+  - Complex tasks (full-stack feature, large refactors): 600–1200s
+- Dispatch via CLI:
+
+```bash
 xclaw agents chat --background \\
   --from-agent {agent_id} --to-agent {agent_id} \\
+  --task-timeout 600 \\
   --text "$(cat {loop_dir}/worker_prompt_US-001.txt)"
 ```
+- Save the returned task_id for monitoring
 
 Repeat for **all** stories in the current batch (same priority).
 Save **all** returned task_ids for monitoring.

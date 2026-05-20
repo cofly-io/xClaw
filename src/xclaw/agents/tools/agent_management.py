@@ -220,13 +220,17 @@ def submit_agent_chat_task(
     request_payload: Dict[str, Any],
     to_agent: str,
     timeout: float,
+    task_timeout: Optional[float] = None,
 ) -> Dict[str, Any]:
     to_id = _normalize_agent_id(to_agent)
     headers = {"X-Agent-Id": to_id}
+    payload = dict(request_payload)
+    if task_timeout is not None:
+        payload["timeout"] = task_timeout
     with create_agent_api_client(base_url, timeout) as client:
         response = client.post(
             "/agent/process/task",
-            json=request_payload,
+            json=payload,
             headers=headers,
         )
         response.raise_for_status()
@@ -291,6 +295,7 @@ async def chat_with_agent(
     task_id: Optional[str] = None,
     session_id: Optional[str] = None,
     timeout: float = 300.0,
+    task_timeout: Optional[float] = None,
 ) -> ToolResponse:
     base = resolve_agent_api_base_url()
 
@@ -327,6 +332,7 @@ async def chat_with_agent(
             payload,
             to_agent,
             timeout,
+            task_timeout,
         )
         tid = submitted.get("task_id", "")
         msg = (
