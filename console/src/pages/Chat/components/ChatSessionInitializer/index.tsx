@@ -196,6 +196,16 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
       return;
     }
 
+    // Issue #4557: skip while a user-initiated session switch is in progress.
+    if (sessionApi.isSessionSwitching) return;
+
+    // onSessionSelected already navigated to this chatId — skip redundant sync.
+    if (sessionApi.lastNavigatedChatId === chatId) {
+      lastAppliedChatIdRef.current = chatId;
+      sessionApi.lastNavigatedChatId = null;
+      return;
+    }
+
     // Pinned-drawer polling refreshes `sessions` without changing chatId.
     if (chatId === lastAppliedChatIdRef.current) {
       return;
