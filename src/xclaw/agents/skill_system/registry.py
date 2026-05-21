@@ -53,7 +53,7 @@ _ACTIVE_SKILL_ENV_ENTRIES: dict[str, dict[str, Any]] = {}
 _ENV_LOCK = threading.Lock()
 
 _builtin_cache: dict[str, Any] = {}
-_BUILTIN_CACHE_LOCK = threading.Lock()
+_BUILTIN_CACHE_LOCK = threading.RLock()
 _SKILL_POOL_INIT_LOCK = threading.Lock()
 _SKILL_POOL_INITIALIZED = False
 

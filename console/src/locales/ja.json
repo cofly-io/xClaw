@@ -1513,10 +1513,17 @@
   },
   "chat": {
     "modelSelectTooltip": "モデルを選択",
+    "newChat": "新しいセッション",
     "newChatTooltip": "新しいチャット",
     "searchTooltip": "すべてのチャットを検索",
     "chatHistoryTooltip": "チャット履歴",
     "allChats": "すべてのチャット",
+    "pinnedGroup": "ピン留め",
+    "group": {
+      "today": "今日",
+      "yesterday": "昨日",
+      "prev3Days": "過去3日間"
+    },
     "createNewChat": "新しいチャットを作成",
     "pinDrawer": "固定",
     "unpinDrawer": "固定解除",
@@ -1527,6 +1534,7 @@
     "description": "私はあなたの質問をサポートするAIアシスタントです。",
     "prompt1": "新しい旅を始めましょう！",
     "prompt2": "あなたのスキルを教えてください。",
+    "prompt3": "supOS プラットフォームについて教えてもらえますか？",
     "inputPlaceholder": "\"↑↓\"でメッセージ移動 · \"/\"でクイックコマンド（承認時は\"/approve\"または\"/deny\"）",
     "commands": {
       "clear": {

@@ -50,6 +50,16 @@ export default defineConfig(({ mode }) => {
         "@codemirror/autocomplete",
       ],
     },
+    optimizeDeps: {
+      include: [
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react-router-dom",
+        "react/jsx-dev-runtime",
+        "react/jsx-runtime",
+      ],
+    },
     server: {
       host: "0.0.0.0",
       port: 5173,

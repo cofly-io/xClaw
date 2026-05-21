@@ -26,7 +26,10 @@ from ..security.tool_guard.execution_level import ToolExecutionLevel
 from ..security.tool_guard.i18n import _TOOL_GUARD_I18N
 from ..security.tool_guard.models import (
     TOOL_GUARD_DENIED_MARK,
+    GuardFinding,
     GuardSeverity,
+    GuardThreatCategory,
+    ToolGuardResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -132,6 +135,129 @@ class ToolGuardMixin:
             level_str = getattr(agent_config, "approval_level", "AUTO")
 
         return ToolExecutionLevel.from_config(level_str)
+
+    def _tool_result_exists_in_memory(self, tool_use_id: str) -> bool:
+        """``True`` when a non-denied tool_result for *tool_use_id* exists."""
+        for msg, marks in self.memory.content:
+            if msg.role != "system" or TOOL_GUARD_DENIED_MARK in marks:
+                continue
+            for block in msg.get_content_blocks("tool_result"):
+                if block.get("id") == tool_use_id:
+                    return True
+        return False
+
+    async def _get_pending_info_for_display(self) -> dict[str, Any]:
+        """Return pending tool info aligned with approval queue head."""
+        fallback = getattr(self, "_tool_guard_pending_info", None) or {}
+        session_id = str(self._request_context.get("session_id") or "")
+        if not session_id:
+            return fallback
+
+        try:
+            pending = (
+                await self._tool_guard_approval_service.get_pending_by_session(
+                    session_id,
+                )
+            )
+        except Exception:
+            logger.warning(
+                "Tool guard: failed to read pending queue head",
+                exc_info=True,
+            )
+            return fallback
+
+        if pending is None:
+            return fallback
+
+        tool_input: dict[str, Any] = {}
+        extra = pending.extra if isinstance(pending.extra, dict) else {}
+        tool_call = extra.get("tool_call") if isinstance(extra, dict) else {}
+        if isinstance(tool_call, dict) and isinstance(
+            tool_call.get("input"),
+            dict,
+        ):
+            tool_input = tool_call["input"]
+
+        return {
+            "tool_name": pending.tool_name
+            or fallback.get("tool_name", "unknown"),
+            "tool_input": tool_input or fallback.get("tool_input", {}),
+            "guardians": fallback.get("guardians", []),
+            "guard_result": fallback.get("guard_result"),
+        }
+
+    async def _cleanup_tool_guard_denied_messages(
+        self,
+        include_denial_response: bool = True,
+    ) -> None:
+        """Remove tool-guard denied messages from memory."""
+        ids_to_delete: list[str] = []
+        last_marked_idx = -1
+
+        for i, (msg, marks) in enumerate(self.memory.content):
+            if TOOL_GUARD_DENIED_MARK in marks:
+                ids_to_delete.append(msg.id)
+                last_marked_idx = i
+
+        if (
+            include_denial_response
+            and last_marked_idx >= 0
+            and last_marked_idx + 1 < len(self.memory.content)
+        ):
+            next_msg, _ = self.memory.content[last_marked_idx + 1]
+            if next_msg.role == "assistant":
+                ids_to_delete.append(next_msg.id)
+
+        if ids_to_delete:
+            removed = await self.memory.delete(ids_to_delete)
+            logger.info(
+                "Tool guard: cleaned up %d denied message(s)",
+                removed,
+            )
+
+    async def _consume_preapproval(
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+    ) -> bool:
+        """Consume one matching approval token if present."""
+        session_id = str(self._request_context.get("session_id") or "")
+        if not session_id:
+            return False
+
+        consumed = await self._tool_guard_approval_service.consume_approval(
+            session_id,
+            tool_name,
+            tool_params=tool_input,
+        )
+        if consumed:
+            logger.info(
+                "Tool guard: pre-approved '%s' (session %s), skipping",
+                tool_name,
+                session_id[:8],
+            )
+        return bool(consumed)
+
+    async def _run_approved_tool_call(
+        self,
+        tool_call: dict[str, Any],
+        tool_name: str,
+        tool_input: dict[str, Any],
+    ) -> dict | None:
+        """Execute approved call and persist replay state."""
+        result = await super()._acting(tool_call)  # type: ignore[misc]
+        if getattr(self, "_tool_guard_forced_replay_active", False):
+            self._tool_guard_forced_replay_active = False
+            self._tool_guard_replay_done = {
+                "tool_name": tool_name,
+                "tool_input": tool_input,
+                "remaining_queue": getattr(
+                    self,
+                    "_tool_guard_replay_queue",
+                    [],
+                ),
+            }
+        return result
 
     # ------------------------------------------------------------------
     # _acting override
@@ -377,6 +503,12 @@ class ToolGuardMixin:
                 tool_call,
                 action.tool_name,
                 action.guard_result,
+            )
+        if action.kind == "preapproved":
+            return await self._run_approved_tool_call(
+                tool_call,
+                action.tool_name,
+                action.tool_input,
             )
         if action.kind == "needs_approval":
             return await self._acting_with_approval(

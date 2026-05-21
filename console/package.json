@@ -6,6 +6,7 @@
   "scripts": {
     "postinstall": "node scripts/apply-vendor-patches.mjs",
     "dev": "vite --host",
+    "dev:bench": "node scripts/measure-dev-cold-start.mjs",
     "build": "tsc -b && vite build",
     "build:prod": "tsc -b && vite build --mode production",
     "build:test": "tsc -b && vite build --mode test",

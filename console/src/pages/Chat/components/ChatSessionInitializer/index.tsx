@@ -266,7 +266,10 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
     if (!pendingId) return;
     if (currentSessionId !== pendingId) return;
 
+    let cancelled = false;
+
     const finish = () => {
+      if (cancelled) return;
       if (loadingGuardRef.current !== null) {
         window.clearTimeout(loadingGuardRef.current);
         loadingGuardRef.current = null;
@@ -276,18 +279,35 @@ const ChatSessionInitializer: React.FC<ChatSessionInitializerProps> = ({
       setPendingId(null);
     };
 
-    const session = sessionsRef.current.find((s) => s.id === currentSessionId);
-    const hasMessages = (session?.messages?.length ?? 0) > 0;
-    const historyLoaded =
-      hasMessages || sessionApi.getLoadedMessageCount(chatId ?? "") > 0;
+    void (async () => {
+      try {
+        await sessionApi.waitForSessionFetch(currentSessionId);
+      } catch (err) {
+        console.error(
+          "[xclaw][ChatSessionInitializer] waitForSessionFetch failed:",
+          err,
+        );
+      }
+      if (cancelled) return;
 
-    if (historyLoaded) {
-      const t = window.requestAnimationFrame(finish);
-      return () => window.cancelAnimationFrame(t);
-    }
+      const session = sessionsRef.current.find(
+        (s) => s.id === currentSessionId,
+      );
+      const hasMessages = (session?.messages?.length ?? 0) > 0;
 
-    const t = window.setTimeout(finish, 1000);
-    return () => window.clearTimeout(t);
+      if (hasMessages) {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(finish);
+        });
+        return;
+      }
+
+      window.setTimeout(finish, 1000);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionId, pendingId, onLoadingChange, chatId]);
 

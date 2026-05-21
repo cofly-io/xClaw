@@ -1716,10 +1716,17 @@
   },
   "chat": {
     "modelSelectTooltip": "Selecionar Modelo",
+    "newChat": "Nova sessão",
     "newChatTooltip": "Novo Chat",
     "searchTooltip": "Pesquisar Todos chats",
     "chatHistoryTooltip": "Chat history",
     "allChats": "Todos Chats",
+    "pinnedGroup": "Fixados",
+    "group": {
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "prev3Days": "Últimos 3 dias"
+    },
     "createNewChat": "Criar Novo Chat",
     "pinDrawer": "Fixar",
     "unpinDrawer": "Desafixar",
@@ -1730,6 +1737,7 @@
     "description": "I am a helpful assistant that can help you with your questions.",
     "prompt1": "Let's start a new journey!",
     "prompt2": "Can you tell me what skills you have?",
+    "prompt3": "Can you tell me about the supOS platform?",
     "inputPlaceholder": "\"↑↓\" for message navigation · \"/\" for quick commands (\"/approve\" or \"/deny\" during approvals)",
     "commands": {
       "clear": {

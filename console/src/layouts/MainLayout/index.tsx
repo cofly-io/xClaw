@@ -11,6 +11,7 @@ import {
   Hammer,
   ListTodo,
   Play,
+  Plug,
   Radio,
   Save,
   Sparkles,
@@ -40,6 +41,7 @@ import AgentsPage from "../../pages/Settings/Agents";
 import VoiceTranscriptionPage from "../../pages/Settings/VoiceTranscription";
 import BackupsPage from "../../pages/Settings/Backups";
 import PluginManagerPage from "../../pages/Settings/PluginManager";
+import SkillPoolPage from "../../pages/Settings/SkillPool";
 import { KEY_TO_LABEL } from "../constants";
 
 const { Content } = Layout;
@@ -49,6 +51,7 @@ const ALL_MORE_MENU_KEYS = [
   "heartbeat",
   "workspace",
   "skills",
+  "skill-pool",
   "tools",
   "mcp",
   "acp",
@@ -70,6 +73,7 @@ const MORE_MENU_KEYS = [
   "workspace",
   "skills",
   "tools",
+  "mcp",
   "agent-config",
   "agents",
   "models",
@@ -92,6 +96,7 @@ const MORE_MENU_ICON_MAP: Record<VisibleMoreMenuKey, LucideIcon> = {
   workspace: FolderOpen,
   skills: Sparkles,
   tools: Hammer,
+  mcp: Plug,
   "agent-config": Play,
   agents: Bot,
   models: Cpu,
@@ -126,6 +131,8 @@ export default function MainLayout() {
         return <WorkspacePage />;
       case "skills":
         return <SkillsHubPage />;
+      case "skill-pool":
+        return <SkillPoolPage />;
       case "tools":
         return <ToolsPage />;
       case "mcp":

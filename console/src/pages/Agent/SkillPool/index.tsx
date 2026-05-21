@@ -123,27 +123,32 @@ function SkillPoolPage() {
   // Use ref to cache data and avoid unnecessary reloads
   const dataLoadedRef = useRef(false);
 
-  const loadData = useCallback(async (forceReload = false) => {
-    // Skip if already loaded and not forcing reload
-    if (dataLoadedRef.current && !forceReload) return;
+  const loadData = useCallback(
+    async (forceReload = false) => {
+      if (dataLoadedRef.current && !forceReload) {
+        setLoading(false);
+        return;
+      }
 
-    setLoading(true);
-    try {
-      const [poolSkills, workspaceSummaries] = await Promise.all([
-        api.listSkillPoolSkills(),
-        api.listSkillWorkspaces(),
-      ]);
-      setSkills(poolSkills);
-      setWorkspaces(workspaceSummaries);
-      dataLoadedRef.current = true;
-    } catch (error) {
-      message.error(
-        error instanceof Error ? error.message : "Failed to load skill pool",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      setLoading(true);
+      try {
+        const [poolSkills, workspaceSummaries] = await Promise.all([
+          api.listSkillPoolSkills(),
+          api.listSkillWorkspaces(),
+        ]);
+        setSkills(poolSkills);
+        setWorkspaces(workspaceSummaries);
+        dataLoadedRef.current = true;
+      } catch (error) {
+        message.error(
+          error instanceof Error ? error.message : "Failed to load skill pool",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [message],
+  );
 
   const handleRefresh = useCallback(async () => {
     setLoading(true);
@@ -163,11 +168,45 @@ function SkillPoolPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [message]);
 
+  // Load data on mount - use empty deps to ensure it runs once per mount
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    let cancelled = false;
+
+    const init = async () => {
+      dataLoadedRef.current = false;
+      invalidateSkillCache({ pool: true, workspaces: true });
+      setLoading(true);
+      try {
+        const [poolSkills, workspaceSummaries] = await Promise.all([
+          api.listSkillPoolSkills(),
+          api.listSkillWorkspaces(),
+        ]);
+        if (cancelled) return;
+        setSkills(poolSkills);
+        setWorkspaces(workspaceSummaries);
+        dataLoadedRef.current = true;
+      } catch (error) {
+        if (!cancelled) {
+          message.error(
+            error instanceof Error
+              ? error.message
+              : "Failed to load skill pool",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void init();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const closeModal = () => {
     setMode(null);

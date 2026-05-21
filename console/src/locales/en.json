@@ -1840,10 +1840,17 @@
   },
   "chat": {
     "modelSelectTooltip": "Select model",
+    "newChat": "New session",
     "newChatTooltip": "New chat",
     "searchTooltip": "Search all chats",
     "chatHistoryTooltip": "Chat history",
     "allChats": "All Chats",
+    "pinnedGroup": "Pinned",
+    "group": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "prev3Days": "Previous 3 days"
+    },
     "createNewChat": "Create New Chat",
     "pinDrawer": "Pin",
     "unpinDrawer": "Unpin",
@@ -1854,6 +1861,7 @@
     "description": "I am a helpful assistant that can help you with your questions.",
     "prompt1": "Let's start a new journey!",
     "prompt2": "Can you tell me what skills you have?",
+    "prompt3": "Can you tell me about the supOS platform?",
     "inputPlaceholder": "\"↑↓\" for message navigation · \"/\" for quick commands (\"/approve\" or \"/deny\" during approvals)",
     "commands": {
       "clear": {

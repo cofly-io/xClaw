@@ -10,6 +10,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { pluginSystem } from "./hostExternals";
+import { ensureHostModulesRegistered } from "./dynamicModuleRegistry";
 import { loadAllPlugins } from "./usePluginLoader";
 import type { PluginRouteDeclaration } from "./hostExternals";
 
@@ -61,11 +62,19 @@ export function PluginProvider({ children }: { children: React.ReactNode }) {
       setPluginRoutes(pluginSystem.getRoutes());
     });
 
-    // Load all installed plugins (non-fatal: one bad plugin won’t block others)
-    loadAllPlugins().then(({ failed }) => {
-      if (failed.length > 0) setError(failed.join("; "));
-      setLoading(false);
-    });
+    // Only load plugins, skip host modules pre-loading
+    // Host modules will be loaded on-demand by Vite
+    loadAllPlugins()
+      .then(({ failed }) => {
+        if (failed.length > 0) setError(failed.join("; "));
+      })
+      .catch((err) => {
+        console.error("[PluginProvider] init failed:", err);
+        setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     return unsub;
   }, []);

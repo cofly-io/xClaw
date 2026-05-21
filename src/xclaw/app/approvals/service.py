@@ -71,6 +71,7 @@ class ApprovalService:
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
         self._pending: dict[str, PendingApproval] = {}
+        self._completed: dict[str, PendingApproval] = {}
         self._channel_manager: Any | None = None
 
     def set_channel_manager(self, channel_manager: Any) -> None:
@@ -122,6 +123,7 @@ class ApprovalService:
         async with self._lock:
             self._pending[request_id] = pending
             self._gc_pending_locked()
+            self._gc_completed_locked()
 
         logger.info(
             "Approval pending created: request_id=%s agent_id=%s tool=%s "
@@ -145,14 +147,12 @@ class ApprovalService:
         async with self._lock:
             pending = self._pending.pop(request_id, None)
             if pending is None:
-                logger.warning(
-                    "Approval request %s not found (already resolved?)",
-                    request_id[:8],
-                )
-                return None
+                return self._completed.get(request_id)
 
             pending.status = decision.value
             pending.resolved_at = time.time()
+            self._completed[request_id] = pending
+            self._gc_completed_locked()
 
         # Set Future result outside lock
         if not pending.future.done():
@@ -168,9 +168,11 @@ class ApprovalService:
         return pending
 
     async def get_request(self, request_id: str) -> PendingApproval | None:
-        """Get a pending request by id."""
+        """Get a request by id whether pending or already resolved."""
         async with self._lock:
-            return self._pending.get(request_id)
+            return self._pending.get(request_id) or self._completed.get(
+                request_id,
+            )
 
     async def get_pending_by_session(
         self,
@@ -332,6 +334,7 @@ class ApprovalService:
                     pending.future.set_result(ApprovalDecision.TIMEOUT)
                 pending.status = "superseded"
                 pending.resolved_at = now
+                self._completed[k] = pending
                 cancelled += 1
         if cancelled:
             logger.info(
@@ -385,6 +388,46 @@ class ApprovalService:
             )
         return cancelled
 
+    async def consume_approval(
+        self,
+        session_id: str,
+        tool_name: str,
+        tool_params: dict[str, Any] | None = None,
+    ) -> bool:
+        """Check and consume a one-shot tool approval.
+
+        If *tool_name* was recently approved for *session_id*, remove the
+        completed record and return ``True`` so the caller can skip the
+        guard check.  When *tool_params* is given, stored parameters must
+        match exactly.
+        """
+        async with self._lock:
+            for key, completed in list(self._completed.items()):
+                if (
+                    completed.session_id == session_id
+                    and completed.tool_name == tool_name
+                    and completed.status == ApprovalDecision.APPROVED.value
+                ):
+                    if tool_params is not None:
+                        approved_call = completed.extra.get("tool_call", {})
+                        approved_params = (
+                            approved_call.get("input", {})
+                            if isinstance(approved_call, dict)
+                            else {}
+                        )
+                        if approved_params != tool_params:
+                            logger.warning(
+                                "Tool guard: params mismatch for '%s' "
+                                "(session %s), rejecting stale approval",
+                                tool_name,
+                                session_id[:8],
+                            )
+                            del self._completed[key]
+                            return False
+                    del self._completed[key]
+                    return True
+        return False
+
     # ------------------------------------------------------------------
     # Garbage collection
     # ------------------------------------------------------------------
@@ -406,6 +449,7 @@ class ApprovalService:
                 pending.future.set_result(ApprovalDecision.TIMEOUT)
             pending.status = "timeout"
             pending.resolved_at = now
+            self._completed[k] = pending
 
         overflow = len(self._pending) - _GC_MAX_PENDING
         if overflow <= 0:
@@ -420,6 +464,31 @@ class ApprovalService:
                 pending.future.set_result(ApprovalDecision.TIMEOUT)
             pending.status = "timeout"
             pending.resolved_at = now
+            self._completed[key] = pending
+
+    def _gc_completed_locked(self) -> None:
+        """Remove stale/overflow completed records.
+
+        Caller must hold ``_lock``.
+        """
+        now = time.time()
+        expired = [
+            k
+            for k, v in self._completed.items()
+            if v.resolved_at and now - v.resolved_at > _GC_MAX_AGE_SECONDS
+        ]
+        for k in expired:
+            del self._completed[k]
+
+        overflow = len(self._completed) - _GC_MAX_COMPLETED
+        if overflow <= 0:
+            return
+        ordered = sorted(
+            self._completed.items(),
+            key=lambda item: item[1].resolved_at or item[1].created_at,
+        )
+        for key, _pending in ordered[:overflow]:
+            del self._completed[key]
 
 
 # ------------------------------------------------------------------

@@ -1688,10 +1688,17 @@
   },
   "chat": {
     "modelSelectTooltip": "模型选择",
+    "newChat": "新会话",
     "newChatTooltip": "新建聊天",
     "searchTooltip": "搜索所有聊天",
     "chatHistoryTooltip": "聊天历史",
     "allChats": "全部聊天",
+    "pinnedGroup": "置顶",
+    "group": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "prev3Days": "近三天"
+    },
     "createNewChat": "创建新聊天",
     "pinDrawer": "固定",
     "unpinDrawer": "取消固定",
@@ -1702,6 +1709,7 @@
     "description": "我是一个智能助手，可以帮助你解答问题。",
     "prompt1": "让我们开启一段新的旅程吧！",
     "prompt2": "能告诉我你有哪些技能吗？",
+    "prompt3": "能告诉我supOS平台信息吗？",
     "inputPlaceholder": "\"↑↓\" 浏览消息 · \"/\" 快捷指令（审批时 \"/approve\" 或 \"/deny\"）",
     "commands": {
       "clear": {

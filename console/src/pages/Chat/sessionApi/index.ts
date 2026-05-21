@@ -776,6 +776,34 @@ class SessionApi implements IAgentScopeRuntimeWebUISessionAPI {
     return 0;
   }
 
+  /**
+   * Wait until an in-flight ``getSession`` for *sessionId* (or its aliases)
+   * finishes. Used when switching chats so the loading overlay is not hidden
+   * based on a stale ``loadedTailCount`` from a previous visit.
+   */
+  async waitForSessionFetch(sessionId: string): Promise<void> {
+    if (!sessionId) return;
+
+    const ids = new Set<string>([sessionId]);
+    const fromList = this.sessionList.find(
+      (s) =>
+        s.id === sessionId || (s as ExtendedSession).realId === sessionId,
+    ) as ExtendedSession | undefined;
+    if (fromList?.id) ids.add(fromList.id);
+    if (fromList?.realId) ids.add(fromList.realId);
+
+    const realId = this.getRealIdForSession(sessionId);
+    if (realId) ids.add(realId);
+
+    for (const id of ids) {
+      const pending = this.sessionRequests.get(id);
+      if (pending) {
+        await pending;
+        return;
+      }
+    }
+  }
+
   /** Apply listChats to sessionList; merge realId and generating by session_id. */
   private applyChatsToSessionList(
     chats: ChatSpec[],

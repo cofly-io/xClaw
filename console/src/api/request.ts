@@ -65,6 +65,9 @@ export async function request<T = unknown>(
   const method = options.method || "GET";
   const headers = buildHeaders(method, options.headers);
 
+  console.log(`[API] ${method} ${url} - Request initiated`);
+  const startTime = performance.now();
+
   const response = await fetch(url, {
     ...options,
     headers,
@@ -102,6 +105,9 @@ export async function request<T = unknown>(
         `Request failed: ${response.status} ${response.statusText}`,
     );
   }
+
+  const duration = Math.round(performance.now() - startTime);
+  console.log(`[API] ${method} ${url} - Completed in ${duration}ms`);
 
   if (response.status === 204) {
     return undefined as T;

@@ -731,6 +731,11 @@ export default function ChatPage() {
       // Cancel any pending history loads for the previous chat
       sessionApi.cancelPendingLoads(prevChatId);
 
+      // Clear visible messages immediately so the old session does not flash
+      // while the runtime loads the target session (normal switch keeps the
+      // same AgentScopeRuntimeWebUI instance).
+      chatRef.current?.messages.removeAllMessages();
+
       // Only force remount if there are many messages to prevent UI freezing
       // Threshold: 200 backend messages (not cards)
       const REMOUNT_THRESHOLD = 200;

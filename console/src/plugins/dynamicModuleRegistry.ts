@@ -13,6 +13,37 @@
 
 import { moduleRegistry } from "./moduleRegistry";
 
+let registrationPromise: Promise<void> | null = null;
+
+/** Limit parallel dynamic imports so API calls (e.g. skill pool) are not starved. */
+const MODULE_IMPORT_CONCURRENCY = 2;
+const MODULE_IMPORT_TIMEOUT_MS = 60_000;
+
+export function ensureHostModulesRegistered(): Promise<void> {
+  registrationPromise ??= registerHostModulesDynamic();
+  return registrationPromise;
+}
+
+async function importModuleWithTimeout(
+  importFn: () => Promise<Record<string, unknown>>,
+  path: string,
+): Promise<Record<string, unknown> | null> {
+  try {
+    return await Promise.race([
+      importFn(),
+      new Promise<never>((_, reject) => {
+        setTimeout(
+          () => reject(new Error(`Module import timeout: ${path}`)),
+          MODULE_IMPORT_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } catch (error) {
+    console.warn(`[patchable] Failed to register module: ${path}`, error);
+    return null;
+  }
+}
+
 /**
  * Dynamically discover and register all modules in src/pages
  * Uses Vite's import.meta.glob for efficient lazy loading
@@ -44,27 +75,29 @@ export async function registerHostModulesDynamic(): Promise<void> {
     } module(s) for registration`,
   );
 
-  // Register modules
+  const entries = Object.entries(modules);
   let registeredCount = 0;
-  for (const [path, importFn] of Object.entries(modules)) {
-    try {
-      // Convert absolute path to module key
-      // "../pages/Agent/Config/index.tsx" -> "Agent/Config/index"
-      const moduleKey = path
-        .replace(/^\.\.\/pages\//, "")
-        .replace(/\.(ts|tsx)$/, "");
 
-      // Lazy load the module
-      const module = await importFn();
-
-      // Check if module has exports
-      if (module && Object.keys(module).length > 0) {
-        moduleRegistry.register(moduleKey, module);
-        registeredCount++;
-      }
-    } catch (error) {
-      console.warn(`[patchable] Failed to register module: ${path}`, error);
-    }
+  for (let i = 0; i < entries.length; i += MODULE_IMPORT_CONCURRENCY) {
+    const batch = entries.slice(i, i + MODULE_IMPORT_CONCURRENCY);
+    const batchResults = await Promise.all(
+      batch.map(async ([path, importFn]) => {
+        const moduleKey = path
+          .replace(/^\.\.\/pages\//, "")
+          .replace(/\.(ts|tsx)$/, "");
+        const module = await importModuleWithTimeout(importFn, path);
+        if (module && Object.keys(module).length > 0) {
+          moduleRegistry.register(moduleKey, module);
+          return true;
+        }
+        return false;
+      }),
+    );
+    registeredCount += batchResults.filter(Boolean).length;
+    // Yield so user-triggered API requests are not blocked behind chunk loads.
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
+    });
   }
 
   console.log(`[patchable] Registered ${registeredCount} module(s)`);

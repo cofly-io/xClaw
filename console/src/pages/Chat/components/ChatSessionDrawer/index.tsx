@@ -5,9 +5,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
 import { Drawer, Spin, Tooltip } from "antd";
-import { FixedSizeList, type ListChildComponentProps } from "react-window";
+import { FixedSizeList } from "react-window";
 import { IconButton } from "@agentscope-ai/design";
 import {
   SparkOperateRightLine,
@@ -34,69 +33,6 @@ import styles from "./index.module.less";
 
 /** Fixed height of each session item in pixels (matches CSS min-height) */
 const ITEM_HEIGHT = 77;
-
-/** Data passed to each row via FixedSizeList's itemData prop */
-interface SessionRowData {
-  sortedSessions: ExtendedChatSession[];
-  currentSessionId: string | undefined;
-  /** When non-null, a session switch is in progress and other items are disabled */
-  switchingSessionId: string | null;
-  editingSessionId: string | null;
-  editValue: string;
-  t: ReturnType<typeof useTranslation>["t"];
-  handleSessionClick: (sessionId: string) => void;
-  handleEditStart: (sessionId: string, currentName: string) => void;
-  handleDelete: (sessionId: string) => void;
-  handlePinToggle: (sessionId: string) => void;
-  handleEditChange: (value: string) => void;
-  handleEditSubmit: () => void;
-  handleEditCancel: () => void;
-  handleItemContextMenu: (sessionId: string, event: React.MouseEvent) => void;
-}
-
-/** Memoized row renderer — only re-renders when its specific props change */
-const SessionRow = React.memo(function SessionRow({
-  index,
-  style,
-  data,
-}: ListChildComponentProps<SessionRowData>) {
-  const session = data.sortedSessions[index];
-  const channelKey = session.channel?.trim() || "";
-  const channelLabel = channelKey
-    ? getChannelLabel(channelKey, data.t)
-    : undefined;
-  const isEditing = data.editingSessionId === session.id;
-
-  const isDisabled =
-    !!data.switchingSessionId && session.id !== data.switchingSessionId;
-
-  return (
-    <div style={style}>
-      <ChatSessionItem
-        sessionId={session.id!}
-        name={session.name || "New Chat"}
-        time={formatCreatedAt(session.createdAt ?? null)}
-        channelKey={channelKey || undefined}
-        channelLabel={channelLabel}
-        chatStatus={session.status}
-        generating={session.generating}
-        pinned={session.pinned}
-        active={session.id === data.currentSessionId}
-        disabled={isDisabled}
-        editing={isEditing}
-        editValue={isEditing ? data.editValue : undefined}
-        onClick={data.handleSessionClick}
-        onEdit={data.handleEditStart}
-        onDelete={data.handleDelete}
-        onPin={data.handlePinToggle}
-        onEditChange={data.handleEditChange}
-        onEditSubmit={data.handleEditSubmit}
-        onEditCancel={data.handleEditCancel}
-        onContextMenu={data.handleItemContextMenu}
-      />
-    </div>
-  );
-});
 
 /** Sessions from QwenPaw backend include extra fields beyond the runtime UI type */
 interface ExtendedChatSession extends IAgentScopeRuntimeWebUISession {
@@ -145,7 +81,6 @@ const getBackendId = (session: ExtendedChatSession): string | null => {
 
 const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { sessions, currentSessionId, setCurrentSessionId, setSessions } =
     useChatAnywhereSessionsState();
 
@@ -271,54 +206,11 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
     };
   }, [props.open, setSessions]);
 
-  /** Whether a session switch is in progress (issue #4557) */
-  const [switchingSessionId, setSwitchingSessionId] = useState<string | null>(
-    null,
-  );
-
   const handleSessionClick = useCallback(
     (sessionId: string) => {
-      // Block clicks while a switch is in progress.
-      if (sessionApi.isSessionSwitching) return;
-      if (sessionId === currentSessionId) return;
-
-      // Lock immediately (synchronous) before any async work.
-      sessionApi.isSessionSwitching = true;
-      setSwitchingSessionId(sessionId);
-
-      // 1) Pre-load session data (network request happens here).
-      // 2) Navigate to the correct URL (using realId if available).
-      // 3) Only THEN set currentSessionId so the library's useAsyncEffect
-      //    hits the result cache instead of making another request.
-      // 4) Keep lock held until the next React render cycle completes.
-      sessionApi
-        .preloadSession(sessionId)
-        .then(({ realId }) => {
-          const targetUrl = `/chat/${realId || sessionId}`;
-          sessionApi.lastNavigatedChatId = realId || sessionId;
-          navigate(targetUrl, { replace: true });
-          // Now set currentSessionId — the library's getSession will hit cache.
-          setCurrentSessionId(sessionId);
-        })
-        .catch(() => {
-          // On error, still try to switch normally.
-          setCurrentSessionId(sessionId);
-        })
-        .then(() => {
-          // Wait two animation frames so React commits + runs effects,
-          // ensuring ChatSessionInitializer's effect has been skipped.
-          return new Promise<void>((resolve) => {
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => resolve());
-            });
-          });
-        })
-        .finally(() => {
-          sessionApi.finishSessionSwitch();
-          setSwitchingSessionId(null);
-        });
+      setCurrentSessionId(sessionId);
     },
-    [currentSessionId, setCurrentSessionId, navigate],
+    [setCurrentSessionId],
   );
 
   /** Delete a session: call deleteChat API then refresh the list */
@@ -459,42 +351,6 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
     handleDelete,
   ]);
 
-  /** Stable data object for FixedSizeList — avoids re-creating row renderer on every render */
-  const itemData = useMemo<SessionRowData>(
-    () => ({
-      sortedSessions: sortedSessions as ExtendedChatSession[],
-      currentSessionId,
-      switchingSessionId,
-      editingSessionId,
-      editValue,
-      t,
-      handleSessionClick,
-      handleEditStart,
-      handleDelete,
-      handlePinToggle,
-      handleEditChange,
-      handleEditSubmit,
-      handleEditCancel,
-      handleItemContextMenu,
-    }),
-    [
-      sortedSessions,
-      currentSessionId,
-      switchingSessionId,
-      editingSessionId,
-      editValue,
-      t,
-      handleSessionClick,
-      handleEditStart,
-      handleDelete,
-      handlePinToggle,
-      handleEditChange,
-      handleEditSubmit,
-      handleEditCancel,
-      handleItemContextMenu,
-    ],
-  );
-
   return (
     <Drawer
       open={props.open}
@@ -557,11 +413,7 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
       </div>
 
       {/* Session list */}
-      <div
-        className={styles.listWrapper}
-        ref={listWrapperRef}
-        style={switchingSessionId ? { pointerEvents: "none" } : undefined}
-      >
+      <div className={styles.listWrapper} ref={listWrapperRef}>
         <div className={styles.topGradient} />
         {listLoading ? (
           <div
@@ -575,23 +427,55 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
           </div>
         ) : (
           <>
-            {/* Background loading — only show when content overflows the container,
-                so it's visible through unrendered gaps during fast scroll */}
-            {sortedSessions.length * ITEM_HEIGHT > listHeight && (
-              <div className={styles.virtualListBackground}>
-                <Spin size="small" />
-              </div>
-            )}
+            <div className={styles.virtualListBackground}>
+              <Spin size="small" />
+            </div>
             <FixedSizeList
               height={listHeight}
               width="100%"
               itemCount={sortedSessions.length}
               itemSize={ITEM_HEIGHT}
               overscanCount={20}
-              itemData={itemData}
               className={styles.list}
             >
-              {SessionRow}
+              {({ index, style }) => {
+                const session = sortedSessions[index];
+                const ext = session as ExtendedChatSession;
+                const channelKey = ext.channel?.trim() || "";
+                const channelLabel = channelKey
+                  ? getChannelLabel(channelKey, t)
+                  : undefined;
+                return (
+                  <div style={style}>
+                    <ChatSessionItem
+                      key={session.id}
+                      sessionId={session.id!}
+                      name={session.name || "New Chat"}
+                      time={formatCreatedAt(ext.createdAt ?? null)}
+                      channelKey={channelKey || undefined}
+                      channelLabel={channelLabel}
+                      chatStatus={ext.status}
+                      generating={ext.generating}
+                      pinned={ext.pinned}
+                      active={session.id === currentSessionId}
+                      editing={editingSessionId === session.id}
+                      editValue={
+                        editingSessionId === session.id ? editValue : undefined
+                      }
+                      onClick={() => handleSessionClick(session.id!)}
+                      onEdit={() =>
+                        handleEditStart(session.id!, session.name || "New Chat")
+                      }
+                      onDelete={() => void handleDelete(session.id!)}
+                      onPin={() => void handlePinToggle(session.id!)}
+                      onEditChange={handleEditChange}
+                      onEditSubmit={handleEditSubmit}
+                      onEditCancel={handleEditCancel}
+                      onContextMenu={handleItemContextMenu}
+                    />
+                  </div>
+                );
+              }}
             </FixedSizeList>
           </>
         )}

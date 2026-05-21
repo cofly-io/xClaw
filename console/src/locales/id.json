@@ -110,10 +110,17 @@
   },
   "chat": {
     "modelSelectTooltip": "Pilih model",
+    "newChat": "Sesi baru",
     "newChatTooltip": "Chat baru",
     "searchTooltip": "Cari semua chat",
     "chatHistoryTooltip": "Riwayat chat",
     "allChats": "Semua Chat",
+    "pinnedGroup": "Disematkan",
+    "group": {
+      "today": "Hari ini",
+      "yesterday": "Kemarin",
+      "prev3Days": "3 hari sebelumnya"
+    },
     "createNewChat": "Buat Chat Baru",
     "pinDrawer": "Sematkan",
     "unpinDrawer": "Lepas sematan",
@@ -124,6 +131,7 @@
     "description": "Saya asisten yang dapat membantu menjawab pertanyaan Anda.",
     "prompt1": "Mari mulai perjalanan baru!",
     "prompt2": "Bisa jelaskan skill apa saja yang Anda miliki?",
+    "prompt3": "Bisakah Anda ceritakan tentang platform supOS?",
     "inputPlaceholder": "\"↑↓\" untuk navigasi pesan · \"/\" untuk perintah cepat (\"/approve\" atau \"/deny\" saat approval)",
     "commands": {
       "clear": {

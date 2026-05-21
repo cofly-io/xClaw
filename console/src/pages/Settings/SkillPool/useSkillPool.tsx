@@ -200,7 +200,10 @@ export function useSkillPool() {
 
   const loadData = useCallback(
     async (forceReload = false) => {
-      if (dataLoadedRef.current && !forceReload) return;
+      if (dataLoadedRef.current && !forceReload) {
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
       try {
@@ -246,9 +249,61 @@ export function useSkillPool() {
     }
   }, [message]);
 
+  // Load data on mount
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    console.log("[SkillPool] Component mounted, starting data load");
+    let cancelled = false;
+
+    const init = async () => {
+      dataLoadedRef.current = false;
+      invalidateSkillCache({ pool: true, workspaces: true });
+      setLoading(true);
+      console.log("[SkillPool] Fetching data from API...");
+      try {
+        // Fetch sequentially to avoid overwhelming browser connection limit
+        console.log("[SkillPool] Fetching pool skills...");
+        const poolSkills = await api.listSkillPoolSkills();
+        if (cancelled) return;
+        
+        console.log("[SkillPool] Fetching workspaces...");
+        const workspaceSummaries = await api.listSkillWorkspaces();
+        if (cancelled) return;
+        
+        console.log("[SkillPool] Fetching builtin notice...");
+        const notice = await api.getPoolBuiltinNotice();
+        if (cancelled) return;
+        
+        console.log(
+          "[SkillPool] Data fetched successfully:",
+          poolSkills.length,
+          "skills",
+        );
+        setSkills(poolSkills);
+        setWorkspaces(workspaceSummaries);
+        setBuiltinNotice(notice);
+        dataLoadedRef.current = true;
+      } catch (error) {
+        console.error("[SkillPool] Failed to load data:", error);
+        if (!cancelled) {
+          message.error(
+            error instanceof Error
+              ? error.message
+              : "Failed to load skill pool",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void init();
+
+    return () => {
+      console.log("[SkillPool] Component unmounting");
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const closeModal = () => {
     setMode(null);
