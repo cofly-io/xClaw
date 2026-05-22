@@ -165,15 +165,15 @@ patchFile(
 // Patch Tool.js to show Chinese tool names in the chat UI.
 const TOOL_TITLE_NEEDLE = `var title = "".concat(serverLabel).concat(toolName);`;
 const TOOL_TITLE_REPL = `var TOOL_LABELS_ZH = {
-  read_file: '璇诲彇鏂囦欢', write_file: '鍐欏叆鏂囦欢', edit_file: '缂栬緫鏂囦欢', append_file: '杩藉姞鏂囦欢',
-  execute_shell_command: '鎵ц鍛戒护', grep_search: '鎼滅储鍐呭', glob_search: '鎼滅储鏂囦欢',
-  desktop_screenshot: '鎴彇灞忓箷', browser_use: '鎿嶆帶娴忚鍣?,
-  view_image: '鏌ョ湅鍥剧墖', view_video: '鏌ョ湅瑙嗛',
-  get_current_time: '鑾峰彇褰撳墠鏃堕棿', set_user_timezone: '璁剧疆鏃跺尯',
-  list_agents: '鍒楀嚭鍔╂墜', chat_with_agent: '涓庡姪鎵嬪璇?,
-  send_file_to_user: '鍙戦€佹枃浠剁粰鐢ㄦ埛', get_token_usage: '鑾峰彇鐢ㄩ噺',
-  supos_api_call: 'SupOS API 璋冪敤', memory_search: '鎼滅储璁板繂',
-  list_directory: '鍒楀嚭鐩綍'
+  read_file: '读取文件', write_file: '写入文件', edit_file: '编辑文件', append_file: '追加文件',
+  execute_shell_command: '执行命令', grep_search: '搜索内容', glob_search: '搜索文件',
+  desktop_screenshot: '桌面截图', browser_use: '操控浏览器',
+  view_image: '查看图片', view_video: '查看视频',
+  get_current_time: '获取当前时间', set_user_timezone: '设置时区',
+  list_agents: '列出助手', chat_with_agent: '与助手对话',
+  send_file_to_user: '发送文件给用户', get_token_usage: '获取用量',
+  supos_api_call: 'SupOS API 调用', memory_search: '搜索记忆',
+  list_directory: '列出目录'
 };
 var title = "".concat(serverLabel).concat(TOOL_LABELS_ZH[toolName] || toolName);`;
 
@@ -299,22 +299,8 @@ patchFile(
   },
 );
 
-patchFile("@agentscope-ai/chat/lib/Bubble/BubbleList.js", "doLoadRef", (s) => {
-  let t = s;
-  if (t.includes(BUBBLE_LIST_LOADMORE_RAF_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_LOADMORE_RAF_NEEDLE, BUBBLE_LIST_LOADMORE_RAF_REPL);
-  }
-  if (t.includes(BUBBLE_LIST_IMPERATIVE_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_IMPERATIVE_NEEDLE, BUBBLE_LIST_IMPERATIVE_REPL);
-  }
-  if (t.includes(BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_OVERFLOW_ANCHOR_NEEDLE, BUBBLE_LIST_OVERFLOW_ANCHOR_REPL);
-  }
-  if (t.includes(BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE)) {
-    t = t.replace(BUBBLE_LIST_DOLOAD_USEEFFECT_NEEDLE, BUBBLE_LIST_DOLOAD_USEEFFECT_REPL);
-  }
-  return t;
-});
+// BubbleList.js patch removed: MessageList is fully replaced (see writeMessageList below)
+// so incremental BubbleList patches are not needed.
 
 // xclaw: MessageList is fully replaced (not incrementally patched) because the
 // scroll-anchor fix (remove useLayoutEffect) and doLoadRef fix (BubbleList)
