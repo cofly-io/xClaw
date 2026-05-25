@@ -373,34 +373,120 @@ class DingTalkChannel(BaseChannel):
     def to_handle_from_target(self, *, user_id: str, session_id: str) -> str:
         # Key by session_id (short suffix of conversation_id) so cron can
         # use the same session_id to look up stored sessionWebhook.
-        return f"dingtalk:sw:{session_id}"
+        # For DM, prefix with user_id to avoid collision when different
+        # conversation_ids share the same suffix.
+        return (
+            f"dingtalk:sw:{user_id}_{session_id}"
+            if user_id
+            else f"dingtalk:sw:{session_id}"
+        )
 
     async def _before_consume_process(self, request: "AgentRequest") -> None:
         """Save session_webhook from meta for cron/proactive send."""
         meta = getattr(request, "channel_meta", None) or {}
         session_webhook = self._get_session_webhook(meta)
-        if not session_webhook:
-            return
-        session_id = getattr(request, "session_id", None)
-        if not session_id:
-            return
-        webhook_key = self.to_handle_from_target(
-            user_id=getattr(request, "user_id", None) or "",
-            session_id=session_id,
-        )
-        logger.info(
-            "dingtalk _before_consume_process: storing webhook "
-            "session_id=%s conversation_id=%s",
-            session_id,
-            meta.get("conversation_id"),
-        )
-        await self._save_session_webhook(
-            webhook_key,
-            session_webhook,
-            conversation_id=meta.get("conversation_id"),
-            conversation_type=meta.get("conversation_type"),
-            sender_staff_id=meta.get("sender_staff_id"),
-        )
+    async def _before_consume_process(self, request: "AgentRequest") -> None:
+        """Save session_webhook from meta for cron/proactive send."""
+        meta = getattr(request, "channel_meta", None) or {}
+        session_webhook = self._get_session_webhook(meta)
+        if session_webhook:
+            session_id = getattr(request, "session_id", None)
+            if session_id:
+                conversation_type = meta.get("conversation_type")
+                # For DM, use user_id + suffix as key to avoid collision
+                # when different conversation_ids share the same suffix.
+                # For group, use suffix-only key (shared across users).
+                if conversation_type == "dm":
+                    webhook_key = self.to_handle_from_target(
+                        user_id=getattr(request, "user_id", None) or "",
+                        session_id=session_id,
+                    )
+                else:
+                    webhook_key = f"dingtalk:sw:{session_id}"
+                logger.info(
+                    "dingtalk _before_consume_process: storing webhook "
+                    "session_id=%s conversation_id=%s",
+                    session_id,
+                    meta.get("conversation_id"),
+                )
+                await self._save_session_webhook(
+                    webhook_key,
+                    session_webhook,
+                    conversation_id=meta.get("conversation_id"),
+                    conversation_type=conversation_type,
+                    sender_staff_id=meta.get("sender_staff_id"),
+                )
+
+        # Add "processing" reaction to user's incoming message
+        incoming_msg_id = str(meta.get("message_id") or "")
+        conversation_id = str(meta.get("conversation_id") or "")
+        if incoming_msg_id and conversation_id:
+            await self._send_emotion(
+                incoming_msg_id,
+                conversation_id,
+                "🤔Thinking",
+            )
+
+        # Pre-create AI Card before LLM call so user sees it immediately.
+        # The card is stored on request._precreated_card for streaming hooks
+        # and on_event_message_completed to reuse.
+        if self._ai_card_enabled() and conversation_id:
+            try:
+                card = await self._create_ai_card(
+                    conversation_id,
+                    meta=meta,
+                    inbound=True,
+                )
+                if card:
+                    setattr(request, "_precreated_card", card)
+                    logger.info(
+                        "dingtalk _before_consume_process: "
+                        "AI card pre-created for conversation=%s",
+                        conversation_id,
+                    )
+            except Exception:
+                logger.exception(
+                    "dingtalk _before_consume_process: "
+                    "card pre-creation failed, will retry in hooks",
+                )
+
+    async def _on_consume_error(
+        self,
+        request: "AgentRequest",
+        to_handle: str,
+        err_text: str,
+    ) -> None:
+        """Send error emoji and error message via webhook."""
+        meta = getattr(request, "channel_meta", None) or {}
+        incoming_msg_id = str(meta.get("message_id") or "")
+        conversation_id = str(meta.get("conversation_id") or "")
+        if incoming_msg_id and conversation_id:
+            await self._send_emotion(
+                incoming_msg_id,
+                conversation_id,
+                "🤔Thinking",
+                recall=True,
+            )
+            await self._send_emotion(
+                incoming_msg_id,
+                conversation_id,
+                "☹️Error",
+            )
+        # Send error text via webhook or fallback
+        session_webhook = self._get_session_webhook(meta)
+        bot_prefix = self.bot_prefix or ""
+        full_err = bot_prefix + err_text if err_text else bot_prefix
+        if session_webhook and full_err.strip():
+            await self._send_via_session_webhook(
+                session_webhook,
+                full_err.strip(),
+                bot_prefix="",
+            )
+        # Release dedup msg_id so future retries are accepted
+        msg_ids = meta.get("_message_ids")
+        if msg_ids is None:
+            msg_ids = [incoming_msg_id] if incoming_msg_id else []
+        self._release_message_ids(msg_ids)
 
     def _route_from_handle(self, to_handle: str) -> dict:
         # to_handle:
@@ -522,6 +608,14 @@ class DingTalkChannel(BaseChannel):
             return
         async with self._session_webhook_lock:
             raw = self._session_webhook_store.get(webhook_key)
+            # Fallback to suffix-only key
+            actual_key = webhook_key
+            if raw is None:
+                fallback_key = self._suffix_only_webhook_key(webhook_key)
+                if fallback_key:
+                    raw = self._session_webhook_store.get(fallback_key)
+                    if raw is not None:
+                        actual_key = fallback_key
             if raw is None:
                 return
             entry = raw if isinstance(raw, dict) else {"webhook": raw}
@@ -530,10 +624,10 @@ class DingTalkChannel(BaseChannel):
             logger.info(
                 "dingtalk _invalidate_session_webhook: "
                 "clearing webhook for key=%s",
-                webhook_key,
+                actual_key,
             )
             entry["webhook"] = ""
-            self._session_webhook_store[webhook_key] = entry
+            self._session_webhook_store[actual_key] = entry
             self._save_session_webhook_store_to_disk()
 
     async def _load_session_webhook(self, webhook_key: str) -> Optional[str]:
@@ -545,6 +639,26 @@ class DingTalkChannel(BaseChannel):
             return entry.get("webhook")
         return None
 
+    @staticmethod
+    def _suffix_only_webhook_key(webhook_key: str) -> Optional[str]:
+        """Extract suffix-only fallback key from a user-prefixed key.
+
+        e.g. "dingtalk:sw:user123_tru1C1k=" -> "dingtalk:sw:tru1C1k="
+        Returns None if the key has no user prefix (already suffix-only).
+        """
+        prefix = "dingtalk:sw:"
+        if not webhook_key.startswith(prefix):
+            return None
+        ident = webhook_key[len(prefix) :]
+        # If ident contains '_', it might be user_id + suffix
+        underscore_idx = ident.rfind("_")
+        if underscore_idx < 0:
+            return None  # Already suffix-only
+        suffix = ident[underscore_idx + 1 :]
+        if not suffix:
+            return None
+        return f"{prefix}{suffix}"
+
     async def _load_session_webhook_entry(
         self,
         webhook_key: str,
@@ -552,6 +666,8 @@ class DingTalkChannel(BaseChannel):
         """Load the full webhook entry dict from store (memory then disk).
 
         Returns None if not found or if the webhook is expired.
+        Falls back to suffix-only key for backward compatibility with
+        old DM entries and group chat entries.
         """
         if not webhook_key:
             return None
@@ -563,6 +679,14 @@ class DingTalkChannel(BaseChannel):
                 self._load_session_webhook_store_from_disk()
                 raw = self._session_webhook_store.get(webhook_key)
                 source = "disk"
+
+            # Fallback: try suffix-only key (old DM data / group chat)
+            if raw is None:
+                fallback_key = self._suffix_only_webhook_key(webhook_key)
+                if fallback_key:
+                    raw = self._session_webhook_store.get(fallback_key)
+                    if raw is not None:
+                        source = f"fallback({fallback_key})"
 
             if raw is not None:
                 entry = raw if isinstance(raw, dict) else {"webhook": raw}
@@ -966,6 +1090,11 @@ class DingTalkChannel(BaseChannel):
                 if raw is None:
                     self._load_session_webhook_store_from_disk()
                     raw = self._session_webhook_store.get(webhook_key)
+                # Fallback to suffix-only key
+                if raw is None:
+                    fallback_key = self._suffix_only_webhook_key(webhook_key)
+                    if fallback_key:
+                        raw = self._session_webhook_store.get(fallback_key)
                 if raw is not None:
                     webhook_entry = (
                         raw if isinstance(raw, dict) else {"webhook": raw}
