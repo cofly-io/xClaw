@@ -188,7 +188,7 @@ async def get_chat(
     memory = InMemoryMemory()
     memory.load_state_dict(memory_state, strict=False)
 
-    memories = await memory.get_memory(prepend_summary=False)
+    memories = await memory.get_memory(prepend_summary=True)
 
     # Performance: apply pagination on raw memory first, then convert only
     # the requested window instead of converting the whole conversation.
@@ -198,7 +198,6 @@ async def get_chat(
         end = max(0, end)
         start = max(0, end - last_n)
         memories = memories[start:end]
-
     messages = agentscope_msg_to_message(memories)
 
     return ChatHistory(messages=messages, status=status)
