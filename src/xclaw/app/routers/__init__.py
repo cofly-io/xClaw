@@ -23,6 +23,10 @@ from .messages import router as messages_router
 from .files import router as files_router
 from .settings import router as settings_router
 from .backup import router as backup_router
+from .plan import router as plan_router
+from .git import router as git_router
+from .coding_project import router as coding_project_router
+from .access_control import router as access_control_router
 
 router = APIRouter()
 
@@ -47,6 +51,10 @@ router.include_router(supos_auth_router)
 router.include_router(files_router)
 router.include_router(settings_router)
 router.include_router(backup_router)
+router.include_router(plan_router)
+router.include_router(git_router)
+router.include_router(coding_project_router)
+router.include_router(access_control_router)
 
 
 def create_agent_scoped_router() -> APIRouter:

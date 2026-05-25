@@ -1,5 +1,8 @@
 import { Layout, Space, Button, Tooltip } from "antd";
 import { useEffect, useState } from "react";
+import LanguageSwitcher from "../components/LanguageSwitcher/index";
+import ThemeToggleButton from "../components/ThemeToggleButton";
+import CodingModeToggle from "../components/CodingModeToggle";
 import { useTranslation } from "react-i18next";
 import { FileText, Book, HelpCircle, Lock, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -110,6 +113,11 @@ export default function Header({ onLock }: HeaderProps) {
             {t("header.faq")}
           </Button>
         </Tooltip>
+        <div className={styles.headerDivider} />
+        <CodingModeToggle />
+        <div className={styles.headerDivider} />
+        <LanguageSwitcher />
+        <ThemeToggleButton />
         <Tooltip title={t("header.lock", "锁屏")}>
           <Button
             icon={<Lock />}

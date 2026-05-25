@@ -36,6 +36,29 @@ import ChatNewSessionBridge from "./components/ChatNewSessionBridge";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
 import ChatSessionsRefreshListener from "./components/ChatSessionsRefreshListener";
 import ChatLoadingOverlay from "./components/ChatLoadingOverlay";
+import { ApprovalCard } from "../../components/ApprovalCard/ApprovalCard";
+import { commandsApi } from "../../api/modules/commands";
+import { useApprovalContext } from "../../contexts/ApprovalContext";
+import { planApi } from "../../api/modules/plan";
+import { useCodingModeStore } from "../../stores/codingModeStore";
+
+interface ApprovalMessageData {
+  requestId: string;
+  sessionId: string;
+  rootSessionId?: string;
+  agentId: string;
+  toolName: string;
+  severity: string;
+  findingsCount: number;
+  findingsSummary: string;
+  toolParams: Record<string, unknown>;
+  createdAt: number;
+  timeoutSeconds: number;
+}
+
+import WhisperSpeechButton, {
+  WhisperSpeechButtonRef,
+} from "./components/WhisperSpeechButton";
 import {
   toDisplayUrl,
   copyText,
@@ -110,6 +133,19 @@ function payloadCompletesResponse(payload: unknown): boolean {
 
   const record = payload as Record<string, unknown>;
   return record.object === "response" && record.status === "completed";
+}
+
+/** Extract message objects from a parsed SSE payload. */
+function extractMessages(payload: unknown): Record<string, unknown>[] {
+  if (!payload || typeof payload !== "object") return [];
+  const r = payload as Record<string, unknown>;
+  if (r.object === "message") return [r];
+  if (r.object === "response" && Array.isArray(r.output)) {
+    return r.output.filter(
+      (m) => m && typeof m === "object" && m.object === "message",
+    ) as Record<string, unknown>[];
+  }
+  return [];
 }
 
 function renderSuggestionLabel(command: string, description: string) {
@@ -593,6 +629,8 @@ export default function ChatPage() {
   }, []);
   
   const { selectedAgent } = useAgentStore();
+  const { setTodos } = useCodingModeStore();
+  const { toolRenderConfig } = usePlugins();
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
   const { message } = useAppMessage();
@@ -1177,6 +1215,19 @@ export default function ChatPage() {
               scheduleHistoryClear();
             }
           }
+
+          // Intercept Coding Mode events (todo_update)
+          for (const msg of extractMessages(payload)) {
+            const meta = msg.metadata as Record<string, unknown> | undefined;
+            if (!meta || typeof meta !== "object") continue;
+            if (
+              meta.message_type === "todo_update" &&
+              Array.isArray(meta.todos)
+            ) {
+              setTodos(selectedAgent, meta.todos as any);
+            }
+          }
+
           return payload as any;
         },
         replaceMediaURL: (url: string) => {

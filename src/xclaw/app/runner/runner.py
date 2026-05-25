@@ -452,6 +452,29 @@ class AgentRunner(Runner):
             if not isinstance(channel_meta, dict):
                 channel_meta = {}
             user_name = channel_meta.get("user_name")
+
+            # Load agent-specific configuration for shell and coding mode
+            agent_config = load_agent_config(self.agent_id)
+
+            _configured_shell = (
+                agent_config.running.shell_command_executable or None
+            )
+            _default_shell = (
+                _configured_shell
+                or os.environ.get("SHELL")
+                or ("cmd.exe" if sys.platform == "win32" else "/bin/sh")
+            )
+            # In Coding Mode with a concrete project_dir, surface the
+            # project as the env_context's primary location so the LLM
+            # stops treating the agent workspace as "home".
+            _cm = getattr(agent_config, "coding_mode", None)
+            _coding_project_dir = (
+                _cm.project_dir
+                if _cm
+                and getattr(_cm, "enabled", False)
+                and getattr(_cm, "project_dir", None)
+                else None
+            )
             env_context = build_env_context(
                 session_id=session_id,
                 user_id=user_id,
@@ -462,6 +485,8 @@ class AgentRunner(Runner):
                     if self.workspace_dir
                     else str(WORKING_DIR)
                 ),
+                default_shell=_default_shell,
+                project_dir=_coding_project_dir,
             )
 
             # Get MCP clients from manager (hot-reloadable)

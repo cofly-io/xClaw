@@ -931,6 +931,33 @@ class AgentProfileRef(BaseModel):
     )
 
 
+class PlanConfig(BaseModel):
+    """Plan mode configuration (stored in agent.json)."""
+
+    enabled: bool = Field(
+        default=False,
+        description="Whether plan mode is enabled for this agent",
+    )
+
+
+class CodingModeConfig(BaseModel):
+    """Configuration for the Coding Mode feature."""
+
+    enabled: bool = Field(
+        default=False,
+        description="Enable Coding Mode IDE layout and tools",
+    )
+    project_dir: Optional[str] = Field(
+        default=None,
+        description=(
+            "Active coding project directory (absolute path). "
+            "When set, Coding Mode file / git operations use this path "
+            "instead of the agent workspace_dir. "
+            "None means use the default workspace_dir."
+        ),
+    )
+
+
 class AgentProfileConfig(BaseModel):
     """Complete Agent Profile configuration (stored in workspace/agent.json).
 
@@ -993,6 +1020,18 @@ class AgentProfileConfig(BaseModel):
     security: Optional["SecurityConfig"] = Field(
         default=None,
         description="Security configuration for this agent",
+    )
+    acp: Optional[ACPConfig] = Field(
+        default=None,
+        description="ACP configuration for this agent",
+    )
+    plan: PlanConfig = Field(
+        default_factory=PlanConfig,
+        description="Plan mode configuration for this agent",
+    )
+    coding_mode: CodingModeConfig = Field(
+        default_factory=CodingModeConfig,
+        description="Coding Mode configuration for this agent",
     )
 
 

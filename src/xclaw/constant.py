@@ -112,6 +112,27 @@ SECRET_DIR = (
 
 PROJECT_NAME = "xClaw"
 
+# Subdirectory name inside each agent's workspace that holds cloned / imported
+# coding projects.
+# Full path = <workspace_dir> / CODING_PROJECT_SUBDIR / <name>
+CODING_PROJECT_SUBDIR = "coding_projects"
+
+
+def _resolve_docs_dir() -> Path | None:
+    """Find xClaw documentation directory across all install methods."""
+    _pkg_docs = Path(__file__).resolve().parent / "docs"
+    if _pkg_docs.is_dir() and any(_pkg_docs.glob("*.md")):
+        return _pkg_docs
+    _src_docs = (
+        Path(__file__).resolve().parents[2] / "website" / "public" / "docs"
+    )
+    if _src_docs.is_dir() and any(_src_docs.glob("*.md")):
+        return _src_docs
+    return None
+
+
+DOCS_DIR: Path | None = _resolve_docs_dir()
+
 # Default media directory for channels (cross-platform)
 DEFAULT_MEDIA_DIR = WORKING_DIR / "media"
 

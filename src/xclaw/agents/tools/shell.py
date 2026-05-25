@@ -294,7 +294,14 @@ async def execute_shell_command(
 
     Platform shells: Windows uses cmd.exe; Linux/macOS use /bin/sh or /bin/bash.
 
+    Each call runs in a fresh subprocess — ``cd``, ``export``, ``source``,
+    etc. do NOT persist. Pass ``cwd=`` or chain in one call
+    (``cd /repo && pytest``).
+
     IMPORTANT: Always consider the operating system before choosing commands.
+    Check the 'Default Shell' field to determine which shell is active,
+    and generate commands using the appropriate syntax
+    (e.g. bash vs PowerShell vs cmd.exe).
 
     Args:
         command (`str`):
@@ -304,7 +311,7 @@ async def execute_shell_command(
             Default is 60.0 seconds.
         cwd (`Optional[Path]`, defaults to `None`):
             The working directory for the command execution.
-            If None, defaults to WORKING_DIR.
+            If None, defaults to the agent workspace.
 
     Returns:
         `ToolResponse`:

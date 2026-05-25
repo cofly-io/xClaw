@@ -262,6 +262,7 @@
     "mcp": "MCP & Built-in Tools",
     "memory": "Memory",
     "memoryEvolvingAndProactive": "Memory-Evolving & Proactive",
+    "codingMode": "Coding Mode",
     "context": "Context",
     "commands": "Magic commands",
     "heartbeat": "Heartbeat",
