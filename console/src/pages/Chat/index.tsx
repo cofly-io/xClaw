@@ -48,6 +48,7 @@ import {
   type CopyableResponse,
   type RuntimeLoadingBridgeApi,
 } from "./utils";
+import { openExternalLink } from "../../utils/openExternalLink";
 
 const CHAT_ATTACHMENT_MAX_MB = 10;
 
@@ -625,6 +626,34 @@ export default function ChatPage() {
   useMessageHistoryNavigation(chatRef, isChatActive, isComposingRef);
   useChatInputDraft(isChatActive);
 
+  const onFileCardClick = useCallback(
+    (fileInfo: { name?: string; size?: number; url?: string }) => {
+      if (fileInfo.url) {
+        openExternalLink(fileInfo.url);
+      }
+    },
+    [],
+  );
+
+  // Shortcut key for voice recording (Ctrl+Shift+M or Cmd+Shift+M on Mac)
+  useEffect(() => {
+    const handleShortcut = (e: KeyboardEvent) => {
+      if (!isChatActive()) return;
+      // Check for Ctrl+Shift+M (Windows/Linux) or Cmd+Shift+M (Mac)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        e.key.toLowerCase() === "m"
+      ) {
+        e.preventDefault();
+        if (whisperEnabled) {
+          whisperSpeechRef.current?.toggleRecording();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, [isChatActive, whisperEnabled]);
   chatIdRef.current = chatId;
   navigateRef.current = navigate;
 
@@ -1153,6 +1182,7 @@ export default function ChatPage() {
         replaceMediaURL: (url: string) => {
           return toDisplayUrl(url);
         },
+        onFileCardClick,
         cancel(data: { session_id: string }) {
           const resolvedChatId =
             sessionApi.getRealIdForSession(data.session_id) ?? data.session_id;
@@ -1205,6 +1235,10 @@ export default function ChatPage() {
     isDark,
     multimodalCaps,
     runtimeSessionApi,
+    toolRenderConfig,
+    scheduleHistoryClear,
+    planEnabled,
+    onFileCardClick,
   ]);
 
   return (
