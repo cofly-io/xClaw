@@ -966,15 +966,50 @@ class WeixinChannel(BaseChannel):
         text: str,
         context_token: str,
         client: Optional[ILinkClient] = None,
+        api_initiated: bool = False,
+        send_meta: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """Send text using the shared ILinkClient (or create a temp one)."""
+        """Send text using the shared ILinkClient (or create a temp one).
+
+        Args:
+            api_initiated: If True, raise ChannelError on send failure.
+                Used by /api/messages/send to provide accurate error feedback.
+            send_meta: If provided, used to track context_token invalidation.
+                When ret=-2, sets send_meta["_wechat_token_invalid"] = True
+                so subsequent sends in the same request are skipped.
+        """
         _client = client or self._client
         if not _client or not to_user_id or not text:
             return
         try:
-            await _client.send_text(to_user_id, text, context_token)
+            resp = await _client.send_text(to_user_id, text, context_token)
         except Exception:
             logger.exception("weixin _send_text_direct failed")
+            if api_initiated:
+                raise
+            return
+        if isinstance(resp, dict):
+            ret = resp.get("ret", 0)
+            errcode = resp.get("errcode", 0)
+            if ret != 0 or errcode != 0:
+                logger.warning(
+                    "weixin send_text rejected: ret=%s errcode=%s user=%s",
+                    ret,
+                    errcode,
+                    to_user_id,
+                )
+                if api_initiated:
+                    raise ChannelError(
+                        channel_name="weixin",
+                        message=(
+                            f"iLink API rejected: ret={ret} "
+                            f"errcode={errcode} response={resp}"
+                        ),
+                    )
+                # ret=-2 means context_token is invalid/consumed;
+                # mark meta so subsequent sends in this request are skipped.
+                if ret == -2 and send_meta is not None:
+                    send_meta["_wechat_token_invalid"] = True
 
     async def _send_media_file(
         self,
@@ -982,6 +1017,7 @@ class WeixinChannel(BaseChannel):
         context_token: str,
         file_path: str,
         content_type: ContentType,
+        send_meta: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Send a media file (image/file/video) to WeChat.
 
@@ -990,6 +1026,7 @@ class WeixinChannel(BaseChannel):
             context_token: Context token from inbound message.
             file_path: Local path to the media file.
             content_type: Type of media (IMAGE/FILE/VIDEO).
+            send_meta: If provided, used to track context_token invalidation.
         """
         if not self._client or not to_user_id or not context_token:
             logger.warning(
@@ -1012,22 +1049,23 @@ class WeixinChannel(BaseChannel):
                 return
 
             # Send based on content type
+            resp: Optional[Dict[str, Any]] = None
             if content_type == ContentType.IMAGE:
-                await self._client.send_image(
+                resp = await self._client.send_image(
                     to_user_id,
                     str(path_obj),
                     context_token,
                 )
             elif content_type == ContentType.FILE:
                 filename = path_obj.name
-                await self._client.send_file(
+                resp = await self._client.send_file(
                     to_user_id,
                     str(path_obj),
                     filename,
                     context_token,
                 )
             elif content_type == ContentType.VIDEO:
-                await self._client.send_video(
+                resp = await self._client.send_video(
                     to_user_id,
                     str(path_obj),
                     context_token,
@@ -1037,6 +1075,23 @@ class WeixinChannel(BaseChannel):
                     "weixin _send_media_file: unsupported content type: %s",
                     content_type,
                 )
+                return
+
+            # Check response for errors (same logic as _send_text_direct)
+            if isinstance(resp, dict):
+                ret = resp.get("ret", 0)
+                errcode = resp.get("errcode", 0)
+                if ret != 0 or errcode != 0:
+                    logger.warning(
+                        "weixin send_media rejected: "
+                        "ret=%s errcode=%s user=%s type=%s",
+                        ret,
+                        errcode,
+                        to_user_id,
+                        content_type,
+                    )
+                    if ret == -2 and send_meta is not None:
+                        send_meta["_wechat_token_invalid"] = True
         except Exception:
             logger.exception(
                 "weixin _send_media_file failed type=%s path=%s",
@@ -1219,6 +1274,10 @@ class WeixinChannel(BaseChannel):
         text_parts: List[str] = []
 
         for p in parts:
+            # Skip all sends once context_token is marked invalid
+            if m.get("_wechat_token_invalid"):
+                break
+
             t = getattr(p, "type", None) or (
                 p.get("type") if isinstance(p, dict) else None
             )
@@ -1243,6 +1302,7 @@ class WeixinChannel(BaseChannel):
                         context_token,
                         image_url,
                         ContentType.IMAGE,
+                        send_meta=m,
                     )
             elif t == ContentType.FILE:
                 # Send file
@@ -1255,6 +1315,7 @@ class WeixinChannel(BaseChannel):
                         context_token,
                         file_url,
                         ContentType.FILE,
+                        send_meta=m,
                     )
             elif t == ContentType.VIDEO:
                 # Send video
@@ -1267,6 +1328,7 @@ class WeixinChannel(BaseChannel):
                         context_token,
                         video_url,
                         ContentType.VIDEO,
+                        send_meta=m,
                     )
             elif t == ContentType.AUDIO:
                 # Send audio as file (WeChat has no dedicated audio send)
@@ -1279,19 +1341,29 @@ class WeixinChannel(BaseChannel):
                         context_token,
                         str(audio_url),
                         ContentType.FILE,
+                        send_meta=m,
                     )
 
         body = "\n".join(text_parts).strip()
         if prefix and body:
             body = prefix + "  " + body
 
-        if not body:
+        if not body or m.get("_wechat_token_invalid"):
             if stop_typing:
                 stop_typing()
             return
 
+        api_send = bool(m.get("_api_send"))
         for chunk in split_text(body):
-            await self._send_text_direct(to_user_id, chunk, context_token)
+            if m.get("_wechat_token_invalid"):
+                return
+            await self._send_text_direct(
+                to_user_id,
+                chunk,
+                context_token,
+                api_initiated=api_send,
+                send_meta=m,
+            )
 
         # Stop typing indicator after sending all messages
         if stop_typing:
@@ -1354,8 +1426,16 @@ class WeixinChannel(BaseChannel):
         body = (prefix + "  " + text) if prefix and text else text
         if not body or not to_user_id:
             return
+        send_state: Dict[str, Any] = {}
         for chunk in split_text(body):
-            await self._send_text_direct(to_user_id, chunk, context_token)
+            if send_state.get("_wechat_token_invalid"):
+                return
+            await self._send_text_direct(
+                to_user_id,
+                chunk,
+                context_token,
+                send_meta=send_state,
+            )
 
     # ------------------------------------------------------------------
     # Typing Indicator

@@ -33,7 +33,7 @@ from typing import (
     Optional,
 )
 from uuid import uuid4
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import aiohttp
 import dingtalk_stream
@@ -1046,21 +1046,6 @@ class DingTalkChannel(BaseChannel):
                 url = data_attr
         url = (url or "").strip() if isinstance(url, str) else ""
 
-        # AudioContent stores URL in "data"; derive real filename/ext
-        if ptype == ContentType.AUDIO:
-            data_attr = getattr(part, "data", None)
-            if isinstance(data_attr, str) and (
-                data_attr.startswith("http") or data_attr.startswith("file:")
-            ):
-                try:
-                    path = urlparse(data_attr).path
-                    base = os.path.basename(path)
-                    if base and "." in base:
-                        filename = base
-                        ext = base.rsplit(".", 1)[-1].lower()
-                except Exception:
-                    pass
-
         # For images with public HTTP URLs, send directly via sampleImageMsg
         if upload_type == "image" and self._is_public_http_url(url):
             return await self._send_open_api_message(
@@ -1470,20 +1455,6 @@ class DingTalkChannel(BaseChannel):
             part,
             default=default_name,
         )
-        # AudioContent URL is in part.data; derive filename/ext for m4a etc.
-        if ptype == ContentType.AUDIO:
-            data_attr = getattr(part, "data", None)
-            if isinstance(data_attr, str) and (
-                data_attr.startswith("http") or data_attr.startswith("file:")
-            ):
-                try:
-                    path = urlparse(data_attr).path
-                    base = os.path.basename(path)
-                    if base and "." in base:
-                        filename = base
-                        ext = base.rsplit(".", 1)[-1].lower()
-                except Exception:
-                    pass
         if upload_type == "video" and ext not in ("mp4",):
             upload_type = "file"
         elif upload_type == "voice":
@@ -3582,11 +3553,19 @@ class DingTalkChannel(BaseChannel):
                 or getattr(part, "video_url", None)
                 or ""
             )
+            # AudioContent stores its URL in "data" instead of file_url
+            if not url:
+                data_attr = getattr(part, "data", None)
+                if isinstance(data_attr, str) and (
+                    data_attr.startswith("http")
+                    or data_attr.startswith("file:")
+                ):
+                    url = data_attr
             url = (url or "").strip() if isinstance(url, str) else ""
             if url:
                 try:
                     path = urlparse(url).path
-                    base = os.path.basename(path)
+                    base = unquote(os.path.basename(path))
                     if base:
                         filename = base
                 except Exception:

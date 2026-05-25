@@ -69,7 +69,6 @@ const MORE_MENU_KEYS = [
   "workspace",
   "skills",
   "tools",
-  "acp",
   "agent-config",
   "agents",
   "models",

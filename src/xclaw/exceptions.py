@@ -181,6 +181,17 @@ def convert_model_exception(  # pylint: disable=too-many-return-statements
         "original_error_message": str(exc),
     }
 
+    # Pydantic ValidationError indicates a malformed request payload (wrong
+    # parameter name/type), not an auth/quota issue.  Route it to the generic
+    # model execution exception so the underlying message reaches the user
+    # instead of being masked as "Unauthorized access".
+    if type(exc).__name__ == "ValidationError" and (
+        type(exc).__module__.startswith("pydantic")
+    ):
+        model = model_name or "unknown"
+        details["model_name"] = model
+        return ModelExecutionException(model, details=details)
+
     # Level 0: Check if this is a model-related error
     if not _is_model_related_error(exc):
         # Non-model error: wrap as UnknownAgentException
