@@ -1,5 +1,5 @@
-import { Layout, Modal, Spin } from "antd";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Layout, Modal } from "antd";
+import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,7 +20,6 @@ import {
 import Sidebar from "../Sidebar";
 import Header from "../Header";
 import ConsoleCronBubble from "../../components/ConsoleCronBubble";
-import ChunkErrorBoundary from "../../components/ChunkErrorBoundary";
 import LockScreen from "../../components/LockScreen";
 import styles from "../index.module.less";
 import Chat from "../../pages/Chat";
@@ -73,6 +72,8 @@ const MORE_MENU_KEYS = [
   "workspace",
   "skills",
   "tools",
+  "mcp",
+  "acp",
   "agent-config",
   "agents",
   "models",
@@ -95,6 +96,7 @@ const MORE_MENU_ICON_MAP: Record<VisibleMoreMenuKey, LucideIcon> = {
   workspace: FolderOpen,
   skills: Sparkles,
   tools: Hammer,
+  mcp: Cpu,
   acp: SquareTerminal,
   "agent-config": Play,
   agents: Bot,
@@ -197,47 +199,36 @@ export default function MainLayout() {
           <Content className="page-container">
             <ConsoleCronBubble />
             <div className="page-content">
-              <ChunkErrorBoundary resetKey={currentPath}>
-                <Suspense
-                  fallback={
-                    <Spin
-                      tip={t("common.loading")}
-                      style={{ display: "block", margin: "20vh auto" }}
-                    />
-                  }
-                >
-                  <Routes>
-                    <Route path="/" element={<Navigate to="/chat" replace />} />
-                    <Route path="/chat/*" element={<Chat />} />
-                    <Route path="/coding" element={<CodingPage />} />
-                    <Route path="/channels" element={<ChannelsPage />} />
-                    <Route path="/sessions" element={<SessionsPage />} />
-                    <Route path="/cron-jobs" element={<CronJobsPage />} />
-                    <Route path="/heartbeat" element={<HeartbeatPage />} />
-                    <Route path="/skills" element={<SkillsHubPage />} />
-                    <Route
-                      path="/skill-pool"
-                      element={<Navigate to="/skills?tab=pool" replace />}
-                    />
-                    <Route path="/tools" element={<ToolsPage />} />
-                    <Route path="/mcp" element={<MCPPage />} />
-                    <Route path="/acp" element={<ACPPage />} />
-                    <Route path="/ACP" element={<Navigate to="/acp" replace />} />
-                    <Route path="/workspace" element={<WorkspacePage />} />
-                    <Route path="/agents" element={<AgentsPage />} />
-                    <Route path="/models" element={<ModelsPage />} />
-                    <Route path="/environments" element={<EnvironmentsPage />} />
-                    <Route path="/agent-config" element={<AgentConfigPage />} />
-                    <Route path="/backups" element={<BackupsPage />} />
-                    <Route path="/security" element={<SecurityPage />} />
-                    <Route path="/token-usage" element={<TokenUsagePage />} />
-                    <Route
-                      path="/voice-transcription"
-                      element={<VoiceTranscriptionPage />}
-                    />
-                  </Routes>
-                </Suspense>
-              </ChunkErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Navigate to="/chat" replace />} />
+                <Route path="/chat/*" element={<Chat />} />
+                <Route path="/coding" element={<CodingPage />} />
+                <Route path="/channels" element={<ChannelsPage />} />
+                <Route path="/sessions" element={<SessionsPage />} />
+                <Route path="/cron-jobs" element={<CronJobsPage />} />
+                <Route path="/heartbeat" element={<HeartbeatPage />} />
+                <Route path="/skills" element={<SkillsHubPage />} />
+                <Route
+                  path="/skill-pool"
+                  element={<Navigate to="/skills?tab=pool" replace />}
+                />
+                <Route path="/tools" element={<ToolsPage />} />
+                <Route path="/mcp" element={<MCPPage />} />
+                <Route path="/acp" element={<ACPPage />} />
+                <Route path="/ACP" element={<Navigate to="/acp" replace />} />
+                <Route path="/workspace" element={<WorkspacePage />} />
+                <Route path="/agents" element={<AgentsPage />} />
+                <Route path="/models" element={<ModelsPage />} />
+                <Route path="/environments" element={<EnvironmentsPage />} />
+                <Route path="/agent-config" element={<AgentConfigPage />} />
+                <Route path="/backups" element={<BackupsPage />} />
+                <Route path="/security" element={<SecurityPage />} />
+                <Route path="/token-usage" element={<TokenUsagePage />} />
+                <Route
+                  path="/voice-transcription"
+                  element={<VoiceTranscriptionPage />}
+                />
+              </Routes>
             </div>
           </Content>
         </Layout>

@@ -39,7 +39,6 @@ from ..utils.system_info import summarize_python_environment
 from .auth import AuthMiddleware, auto_register_from_env
 from .routers import router as api_router, create_agent_scoped_router
 from .routers.agent_scoped import AgentContextMiddleware
-from .routers.approval import router as approval_router
 from .routers.coding_mode import router as coding_mode_router
 from .routers.voice import voice_router
 from ..envs import load_envs_into_environ
@@ -580,9 +579,6 @@ def get_doctor_runtime():
 
 
 app.include_router(api_router, prefix="/api")
-
-# Approval router: /api/approval/approve, /api/approval/deny, etc.
-app.include_router(approval_router, prefix="/api")
 
 # Coding Mode router: /api/coding-mode
 app.include_router(coding_mode_router, prefix="/api")
