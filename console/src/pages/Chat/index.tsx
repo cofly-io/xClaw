@@ -36,29 +36,7 @@ import ChatNewSessionBridge from "./components/ChatNewSessionBridge";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
 import ChatSessionsRefreshListener from "./components/ChatSessionsRefreshListener";
 import ChatLoadingOverlay from "./components/ChatLoadingOverlay";
-import { ApprovalCard } from "../../components/ApprovalCard/ApprovalCard";
-import { commandsApi } from "../../api/modules/commands";
-import { useApprovalContext } from "../../contexts/ApprovalContext";
-import { planApi } from "../../api/modules/plan";
 import { useCodingModeStore } from "../../stores/codingModeStore";
-
-interface ApprovalMessageData {
-  requestId: string;
-  sessionId: string;
-  rootSessionId?: string;
-  agentId: string;
-  toolName: string;
-  severity: string;
-  findingsCount: number;
-  findingsSummary: string;
-  toolParams: Record<string, unknown>;
-  createdAt: number;
-  timeoutSeconds: number;
-}
-
-import WhisperSpeechButton, {
-  WhisperSpeechButtonRef,
-} from "./components/WhisperSpeechButton";
 import {
   toDisplayUrl,
   copyText,
@@ -630,7 +608,6 @@ export default function ChatPage() {
   
   const { selectedAgent } = useAgentStore();
   const { setTodos } = useCodingModeStore();
-  const { toolRenderConfig } = usePlugins();
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
   const { message } = useAppMessage();
@@ -673,25 +650,6 @@ export default function ChatPage() {
     [],
   );
 
-  // Shortcut key for voice recording (Ctrl+Shift+M or Cmd+Shift+M on Mac)
-  useEffect(() => {
-    const handleShortcut = (e: KeyboardEvent) => {
-      if (!isChatActive()) return;
-      // Check for Ctrl+Shift+M (Windows/Linux) or Cmd+Shift+M (Mac)
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        e.shiftKey &&
-        e.key.toLowerCase() === "m"
-      ) {
-        e.preventDefault();
-        if (whisperEnabled) {
-          whisperSpeechRef.current?.toggleRecording();
-        }
-      }
-    };
-    document.addEventListener("keydown", handleShortcut);
-    return () => document.removeEventListener("keydown", handleShortcut);
-  }, [isChatActive, whisperEnabled]);
   chatIdRef.current = chatId;
   navigateRef.current = navigate;
 
@@ -1286,9 +1244,7 @@ export default function ChatPage() {
     isDark,
     multimodalCaps,
     runtimeSessionApi,
-    toolRenderConfig,
     scheduleHistoryClear,
-    planEnabled,
     onFileCardClick,
   ]);
 

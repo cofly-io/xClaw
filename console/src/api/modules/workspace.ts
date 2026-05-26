@@ -152,7 +152,7 @@ export const workspaceApi = {
 
   // Coding Mode – full file tree (all file types)
   listCodeFiles: () =>
-    request<MdFileInfo[]>("/workspace/code-files").then((files) =>
+    request<MdFileInfo[]>("/agent/code-files").then((files) =>
       files.map((file) => ({
         ...file,
         updated_at: new Date(file.modified_time).getTime(),
@@ -177,7 +177,7 @@ export const workspaceApi = {
     }
 
     const url = getApiUrl(
-      `/workspace/code-files/${filePath
+      `/agent/code-files/${filePath
         .split("/")
         .map(encodeURIComponent)
         .join("/")}`,
@@ -205,7 +205,7 @@ export const workspaceApi = {
 
   saveCodeFile: (filePath: string, content: string) =>
     request<{ path: string; size: number }>(
-      `/workspace/code-files/${filePath
+      `/agent/code-files/${filePath
         .split("/")
         .map(encodeURIComponent)
         .join("/")}`,
@@ -221,7 +221,7 @@ export const workspaceApi = {
     }),
 
   /** Returns the URL for the SSE file-watch stream (Coding Mode). */
-  getWatchUrl: () => getApiUrl("/workspace/watch"),
+  getWatchUrl: () => getApiUrl("/agent/watch"),
 
   /**
    * Returns the URL for a binary file (image, PDF, CSV) preview.
@@ -229,7 +229,7 @@ export const workspaceApi = {
    */
   getBinaryFileUrl: (filePath: string) =>
     getApiUrl(
-      `/workspace/binary-files/${filePath
+      `/agent/binary-files/${filePath
         .split("/")
         .map(encodeURIComponent)
         .join("/")}`,

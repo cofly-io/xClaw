@@ -692,6 +692,117 @@ class AutoTitleConfig(BaseModel):
     )
 
 
+class LightContextCompactConfig(BaseModel):
+    """Compaction behavior configuration for light context manager."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    compact_threshold_ratio: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Fraction of max_input_length at which compaction triggers."
+        ),
+    )
+
+    reserve_threshold_ratio: float = Field(
+        default=0.4,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Fraction of max_input_length reserved after compaction."
+        ),
+    )
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable context compaction in light context manager.",
+    )
+
+    compact_with_thinking_block: bool = Field(
+        default=False,
+        description=(
+            "Include a thinking block in the compacted output."
+        ),
+    )
+
+
+class ToolResultPruningConfig(BaseModel):
+    """Tool result pruning configuration for light context manager."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable tool result pruning.",
+    )
+
+    tool_results_cache: str = Field(
+        default="tool_results_cache",
+        description="Subdirectory name for offloaded tool results.",
+    )
+
+    offload_retention_days: int = Field(
+        default=7,
+        ge=1,
+        description="Days to retain offloaded tool result files.",
+    )
+
+    pruning_recent_n: int = Field(
+        default=20,
+        ge=0,
+        description=(
+            "Number of most recent tool results exempt from pruning."
+        ),
+    )
+
+    pruning_old_msg_max_bytes: int = Field(
+        default=5000,
+        ge=0,
+        description="Max bytes for older (non-recent) pruned messages.",
+    )
+
+    pruning_recent_msg_max_bytes: int = Field(
+        default=100000,
+        ge=0,
+        description="Max bytes for recent pruned messages.",
+    )
+
+    exempt_file_extensions: list[str] = Field(
+        default_factory=list,
+        description=(
+            "File extensions exempt from pruning (e.g. ['.py', '.md'])."
+        ),
+    )
+
+    exempt_tool_names: list[str] = Field(
+        default_factory=list,
+        description="Tool names whose results are exempt from pruning.",
+    )
+
+
+class LightContextConfig(BaseModel):
+    """Light context manager configuration."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    dialog_path: str = Field(
+        default="dialog.json",
+        description="Path to the dialog JSON file.",
+    )
+
+    tool_result_pruning_config: ToolResultPruningConfig = Field(
+        default_factory=ToolResultPruningConfig,
+        description="Tool result pruning configuration.",
+    )
+
+    context_compact_config: LightContextCompactConfig = Field(
+        default_factory=LightContextCompactConfig,
+        description="Context compaction configuration.",
+    )
+
+
 class AgentsRunningConfig(BaseModel):
     """Agent runtime behavior configuration."""
 
@@ -799,6 +910,15 @@ class AgentsRunningConfig(BaseModel):
         ),
     )
 
+    shell_command_executable: Optional[str] = Field(
+        default=None,
+        description=(
+            "Shell executable path for execute_shell_command "
+            "(e.g. /bin/bash, cmd.exe). When set, overrides the "
+            "default shell detection for this agent."
+        ),
+    )
+
     @model_validator(mode="after")
     def validate_llm_retry_backoff(self) -> "AgentsRunningConfig":
         """Validate LLM retry backoff relationships."""
@@ -869,6 +989,11 @@ class AgentsRunningConfig(BaseModel):
             "STRICT, SMART, AUTO, or OFF.  When set via running-config API, "
             "the value is written back to the agent profile."
         ),
+    )
+
+    light_context_config: LightContextConfig = Field(
+        default_factory=LightContextConfig,
+        description="Light context manager configuration.",
     )
 
     @property
